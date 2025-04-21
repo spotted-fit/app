@@ -55,7 +55,10 @@ fun PostDetailView(
     actionButtons: @Composable ColumnScope.() -> Unit = {},
 
     // Optional close action
-    onClose: (() -> Unit)? = null
+    onClose: (() -> Unit)? = null,
+
+    // Optional callback for activity type click
+    onActivityTypeClick: (() -> Unit)? = null
 ) {
     // Use the common implementation with URL-based image content
     PostDetailViewImpl(
@@ -67,7 +70,8 @@ fun PostDetailView(
         likes = likes,
         comments = comments,
         actionButtons = actionButtons,
-        onClose = onClose
+        onClose = onClose,
+        onActivityTypeClick = onActivityTypeClick
     ) { showAfterImage, imageTransition ->
         // URL-based images
         Box(
@@ -202,6 +206,9 @@ private fun PostDetailViewImpl(
     // Optional close action
     onClose: (() -> Unit)? = null,
 
+    // Optional callback for activity type click
+    onActivityTypeClick: (() -> Unit)? = null,
+
     // Image content - this is the part that differs between implementations
     imageContent: @Composable (showAfterImage: Boolean, imageTransition: State<Float>) -> Unit
 ) {
@@ -278,11 +285,18 @@ private fun PostDetailViewImpl(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(top = 4.dp)
                         ) {
-                            Text(
-                                text = activityType,
-                                fontSize = 14.sp,
-                                color = Color.White.copy(alpha = 0.8f)
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .clickable(onClick = { onActivityTypeClick?.invoke() })
+                                    .padding(vertical = 2.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = activityType,
+                                    fontSize = 24.sp,  // Larger emoji size
+                                    color = Color.White
+                                )
+                            }
                             Spacer(modifier = Modifier.width(8.dp))
                             // Small dot separator with modern styling
                             Box(
@@ -517,7 +531,10 @@ fun PostDetailView(
     actionButtons: @Composable ColumnScope.() -> Unit = {},
 
     // Optional close action
-    onClose: (() -> Unit)? = null
+    onClose: (() -> Unit)? = null,
+
+    // Optional callback for activity type click
+    onActivityTypeClick: (() -> Unit)? = null
 ) {
     // Use the common implementation with ByteArray image content
     PostDetailViewImpl(
@@ -531,7 +548,8 @@ fun PostDetailView(
         comments = emptyList(),
         showLikesAndComments = showLikesAndComments,
         actionButtons = actionButtons,
-        onClose = onClose
+        onClose = onClose,
+        onActivityTypeClick = onActivityTypeClick
     ) { showAfterImage, imageTransition ->
         // Display the ByteArray images using ImageConverter
         Box(
