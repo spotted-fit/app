@@ -153,7 +153,7 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
             // Render the selected screen's content based on the page
             when (page) {
                 0 -> FeedScreen().Content()
-                1 -> CameraScreen().Content()
+                1 -> CameraScreen(isVisible = currentTab == 1).Content()
                 2 -> FriendsScreen().Content()
                 3 -> ProfileScreen().Content()
                 else -> FeedScreen().Content() // Default to Feed screen
