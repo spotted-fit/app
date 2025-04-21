@@ -133,6 +133,7 @@ class CameraScreen(
                             showBeforeAfterToggle = true,
                             onClose = { viewModel.resetToStart() },
                             showLikesAndComments = false,
+                            onActivityTypeClick = { viewModel.showEmojiPicker = true },
                             actionButtons = {
                                 // Add a post button
                                 Box(
