@@ -8,13 +8,24 @@ import androidx.compose.runtime.setValue
  * ViewModel for the camera screen that manages all state.
  */
 class CameraViewModel {
-    // Activity types
+    // Activity types - iOS-style emojis with more variety
     val activityTypes = listOf(
-        "🏃",
-        "🚶",
-        "🚴",
-        "🏊",
-        "🧘"
+        "🏃‍♂️", // running
+        "🚶‍♂️", // walking
+        "🚴‍♂️", // cycling
+        "🏊‍♂️", // swimming
+        "🧘‍♂️", // yoga
+        "🏋️‍♂️", // weight lifting
+        "⛹️‍♂️", // basketball
+        "🤸‍♂️", // gymnastics
+        "🧗‍♂️", // climbing
+        "🤾‍♂️", // handball
+        "🏄‍♂️", // surfing
+        "🚣‍♂️", // rowing
+        "⛷️", // skiing
+        "🏂", // snowboarding
+        "🏌️‍♂️", // golf
+        "🤼‍♂️" // wrestling
     )
 
     // Camera state
@@ -100,24 +111,6 @@ class CameraViewModel {
      */
     fun completePostAnimation() {
         postAnimationFinished = true
-    }
-
-    /**
-     * Navigates to the next photo in the carousel.
-     */
-    fun nextPhoto() {
-        if (currentPhotoIndex < 1) {
-            currentPhotoIndex++
-        }
-    }
-
-    /**
-     * Navigates to the previous photo in the carousel.
-     */
-    fun previousPhoto() {
-        if (currentPhotoIndex > 0) {
-            currentPhotoIndex--
-        }
     }
 
     /**
