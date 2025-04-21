@@ -1,64 +1,81 @@
 package fit.spotted.app.ui.screens
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import fit.spotted.app.camera.getCamera
+import fit.spotted.app.ui.camera.CameraControls
+import fit.spotted.app.ui.camera.CameraPreview
+import fit.spotted.app.ui.camera.CameraViewModel
+import fit.spotted.app.ui.camera.EmojiPicker
+import fit.spotted.app.ui.camera.PhotoPreview
+import fit.spotted.app.ui.camera.PostAnimation
+import fit.spotted.app.ui.camera.PreviewControls
+import fit.spotted.app.ui.camera.TimerDisplay
 import fit.spotted.app.utils.getImageConverter
 
 /**
  * Screen that allows users to take photos of their fitness activities.
  */
-class CameraScreen(private val isVisible: Boolean = true) : Screen {
-
-    // Mock list of activity types with only emojis
-    private val activityTypes = listOf(
-        "🏃",
-        "🚶",
-        "🚴",
-        "🏊",
-        "🧘"
-    )
+class CameraScreen(
+    private val isVisible: Boolean = true,
+    private val onAfterWorkoutModeChanged: ((Boolean) -> Unit)? = null
+) : Screen {
 
     @Composable
     override fun Content() {
-        var selectedActivity by remember { mutableStateOf(activityTypes.first()) }
-        var photoTaken by remember { mutableStateOf(false) }
-        var showEmojiPicker by remember { mutableStateOf(false) }
-        var photoData by remember { mutableStateOf<ByteArray?>(null) }
+        // Create the view model
+        val viewModel = remember { CameraViewModel() }
 
-        // Only initialize the camera when the screen is visible
+        // Notify when isAfterWorkoutMode changes
+        LaunchedEffect(viewModel.isAfterWorkoutMode) {
+            onAfterWorkoutModeChanged?.invoke(viewModel.isAfterWorkoutMode)
+        }
+
+        // Get the camera and image converter
         val camera = remember(isVisible) { 
             if (isVisible) getCamera() else null 
         }
 
-        // Get the image converter
         val imageConverter = remember { getImageConverter() }
+
+        // Update timer every second when running
+        LaunchedEffect(viewModel.isTimerRunning) {
+            if (viewModel.isTimerRunning) {
+                while (true) {
+                    kotlinx.coroutines.delay(1000)
+                    viewModel.seconds++
+                }
+            }
+        }
+
+        // Handle animation completion and reset states
+        LaunchedEffect(viewModel.showPostAnimation) {
+            if (viewModel.showPostAnimation) {
+                // Wait for animation to complete (1.5 seconds)
+                kotlinx.coroutines.delay(1500)
+
+                // Mark animation as finished
+                viewModel.completePostAnimation()
+
+                // Wait a bit more for exit animation
+                kotlinx.coroutines.delay(500)
+
+                // Reset all states after posting
+                viewModel.resetToStart()
+            }
+        }
 
         // Clean up camera resources when the screen is disposed or becomes invisible
         DisposableEffect(isVisible) {
@@ -70,57 +87,56 @@ class CameraScreen(private val isVisible: Boolean = true) : Screen {
         // Main container that fills the entire screen
         Box(modifier = Modifier
             .fillMaxSize()
-            .clip(RoundedCornerShape(0.dp)) // Clip to ensure content stays within bounds
+            .clip(RoundedCornerShape(0.dp))
         ) {
+            // Post success animation overlay
+            PostAnimation(
+                visible = viewModel.showPostAnimation,
+                animationFinished = viewModel.postAnimationFinished
+            )
+
             // Camera preview or captured photo - takes the full screen
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(3/4f)
                     .align(Alignment.Center)
-                    .clip(RoundedCornerShape(30.dp)), // Clip to ensure content stays within bounds
+                    .clip(RoundedCornerShape(30.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                if (photoTaken && photoData != null) {
-                    // Show captured photo preview - fill the entire screen with the image
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // Display the actual captured photo using the platform-specific image converter
-                        imageConverter.ByteArrayImage(
-                            bytes = photoData!!,
-                            modifier = Modifier.fillMaxSize(),
-                            contentDescription = "Captured photo"
-                        )
-                    }
-                } else if (camera != null && isVisible) {
-                    // Camera preview - full screen
-                    camera.CameraPreview(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(0.dp)), // Clip to ensure content stays within bounds
-                        onPhotoCaptured = { bytes ->
-                            photoData = bytes
-                            photoTaken = true
-                        }
+                if (viewModel.showPreview && viewModel.beforeWorkoutPhoto != null && viewModel.afterWorkoutPhoto != null) {
+                    // Show before/after photos in a card deck/carousel style
+                    PhotoPreview(
+                        beforeWorkoutPhoto = viewModel.beforeWorkoutPhoto!!,
+                        afterWorkoutPhoto = viewModel.afterWorkoutPhoto!!,
+                        imageConverter = imageConverter,
+                        showPostAnimation = viewModel.showPostAnimation,
+                        currentPhotoIndex = viewModel.currentPhotoIndex,
+                        onNextPhoto = { viewModel.nextPhoto() },
+                        onPreviousPhoto = { viewModel.previousPhoto() }
                     )
                 } else {
-                    // Placeholder when camera is not available or screen is not visible
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            "Camera initializing...",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    // Show camera preview or captured photo
+                    CameraPreview(
+                        camera = camera,
+                        imageConverter = imageConverter,
+                        photoData = viewModel.photoData,
+                        isVisible = isVisible,
+                        photoTaken = viewModel.photoTaken,
+                        onPhotoCaptured = { bytes ->
+                            viewModel.photoData = bytes
+                            viewModel.photoTaken = true
+                        }
+                    )
+                }
+
+                // Show timer in after workout mode
+                if (viewModel.isAfterWorkoutMode) {
+                    TimerDisplay(
+                        timerText = viewModel.formatTimer(),
+                        showPostAnimation = viewModel.showPostAnimation,
+                        modifier = Modifier.align(Alignment.TopEnd)
+                    )
                 }
             }
 
@@ -131,199 +147,36 @@ class CameraScreen(private val isVisible: Boolean = true) : Screen {
                     .padding(bottom = 32.dp),
                 contentAlignment = Alignment.BottomCenter
             ) {
-                // Bottom row with camera controls
-                if (!photoTaken && camera != null && isVisible) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 32.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Camera swap button
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(Color.Black.copy(alpha = 0.6f))
-                                .border(width = 1.dp, color = Color.White.copy(alpha = 0.7f), shape = CircleShape)
-                                .clickable { camera.switchCamera() },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Switch Camera",
-                                modifier = Modifier.size(28.dp),
-                                tint = Color.White
-                            )
-                        }
-
-                        // Custom camera button with white border
-                        Box(
-                            modifier = Modifier
-                                .size(80.dp)
-                                .clip(CircleShape)
-                                .background(Color.Transparent)
-                                .border(width = 4.dp, color = Color.White, shape = CircleShape)
-                                .padding(2.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.2f))
-                                .clickable { camera.takePhoto() },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            // Inner circle
-                            Box(
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.White),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                // Empty box to create a simple camera button
-                                // BeReal uses a simple circle without an icon
-                            }
-                        }
-
-                        // Activity emoji button
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(Color.Black.copy(alpha = 0.6f))
-                                .border(width = 1.dp, color = Color.White.copy(alpha = 0.7f), shape = CircleShape)
-                                .clickable { showEmojiPicker = true },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = selectedActivity,
-                                fontSize = 28.sp,
-                                color = Color.White
-                            )
-                        }
-                    }
+                if (viewModel.showPreview && viewModel.beforeWorkoutPhoto != null && viewModel.afterWorkoutPhoto != null) {
+                    // Show preview controls
+                    PreviewControls(
+                        selectedActivity = viewModel.selectedActivity,
+                        onActivityClick = { viewModel.showEmojiPicker = true },
+                        onRetake = { viewModel.resetToStart() },
+                        onPost = { viewModel.postWorkout() },
+                        showPostAnimation = viewModel.showPostAnimation
+                    )
                 } else {
-                    // Instagram-style controls when photo is taken - side by side buttons
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 32.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        // Retake button - styled like Instagram
-                        Box(
-                            modifier = Modifier
-                                .size(60.dp)
-                                .clip(CircleShape)
-                                .background(Color.Black.copy(alpha = 0.6f))
-                                .border(width = 1.dp, color = Color.White.copy(alpha = 0.7f), shape = CircleShape)
-                                .clickable { 
-                                    photoTaken = false
-                                    photoData = null
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Retake Photo",
-                                tint = Color.White,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-
-                        // Upload button - styled like Instagram
-                        Box(
-                            modifier = Modifier
-                                .size(60.dp)
-                                .clip(CircleShape)
-                                .background(if (photoData != null) MaterialTheme.colors.primary else Color.Gray)
-                                .border(
-                                    width = 1.dp, 
-                                    color = Color.White.copy(alpha = 0.7f), 
-                                    shape = CircleShape
-                                )
-                                .clickable(enabled = photoData != null) { 
-                                    if (photoData != null) {
-                                        println("Photo uploaded! Size: ${photoData?.size ?: 0} bytes")
-                                        photoTaken = false
-                                        photoData = null
-                                    }
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "Upload",
-                                tint = Color.White,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
+                    // Show camera controls
+                    CameraControls(
+                        camera = camera,
+                        photoTaken = viewModel.photoTaken,
+                        photoData = viewModel.photoData,
+                        isAfterWorkoutMode = viewModel.isAfterWorkoutMode,
+                        onRetake = { viewModel.retakePhoto() },
+                        onAccept = { viewModel.acceptPhoto() }
+                    )
                 }
             }
 
-            // Camera controls have been moved to the bottom row
-
-            // Emoji picker popup - Instagram-style
-            if (showEmojiPicker) {
-                Popup(
-                    alignment = Alignment.BottomCenter,
-                    offset = IntOffset(0, -120),
-                    onDismissRequest = { showEmojiPicker = false },
-                    properties = PopupProperties(focusable = true)
-                ) {
-                    Card(
-                        modifier = Modifier
-                            .width(240.dp),
-                        shape = RoundedCornerShape(20.dp),
-                        backgroundColor = Color.Black.copy(alpha = 0.8f),
-                        elevation = 10.dp
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            // Title
-                            Text(
-                                "Select Activity Type",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
-                                modifier = Modifier.padding(bottom = 12.dp)
-                            )
-
-                            // Emoji grid
-                            LazyVerticalGrid(
-                                columns = GridCells.Fixed(4),
-                                modifier = Modifier.height(140.dp)
-                            ) {
-                                items(activityTypes) { emoji ->
-                                    Box(
-                                        modifier = Modifier
-                                            .padding(8.dp)
-                                            .size(48.dp)
-                                            .clip(CircleShape)
-                                            .background(
-                                                if (emoji == selectedActivity)
-                                                    MaterialTheme.colors.primary
-                                                else
-                                                    Color.DarkGray.copy(alpha = 0.6f)
-                                            )
-                                            .clickable {
-                                                selectedActivity = emoji
-                                                showEmojiPicker = false
-                                            },
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = emoji,
-                                            fontSize = 28.sp
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            // Emoji picker popup
+            if (viewModel.showEmojiPicker) {
+                EmojiPicker(
+                    activityTypes = viewModel.activityTypes,
+                    selectedActivity = viewModel.selectedActivity,
+                    onActivitySelected = { viewModel.selectedActivity = it },
+                    onDismiss = { viewModel.showEmojiPicker = false }
+                )
             }
         }
     }
