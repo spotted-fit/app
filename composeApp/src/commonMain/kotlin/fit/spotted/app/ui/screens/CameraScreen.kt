@@ -14,8 +14,9 @@ import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import fit.spotted.app.camera.getCamera
+import fit.spotted.app.utils.getImageConverter
 
 /**
  * Screen that allows users to take photos of their fitness activities.
@@ -55,6 +57,9 @@ class CameraScreen(private val isVisible: Boolean = true) : Screen {
             if (isVisible) getCamera() else null 
         }
 
+        // Get the image converter
+        val imageConverter = remember { getImageConverter() }
+
         // Clean up camera resources when the screen is disposed or becomes invisible
         DisposableEffect(isVisible) {
             onDispose {
@@ -70,22 +75,25 @@ class CameraScreen(private val isVisible: Boolean = true) : Screen {
             // Camera preview or captured photo - takes the full screen
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(0.dp)), // Clip to ensure content stays within bounds
+                    .fillMaxWidth()
+                    .aspectRatio(3/4f)
+                    .align(Alignment.Center)
+                    .clip(RoundedCornerShape(30.dp)), // Clip to ensure content stays within bounds
                 contentAlignment = Alignment.Center
             ) {
                 if (photoTaken && photoData != null) {
-                    // Show captured photo indicator
+                    // Show captured photo preview - fill the entire screen with the image
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(Color.Black),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            "Photo captured!",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
+                        // Display the actual captured photo using the platform-specific image converter
+                        imageConverter.ByteArrayImage(
+                            bytes = photoData!!,
+                            modifier = Modifier.fillMaxSize(),
+                            contentDescription = "Captured photo"
                         )
                     }
                 } else if (camera != null && isVisible) {
@@ -123,36 +131,73 @@ class CameraScreen(private val isVisible: Boolean = true) : Screen {
                     .padding(bottom = 32.dp),
                 contentAlignment = Alignment.BottomCenter
             ) {
-                // Instagram-style camera button - centered at bottom
+                // Bottom row with camera controls
                 if (!photoTaken && camera != null && isVisible) {
-                    // Custom camera button with white border
-                    Box(
+                    Row(
                         modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .background(Color.Transparent)
-                            .border(width = 4.dp, color = Color.White, shape = CircleShape)
-                            .padding(2.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.2f))
-                            .clickable { camera?.takePhoto() },
-                        contentAlignment = Alignment.Center
+                            .fillMaxWidth()
+                            .padding(horizontal = 32.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Inner circle
+                        // Camera swap button
                         Box(
                             modifier = Modifier
-                                .size(64.dp)
+                                .size(56.dp)
                                 .clip(CircleShape)
-                                .background(Color.White),
+                                .background(Color.Black.copy(alpha = 0.6f))
+                                .border(width = 1.dp, color = Color.White.copy(alpha = 0.7f), shape = CircleShape)
+                                .clickable { camera.switchCamera() },
                             contentAlignment = Alignment.Center
                         ) {
-                            // We're using Add icon as a substitute for camera icon
-                            // In a real app, you would use a proper camera icon
                             Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Take Photo",
-                                modifier = Modifier.size(32.dp),
-                                tint = Color.Black
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Switch Camera",
+                                modifier = Modifier.size(28.dp),
+                                tint = Color.White
+                            )
+                        }
+
+                        // Custom camera button with white border
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .background(Color.Transparent)
+                                .border(width = 4.dp, color = Color.White, shape = CircleShape)
+                                .padding(2.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.2f))
+                                .clickable { camera.takePhoto() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            // Inner circle
+                            Box(
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                // Empty box to create a simple camera button
+                                // BeReal uses a simple circle without an icon
+                            }
+                        }
+
+                        // Activity emoji button
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.6f))
+                                .border(width = 1.dp, color = Color.White.copy(alpha = 0.7f), shape = CircleShape)
+                                .clickable { showEmojiPicker = true },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = selectedActivity,
+                                fontSize = 28.sp,
+                                color = Color.White
                             )
                         }
                     }
@@ -177,11 +222,11 @@ class CameraScreen(private val isVisible: Boolean = true) : Screen {
                                 },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                "Retake",
-                                color = Color.White,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 14.sp
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Retake Photo",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
                             )
                         }
 
@@ -216,31 +261,13 @@ class CameraScreen(private val isVisible: Boolean = true) : Screen {
                 }
             }
 
-            // Activity emoji in bottom corner - only show when taking a photo
-            if (!photoTaken) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(24.dp)
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.5f))
-                        .clickable { showEmojiPicker = true },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = selectedActivity,
-                        fontSize = 28.sp,
-                        color = Color.White
-                    )
-                }
-            }
+            // Camera controls have been moved to the bottom row
 
             // Emoji picker popup - Instagram-style
             if (showEmojiPicker) {
                 Popup(
-                    alignment = Alignment.BottomEnd,
-                    offset = IntOffset(-24, -80),
+                    alignment = Alignment.BottomCenter,
+                    offset = IntOffset(0, -120),
                     onDismissRequest = { showEmojiPicker = false },
                     properties = PopupProperties(focusable = true)
                 ) {

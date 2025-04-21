@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
  */
 class WasmJsCamera : Camera {
     private var onPhotoCapturedCallback: ((ByteArray) -> Unit)? = null
+    private var currentCameraFacing = CameraFacing.BACK
 
     @Composable
     override fun CameraPreview(
@@ -62,6 +63,19 @@ class WasmJsCamera : Camera {
     override fun release() {
         // Do nothing - no resources to release
         onPhotoCapturedCallback = null
+    }
+
+    override fun switchCamera(): CameraFacing {
+        // Toggle camera facing direction even though it doesn't do anything in web
+        currentCameraFacing = when (currentCameraFacing) {
+            CameraFacing.BACK -> CameraFacing.FRONT
+            CameraFacing.FRONT -> CameraFacing.BACK
+        }
+        return currentCameraFacing
+    }
+
+    override fun getCurrentCameraFacing(): CameraFacing {
+        return currentCameraFacing
     }
 }
 
