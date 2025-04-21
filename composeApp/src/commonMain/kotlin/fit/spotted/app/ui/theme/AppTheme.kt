@@ -8,12 +8,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import fit.spotted.app.getPlatform
 
-// Light theme colors
+// Light theme colors - Modern black and white with transparency
 private val LightColorPalette = lightColors(
-    primary = Color(0xFF1976D2),
-    primaryVariant = Color(0xFF1565C0),
-    secondary = Color(0xFF03DAC5),
-    background = Color(0xFFF5F5F5),
+    primary = Color.Black,
+    primaryVariant = Color.Black.copy(alpha = 0.8f),
+    secondary = Color.White,
+    background = Color.White,
     surface = Color.White,
     onPrimary = Color.White,
     onSecondary = Color.Black,
@@ -21,14 +21,14 @@ private val LightColorPalette = lightColors(
     onSurface = Color.Black
 )
 
-// Dark theme colors
+// Dark theme colors - Modern black and white with transparency
 private val DarkColorPalette = darkColors(
-    primary = Color(0xFF90CAF9),
-    primaryVariant = Color(0xFF64B5F6),
-    secondary = Color(0xFF03DAC5),
-    background = Color(0xFF121212),
-    surface = Color(0xFF1E1E1E),
-    onPrimary = Color.Black,
+    primary = Color.Black,
+    primaryVariant = Color.Black.copy(alpha = 0.7f),
+    secondary = Color.White,
+    background = Color.Black,
+    surface = Color(0xFF121212),
+    onPrimary = Color.White,
     onSecondary = Color.Black,
     onBackground = Color.White,
     onSurface = Color.White

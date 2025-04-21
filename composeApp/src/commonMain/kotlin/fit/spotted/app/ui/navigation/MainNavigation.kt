@@ -3,6 +3,7 @@ package fit.spotted.app.ui.navigation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.*
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import fit.spotted.app.ui.screens.*
 
 /**
@@ -111,57 +113,108 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
 
     Scaffold(
         bottomBar = {
-            BottomNavigation {
+            // Modern bottom navigation with transparency and sleek design
+            BottomNavigation(
+                backgroundColor = MaterialTheme.colors.surface.copy(alpha = 0.9f),
+                elevation = 0.dp,
+                contentColor = MaterialTheme.colors.onSurface
+            ) {
+                // Feed tab
                 BottomNavigationItem(
                     selected = currentTab == 0,
                     onClick = { 
                         handleTabChange(0)
                     },
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Feed") },
-                    label = { Text("Feed") }
+                    icon = { 
+                        Icon(
+                            Icons.Default.Home, 
+                            contentDescription = "Feed",
+                            modifier = Modifier.size(26.dp)
+                        ) 
+                    },
+                    selectedContentColor = MaterialTheme.colors.onSurface,
+                    unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                    label = null // Remove labels for cleaner look
                 )
 
+                // Activity/Camera tab
                 BottomNavigationItem(
                     selected = currentTab == 1,
                     onClick = { 
                         handleTabChange(1)
                     },
-                    icon = { Icon(Icons.Default.Add, contentDescription = "Activity") },
-                    label = { Text("Activity") }
+                    icon = { 
+                        Icon(
+                            Icons.Default.Add, 
+                            contentDescription = "Activity",
+                            modifier = Modifier.size(26.dp)
+                        ) 
+                    },
+                    selectedContentColor = MaterialTheme.colors.onSurface,
+                    unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                    label = null // Remove labels for cleaner look
                 )
 
+                // Friends tab
                 BottomNavigationItem(
                     selected = currentTab == 2,
                     onClick = { 
                         handleTabChange(2)
                     },
-                    icon = { Icon(Icons.Default.Person, contentDescription = "Friends") },
-                    label = { Text("Friends") }
+                    icon = { 
+                        Icon(
+                            Icons.Default.Person, 
+                            contentDescription = "Friends",
+                            modifier = Modifier.size(26.dp)
+                        ) 
+                    },
+                    selectedContentColor = MaterialTheme.colors.onSurface,
+                    unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                    label = null // Remove labels for cleaner look
                 )
 
+                // Profile tab
                 BottomNavigationItem(
                     selected = currentTab == 3,
                     onClick = { 
                         handleTabChange(3)
                     },
-                    icon = { Icon(Icons.Default.AccountCircle, contentDescription = "Profile") },
-                    label = { Text("Profile") }
+                    icon = { 
+                        Icon(
+                            Icons.Default.AccountCircle, 
+                            contentDescription = "Profile",
+                            modifier = Modifier.size(26.dp)
+                        ) 
+                    },
+                    selectedContentColor = MaterialTheme.colors.onSurface,
+                    unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                    label = null // Remove labels for cleaner look
                 )
             }
         },
         topBar = {
             if (currentTab == 3) {
-                // Show logout button in the top bar when on the profile screen
+                // Modern top app bar with transparency
                 TopAppBar(
-                    title = { Text("Profile") },
+                    title = { 
+                        Text(
+                            "Profile", 
+                            color = MaterialTheme.colors.onSurface
+                        ) 
+                    },
+                    backgroundColor = MaterialTheme.colors.surface.copy(alpha = 0.9f),
+                    elevation = 0.dp,
                     actions = {
                         TextButton(
                             onClick = onLogout,
                             colors = ButtonDefaults.textButtonColors(
-                                contentColor = MaterialTheme.colors.onPrimary
+                                contentColor = MaterialTheme.colors.onSurface
                             )
                         ) {
-                            Text("Logout")
+                            Text(
+                                "Logout",
+                                color = MaterialTheme.colors.onSurface
+                            )
                         }
                     }
                 )

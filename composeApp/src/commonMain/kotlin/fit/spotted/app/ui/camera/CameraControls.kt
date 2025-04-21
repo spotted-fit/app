@@ -1,27 +1,17 @@
 package fit.spotted.app.ui.camera
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -31,9 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import fit.spotted.app.camera.Camera
 
 /**
@@ -94,7 +82,8 @@ fun CameraControls(
                     modifier = Modifier
                         .size(64.dp)
                         .clip(CircleShape)
-                        .background(Color.White),
+                        .background(Color.White)
+                        .border(width = 2.dp, color = Color.Black, shape = CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     // Empty box to create a simple camera button
@@ -160,119 +149,3 @@ fun CameraControls(
     }
 }
 
-/**
- * Preview controls for posting or retaking photos.
- */
-@Composable
-fun PreviewControls(
-    selectedActivity: String,
-    onActivityClick: () -> Unit,
-    onRetake: () -> Unit,
-    onPost: () -> Unit,
-    showPostAnimation: Boolean = false,
-    modifier: Modifier = Modifier
-) {
-    AnimatedVisibility(
-        visible = !showPostAnimation,
-        enter = fadeIn(),
-        exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
-    ) {
-        Column(
-            modifier = modifier
-                .padding(bottom = 16.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Activity selection button
-            Box(
-                modifier = Modifier
-                    .padding(bottom = 16.dp)
-                    .height(60.dp)
-                    .width(200.dp)
-                    .clip(RoundedCornerShape(30.dp))
-                    .background(Color.DarkGray)
-                    .clickable(onClick = onActivityClick),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = selectedActivity,
-                        fontSize = 24.sp,
-                        color = Color.White
-                    )
-                }
-            }
-
-            // Retake and Post buttons
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Retake button
-                Box(
-                    modifier = Modifier
-                        .height(60.dp)
-                        .width(150.dp)
-                        .clip(RoundedCornerShape(30.dp))
-                        .background(Color.Gray)
-                        .clickable(onClick = onRetake),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Retake Photos",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Retake",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
-                        )
-                    }
-                }
-
-                // Post button
-                Box(
-                    modifier = Modifier
-                        .height(60.dp)
-                        .width(150.dp)
-                        .clip(RoundedCornerShape(30.dp))
-                        .background(color = MaterialTheme.colors.primary)
-                        .clickable(onClick = onPost),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = "Post Photos",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Post",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
-                        )
-                    }
-                }
-            }
-        }
-    }
-}

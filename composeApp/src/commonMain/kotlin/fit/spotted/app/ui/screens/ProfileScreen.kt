@@ -8,7 +8,10 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.*
+import androidx.compose.material.Divider
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.*
@@ -34,15 +37,123 @@ class ProfileScreen : Screen {
 
     // Mock data for activity photos with only emojis
     private val mockActivityPhotos = listOf(
-        ActivityPhoto("1", "🏃", "https://example.com/running1_before.jpg", "https://example.com/running1_after.jpg", "25:30", "2023-05-15"),
-        ActivityPhoto("2", "🚴", "https://example.com/cycling1_before.jpg", "https://example.com/cycling1_after.jpg", "45:00", "2023-05-12"),
-        ActivityPhoto("3", "🏊", "https://example.com/swimming1_before.jpg", "https://example.com/swimming1_after.jpg", "35:20", "2023-05-10"),
-        ActivityPhoto("4", "🧘", "https://example.com/yoga1_before.jpg", "https://example.com/yoga1_after.jpg", "30:00", "2023-05-08"),
-        ActivityPhoto("5", "🏃", "https://example.com/running2_before.jpg", "https://example.com/running2_after.jpg", "28:45", "2023-05-05"),
-        ActivityPhoto("6", "🚴", "https://example.com/cycling2_before.jpg", "https://example.com/cycling2_after.jpg", "01:15:30", "2023-05-03"),
-        ActivityPhoto("7", "🏃", "https://example.com/running3_before.jpg", "https://example.com/running3_after.jpg", "22:15", "2023-05-01"),
-        ActivityPhoto("8", "🚴", "https://example.com/cycling3_before.jpg", "https://example.com/cycling3_after.jpg", "50:10", "2023-04-28"),
-        ActivityPhoto("9", "🏊", "https://example.com/swimming2_before.jpg", "https://example.com/swimming2_after.jpg", "40:05", "2023-04-25")
+        ActivityPhoto(
+            id = "1", 
+            activityType = "🏃", 
+            beforeImageUrl = "https://example.com/running1_before.jpg", 
+            afterImageUrl = "https://example.com/running1_after.jpg", 
+            workoutDuration = "25:30", 
+            date = "2023-05-15",
+            likes = 15,
+            comments = listOf(
+                fit.spotted.app.ui.components.Comment("Alice", "Great job!"),
+                fit.spotted.app.ui.components.Comment("Bob", "Keep it up!")
+            )
+        ),
+        ActivityPhoto(
+            id = "2", 
+            activityType = "🚴", 
+            beforeImageUrl = "https://example.com/cycling1_before.jpg", 
+            afterImageUrl = "https://example.com/cycling1_after.jpg", 
+            workoutDuration = "45:00", 
+            date = "2023-05-12",
+            likes = 23,
+            comments = listOf(
+                fit.spotted.app.ui.components.Comment("Charlie", "Impressive ride!"),
+                fit.spotted.app.ui.components.Comment("David", "How many miles?")
+            )
+        ),
+        ActivityPhoto(
+            id = "3", 
+            activityType = "🏊", 
+            beforeImageUrl = "https://example.com/swimming1_before.jpg", 
+            afterImageUrl = "https://example.com/swimming1_after.jpg", 
+            workoutDuration = "35:20", 
+            date = "2023-05-10",
+            likes = 8,
+            comments = listOf(
+                fit.spotted.app.ui.components.Comment("Eve", "Nice form!"),
+                fit.spotted.app.ui.components.Comment("Frank", "Water looks great!")
+            )
+        ),
+        ActivityPhoto(
+            id = "4", 
+            activityType = "🧘", 
+            beforeImageUrl = "https://example.com/yoga1_before.jpg", 
+            afterImageUrl = "https://example.com/yoga1_after.jpg", 
+            workoutDuration = "30:00", 
+            date = "2023-05-08",
+            likes = 19,
+            comments = listOf(
+                fit.spotted.app.ui.components.Comment("George", "Peaceful pose!"),
+                fit.spotted.app.ui.components.Comment("Hannah", "Looks relaxing!")
+            )
+        ),
+        ActivityPhoto(
+            id = "5", 
+            activityType = "🏃", 
+            beforeImageUrl = "https://example.com/running2_before.jpg", 
+            afterImageUrl = "https://example.com/running2_after.jpg", 
+            workoutDuration = "28:45", 
+            date = "2023-05-05",
+            likes = 31,
+            comments = listOf(
+                fit.spotted.app.ui.components.Comment("Irene", "Fast pace!"),
+                fit.spotted.app.ui.components.Comment("Jack", "Great form!")
+            )
+        ),
+        ActivityPhoto(
+            id = "6", 
+            activityType = "🚴", 
+            beforeImageUrl = "https://example.com/cycling2_before.jpg", 
+            afterImageUrl = "https://example.com/cycling2_after.jpg", 
+            workoutDuration = "01:15:30", 
+            date = "2023-05-03",
+            likes = 12,
+            comments = listOf(
+                fit.spotted.app.ui.components.Comment("Kate", "Long ride!"),
+                fit.spotted.app.ui.components.Comment("Liam", "Beautiful scenery!")
+            )
+        ),
+        ActivityPhoto(
+            id = "7", 
+            activityType = "🏃", 
+            beforeImageUrl = "https://example.com/running3_before.jpg", 
+            afterImageUrl = "https://example.com/running3_after.jpg", 
+            workoutDuration = "22:15", 
+            date = "2023-05-01",
+            likes = 7,
+            comments = listOf(
+                fit.spotted.app.ui.components.Comment("Mia", "Quick run!"),
+                fit.spotted.app.ui.components.Comment("Noah", "Good pace!")
+            )
+        ),
+        ActivityPhoto(
+            id = "8", 
+            activityType = "🚴", 
+            beforeImageUrl = "https://example.com/cycling3_before.jpg", 
+            afterImageUrl = "https://example.com/cycling3_after.jpg", 
+            workoutDuration = "50:10", 
+            date = "2023-04-28",
+            likes = 16,
+            comments = listOf(
+                fit.spotted.app.ui.components.Comment("Olivia", "Great ride!"),
+                fit.spotted.app.ui.components.Comment("Peter", "How was the terrain?")
+            )
+        ),
+        ActivityPhoto(
+            id = "9", 
+            activityType = "🏊", 
+            beforeImageUrl = "https://example.com/swimming2_before.jpg", 
+            afterImageUrl = "https://example.com/swimming2_after.jpg", 
+            workoutDuration = "40:05", 
+            date = "2023-04-25",
+            likes = 21,
+            comments = listOf(
+                fit.spotted.app.ui.components.Comment("Quinn", "Nice swim!"),
+                fit.spotted.app.ui.components.Comment("Rachel", "Water looks refreshing!")
+            )
+        )
     )
 
     @Composable
@@ -105,112 +216,18 @@ class ProfileScreen : Screen {
                     ) { page ->
                         val photo = mockActivityPhotos[page]
 
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            // Before/After images with carousel-like display
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(Color.DarkGray),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                // We would implement a proper image carousel here
-                                // For now, just show placeholders for both images
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        text = if (page == selectedPhotoIndex && currentPhotoIndex == 1) 
-                                            "After: ${photo.afterImageUrl}" 
-                                        else 
-                                            "Before: ${photo.beforeImageUrl}",
-                                        color = Color.White
-                                    )
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    Text(
-                                        text = "Duration: ${photo.workoutDuration}",
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-
-                            // Overlay with user info at the bottom
-                            Column(
-                                modifier = Modifier
-                                    .align(Alignment.BottomStart)
-                                    .fillMaxWidth()
-                                    .background(Color.Black.copy(alpha = 0.5f))
-                                    .padding(16.dp)
-                            ) {
-                                // User info
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Person,
-                                        contentDescription = "Profile Picture",
-                                        modifier = Modifier.size(40.dp),
-                                        tint = Color.White
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Column {
-                                        Text(
-                                            text = mockUser.name,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 16.sp,
-                                            color = Color.White
-                                        )
-                                        Row {
-                                            Text(
-                                                text = photo.activityType,
-                                                fontSize = 14.sp,
-                                                color = Color.White.copy(alpha = 0.7f)
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                text = "• ${photo.workoutDuration}",
-                                                fontSize = 14.sp,
-                                                color = Color.White.copy(alpha = 0.7f)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Action buttons on the right side
-                            Column(
-                                modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .padding(16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                // Simple button for switching between before/after
-                                Button(
-                                    onClick = { 
-                                        if (page == selectedPhotoIndex) {
-                                            currentPhotoIndex = if (currentPhotoIndex == 0) 1
-                                            else 0
-                                        }
-                                    }
-                                ) {
-                                    Text(
-                                        text = if (page == selectedPhotoIndex && currentPhotoIndex == 0) "Show After" else "Show Before",
-                                        color = Color.White
-                                    )
-                                }
-
-                                // Close button
-                                Button(
-                                    onClick = { selectedPhoto = null }
-                                ) {
-                                    Text("Close")
-                                }
-                            }
-                        }
+                        // Use the enhanced PostDetailView component
+                        fit.spotted.app.ui.components.PostDetailView(
+                            beforeImageUrl = photo.beforeImageUrl,
+                            afterImageUrl = photo.afterImageUrl,
+                            workoutDuration = photo.workoutDuration,
+                            activityType = photo.activityType,
+                            userName = mockUser.name,
+                            showBeforeAfterToggle = true,
+                            initialShowAfterImage = page == selectedPhotoIndex && currentPhotoIndex == 1,
+                            likes = photo.likes,
+                            comments = photo.comments
+                        )
                     }
                 }
             }
@@ -335,6 +352,8 @@ class ProfileScreen : Screen {
         val beforeImageUrl: String,
         val afterImageUrl: String,
         val workoutDuration: String,
-        val date: String
+        val date: String,
+        val likes: Int = 0,
+        val comments: List<fit.spotted.app.ui.components.Comment> = emptyList()
     )
 }
