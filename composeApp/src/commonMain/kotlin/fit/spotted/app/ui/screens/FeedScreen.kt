@@ -32,7 +32,9 @@ class FeedScreen : Screen {
             id = "1",
             userName = "John Doe",
             activityType = "🏃",
-            imageUrl = "https://example.com/running.jpg",
+            beforeImageUrl = "https://example.com/running_before.jpg",
+            afterImageUrl = "https://example.com/running_after.jpg",
+            workoutDuration = "25:30",
             likes = 15,
             comments = listOf(
                 Comment("Alice", "Great job!"),
@@ -43,7 +45,9 @@ class FeedScreen : Screen {
             id = "2",
             userName = "Jane Smith",
             activityType = "🧘",
-            imageUrl = "https://example.com/yoga.jpg",
+            beforeImageUrl = "https://example.com/yoga_before.jpg",
+            afterImageUrl = "https://example.com/yoga_after.jpg",
+            workoutDuration = "45:00",
             likes = 23,
             comments = listOf(
                 Comment("Charlie", "Impressive pose!"),
@@ -54,7 +58,9 @@ class FeedScreen : Screen {
             id = "3",
             userName = "Mike Johnson",
             activityType = "🚴",
-            imageUrl = "https://example.com/cycling.jpg",
+            beforeImageUrl = "https://example.com/cycling_before.jpg",
+            afterImageUrl = "https://example.com/cycling_after.jpg",
+            workoutDuration = "01:15:45",
             likes = 8,
             comments = listOf(
                 Comment("Eve", "Nice ride!"),
@@ -65,7 +71,9 @@ class FeedScreen : Screen {
             id = "4",
             userName = "Sarah Williams",
             activityType = "🏊",
-            imageUrl = "https://example.com/swimming.jpg",
+            beforeImageUrl = "https://example.com/swimming_before.jpg",
+            afterImageUrl = "https://example.com/swimming_after.jpg",
+            workoutDuration = "35:20",
             likes = 19,
             comments = listOf(
                 Comment("George", "Nice form!"),
@@ -76,7 +84,9 @@ class FeedScreen : Screen {
             id = "5",
             userName = "David Brown",
             activityType = "🥾",
-            imageUrl = "https://example.com/hiking.jpg",
+            beforeImageUrl = "https://example.com/hiking_before.jpg",
+            afterImageUrl = "https://example.com/hiking_after.jpg",
+            workoutDuration = "02:30:15",
             likes = 31,
             comments = listOf(
                 Comment("Irene", "Beautiful view!"),
@@ -107,17 +117,34 @@ class FeedScreen : Screen {
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Image placeholder (full screen)
+            // Before/After images with carousel-like display
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.DarkGray),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "Image: ${post.imageUrl}",
-                    color = Color.White
-                )
+                // We would implement a proper image carousel here
+                // For now, just show placeholders for both images
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Before: ${post.beforeImageUrl}",
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "After: ${post.afterImageUrl}",
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Duration: ${post.workoutDuration}",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
             // Overlay with user info at the bottom
@@ -146,11 +173,19 @@ class FeedScreen : Screen {
                             fontSize = 16.sp,
                             color = Color.White
                         )
-                        Text(
-                            text = post.activityType,
-                            fontSize = 14.sp,
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
+                        Row {
+                            Text(
+                                text = post.activityType,
+                                fontSize = 14.sp,
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "• ${post.workoutDuration}",
+                                fontSize = 14.sp,
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                        }
                     }
                 }
             }
@@ -251,7 +286,9 @@ class FeedScreen : Screen {
         val id: String,
         val userName: String,
         val activityType: String,
-        val imageUrl: String,
+        val beforeImageUrl: String,
+        val afterImageUrl: String,
+        val workoutDuration: String,
         val likes: Int,
         val comments: List<Comment>
     )
