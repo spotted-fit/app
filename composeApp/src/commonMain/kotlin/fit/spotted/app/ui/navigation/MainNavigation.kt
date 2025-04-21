@@ -13,13 +13,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.unit.dp
-import fit.spotted.app.ui.screens.CameraScreen
-import fit.spotted.app.ui.screens.FeedScreen
-import fit.spotted.app.ui.screens.FriendsScreen
-import fit.spotted.app.ui.screens.LoginScreen
-import fit.spotted.app.ui.screens.ProfileScreen
+import fit.spotted.app.ui.screens.*
 import kotlinx.coroutines.launch
 
 /**
@@ -153,7 +147,7 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
             // Render the selected screen's content based on the page
             when (page) {
                 0 -> FeedScreen().Content()
-                1 -> CameraScreen().Content()
+                1 -> CameraScreen(isVisible = currentTab == 1).Content()
                 2 -> FriendsScreen().Content()
                 3 -> ProfileScreen().Content()
                 else -> FeedScreen().Content() // Default to Feed screen

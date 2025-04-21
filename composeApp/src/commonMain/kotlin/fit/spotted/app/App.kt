@@ -1,9 +1,8 @@
 package fit.spotted.app
 
-import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import fit.spotted.app.ui.theme.AppTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 @Preview
