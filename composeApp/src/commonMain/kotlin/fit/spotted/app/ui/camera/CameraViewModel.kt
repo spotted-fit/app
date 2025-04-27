@@ -3,6 +3,7 @@ package fit.spotted.app.ui.camera
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
 
 /**
  * ViewModel for the camera screen that manages all state.
@@ -32,11 +33,11 @@ class CameraViewModel {
     var selectedActivity by mutableStateOf(activityTypes.first())
     var photoTaken by mutableStateOf(false)
     var showEmojiPicker by mutableStateOf(false)
-    var photoData by mutableStateOf<ByteArray?>(null)
+    var photoData by mutableStateOf<ImageBitmap?>(null)
 
     // Before/after workout photos
-    var beforeWorkoutPhoto by mutableStateOf<ByteArray?>(null)
-    var afterWorkoutPhoto by mutableStateOf<ByteArray?>(null)
+    var beforeWorkoutPhoto by mutableStateOf<ImageBitmap?>(null)
+    var afterWorkoutPhoto by mutableStateOf<ImageBitmap?>(null)
     var isAfterWorkoutMode by mutableStateOf(false)
     var showPreview by mutableStateOf(false)
 
@@ -67,7 +68,7 @@ class CameraViewModel {
         if (photoData != null) {
             if (!isAfterWorkoutMode) {
                 // First photo (before workout)
-                println("Before workout photo captured! Size: ${photoData?.size ?: 0} bytes")
+                println("Before workout photo captured!")
                 beforeWorkoutPhoto = photoData
                 photoTaken = false
                 photoData = null

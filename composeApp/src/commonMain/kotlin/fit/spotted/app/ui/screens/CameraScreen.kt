@@ -34,7 +34,7 @@ import fit.spotted.app.ui.camera.EmojiPicker
 import fit.spotted.app.ui.camera.PostAnimation
 import fit.spotted.app.ui.camera.TimerDisplay
 import fit.spotted.app.ui.components.PostDetailView
-import fit.spotted.app.utils.getImageConverter
+import kotlinx.coroutines.delay
 
 /**
  * Screen that allows users to take photos of their fitness activities.
@@ -54,18 +54,16 @@ class CameraScreen(
             onAfterWorkoutModeChanged?.invoke(viewModel.isAfterWorkoutMode)
         }
 
-        // Get the camera and image converter
+        // Get the camera
         val camera = remember(isVisible) { 
             if (isVisible) getCamera() else null 
         }
-
-        val imageConverter = remember { getImageConverter() }
 
         // Update timer every second when running
         LaunchedEffect(viewModel.isTimerRunning) {
             if (viewModel.isTimerRunning) {
                 while (true) {
-                    kotlinx.coroutines.delay(1000)
+                    delay(1000)
                     viewModel.seconds++
                 }
             }
@@ -75,13 +73,13 @@ class CameraScreen(
         LaunchedEffect(viewModel.showPostAnimation) {
             if (viewModel.showPostAnimation) {
                 // Wait for animation to complete (1.5 seconds)
-                kotlinx.coroutines.delay(1500)
+                delay(1500)
 
                 // Mark animation as finished
                 viewModel.completePostAnimation()
 
                 // Wait a bit more for exit animation
-                kotlinx.coroutines.delay(500)
+                delay(500)
 
                 // Reset all states after posting
                 viewModel.resetToStart()
@@ -123,9 +121,8 @@ class CameraScreen(
                         exit = fadeOut() + slideOutVertically(targetOffsetY = { -it })
                     ) {
                         PostDetailView(
-                            beforeWorkoutPhoto = viewModel.beforeWorkoutPhoto!!,
-                            afterWorkoutPhoto = viewModel.afterWorkoutPhoto!!,
-                            imageConverter = imageConverter,
+                            beforeWorkoutPhoto = viewModel.beforeWorkoutPhoto,
+                            afterWorkoutPhoto = viewModel.afterWorkoutPhoto,
                             workoutDuration = viewModel.formatTimer(),
                             activityType = viewModel.selectedActivity,
                             userName = "You", // Using "You" as the default username for preview
@@ -158,12 +155,11 @@ class CameraScreen(
                     // Show camera preview or captured photo
                     CameraPreview(
                         camera = camera,
-                        imageConverter = imageConverter,
                         photoData = viewModel.photoData,
                         isVisible = isVisible,
                         photoTaken = viewModel.photoTaken,
-                        onPhotoCaptured = { bytes ->
-                            viewModel.photoData = bytes
+                        onPhotoCaptured = { bitmap ->
+                            viewModel.photoData = bitmap
                             viewModel.photoTaken = true
                         }
                     )

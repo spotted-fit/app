@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.dp
 import fit.spotted.app.camera.Camera
 
@@ -31,7 +32,7 @@ import fit.spotted.app.camera.Camera
 fun CameraControls(
     camera: Camera?,
     photoTaken: Boolean,
-    photoData: ByteArray?,
+    photoData: ImageBitmap?,
     isAfterWorkoutMode: Boolean,
     onRetake: () -> Unit,
     onAccept: () -> Unit,
@@ -148,4 +149,3 @@ fun CameraControls(
         }
     }
 }
-

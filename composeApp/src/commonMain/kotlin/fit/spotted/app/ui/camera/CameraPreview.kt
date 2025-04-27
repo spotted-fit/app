@@ -1,5 +1,6 @@
 package fit.spotted.app.ui.camera
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,10 +11,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fit.spotted.app.camera.Camera
-import fit.spotted.app.utils.ImageConverter
 
 /**
  * A composable that displays either the camera preview or a captured photo.
@@ -21,11 +23,10 @@ import fit.spotted.app.utils.ImageConverter
 @Composable
 fun CameraPreview(
     camera: Camera?,
-    imageConverter: ImageConverter,
-    photoData: ByteArray?,
+    photoData: ImageBitmap?,
     isVisible: Boolean,
     photoTaken: Boolean,
-    onPhotoCaptured: (ByteArray) -> Unit,
+    onPhotoCaptured: (ImageBitmap) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -42,20 +43,25 @@ fun CameraPreview(
                     .background(Color.Black),
                 contentAlignment = Alignment.Center
             ) {
-                // Display the actual captured photo using the platform-specific image converter
-                imageConverter.ByteArrayImage(
-                    bytes = photoData,
-                    modifier = Modifier.fillMaxSize(),
-                    contentDescription = "Captured photo"
+                // Display the actual captured photo directly using Image composable
+                // Check if the photo was taken with the front camera and mirror it if needed
+                Image(
+                    bitmap = photoData,
+                    contentDescription = "Captured photo",
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentScale = ContentScale.Fit
                 )
             }
         } else if (camera != null && isVisible && !photoTaken) {
             // Camera preview
-            camera.CameraPreview(
+            camera.Preview(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(0.dp)),
-                onPhotoCaptured = onPhotoCaptured
+                onPhotoCaptured = { bitmap ->
+                    onPhotoCaptured(bitmap)
+                }
             )
         } else {
             // Placeholder when camera is not available or screen is not visible

@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,12 +22,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import fit.spotted.app.utils.ImageConverter
 
 /**
  * A reusable component that displays a post or photo detail view.
@@ -57,10 +59,8 @@ fun PostDetailView(
     // Optional close action
     onClose: (() -> Unit)? = null,
 
-    // Optional callback for activity type click
     onActivityTypeClick: (() -> Unit)? = null
 ) {
-    // Use the common implementation with URL-based image content
     PostDetailViewImpl(
         workoutDuration = workoutDuration,
         activityType = activityType,
@@ -78,13 +78,8 @@ fun PostDetailView(
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer {
-                    // Apply rotation and scale animations for a more dynamic feel
                     rotationY = imageTransition.value * 180f
                     alpha = if (imageTransition.value > 0.5f) imageTransition.value else 1 - imageTransition.value
-                    // Apply horizontal flip/mirror to the "after" image
-                    if (showAfterImage) {
-                        scaleX = -1f
-                    }
                 },
             contentAlignment = Alignment.Center
         ) {
@@ -325,7 +320,8 @@ private fun PostDetailViewImpl(
         ) {
             Column(
                 modifier = Modifier
-                    .padding(end = 16.dp, bottom = 24.dp),
+                    .padding(end = 16.dp, bottom = 24.dp)
+                    ,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
@@ -505,15 +501,14 @@ private fun PostDetailViewImpl(
 }
 
 /**
- * An overload of PostDetailView that accepts ByteArray images instead of URLs.
+ * An overload of PostDetailView that accepts ImageBitmap images instead of URLs.
  * This is used for previewing images before posting.
  */
 @Composable
 fun PostDetailView(
-    // ByteArray images
-    beforeWorkoutPhoto: ByteArray,
-    afterWorkoutPhoto: ByteArray,
-    imageConverter: ImageConverter,
+    // ImageBitmap images
+    beforeWorkoutPhoto: ImageBitmap?,
+    afterWorkoutPhoto: ImageBitmap?,
 
     // Common parameters
     workoutDuration: String,
@@ -536,7 +531,7 @@ fun PostDetailView(
     // Optional callback for activity type click
     onActivityTypeClick: (() -> Unit)? = null
 ) {
-    // Use the common implementation with ByteArray image content
+    // Use the common implementation with ImageBitmap image content
     PostDetailViewImpl(
         workoutDuration = workoutDuration,
         activityType = activityType,
@@ -551,12 +546,11 @@ fun PostDetailView(
         onClose = onClose,
         onActivityTypeClick = onActivityTypeClick
     ) { showAfterImage, imageTransition ->
-        // Display the ByteArray images using ImageConverter
+        // Display the ImageBitmap images directly
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer {
-                    // Apply rotation and scale animations for a more dynamic feel
                     rotationY = imageTransition.value * 180f
                     alpha = if (imageTransition.value > 0.5f) imageTransition.value else 1 - imageTransition.value
                 },
@@ -565,19 +559,20 @@ fun PostDetailView(
             // Display the current image based on showAfterImage state
             val currentPhoto = if (showAfterImage) afterWorkoutPhoto else beforeWorkoutPhoto
 
-            // Use ImageConverter to display the ByteArray image with mirroring for the "after" image
-            imageConverter.ByteArrayImage(
-                bytes = currentPhoto,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        // Apply horizontal flip/mirror to the "after" image
-                        if (showAfterImage) {
-                            scaleX = -1f
-                        }
-                    },
-                contentDescription = if (showAfterImage) "After workout photo" else "Before workout photo"
-            )
+            // Use standard Image composable to display the ImageBitmap
+            currentPhoto?.let { bitmap ->
+                Image(
+                    bitmap = bitmap,
+                    contentDescription = if (showAfterImage) "After workout photo" else "Before workout photo",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer(
+                            scaleX = if (showAfterImage) -1f else 1f
+                        )
+                    ,
+                    contentScale = ContentScale.Fit
+                )
+            }
         }
     }
 }
