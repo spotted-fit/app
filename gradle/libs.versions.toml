@@ -9,6 +9,7 @@ compose-multiplatform = "1.7.3"
 kotlin = "2.1.20"
 voyagerVersion = "1.1.0-beta02"
 camerax = "1.4.2"
+ktor = "3.1.1"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
@@ -22,6 +23,7 @@ androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.r
 androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "camerax" }
 androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "camerax" }
 androidx-camera-extensions = { module = "androidx.camera:camera-extensions", version.ref = "camerax" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
