@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -18,13 +19,13 @@ import androidx.compose.ui.unit.sp
  * Web implementation of the Camera interface that reports camera as unavailable.
  */
 class WasmJsCamera : Camera {
-    private var onPhotoCapturedCallback: ((ByteArray) -> Unit)? = null
+    private var onPhotoCapturedCallback: ((ImageBitmap) -> Unit)? = null
     private var currentCameraFacing = CameraFacing.BACK
 
     @Composable
-    override fun CameraPreview(
+    override fun Preview(
         modifier: Modifier,
-        onPhotoCaptured: (ByteArray) -> Unit
+        onPhotoCaptured: (ImageBitmap) -> Unit
     ) {
         // Store the callback
         onPhotoCapturedCallback = onPhotoCaptured

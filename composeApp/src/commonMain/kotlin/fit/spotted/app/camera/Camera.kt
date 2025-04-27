@@ -2,6 +2,7 @@ package fit.spotted.app.camera
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 
 /**
  * Enum representing camera lens facing direction.
@@ -19,12 +20,12 @@ interface Camera {
      * Provides a composable that displays the camera preview.
      *
      * @param modifier Modifier to be applied to the camera preview
-     * @param onPhotoCaptured Callback that is invoked when a photo is captured, with the photo data as a ByteArray
+     * @param onPhotoCaptured Callback that is invoked when a photo is captured
      */
     @Composable
-    fun CameraPreview(
+    fun Preview(
         modifier: Modifier,
-        onPhotoCaptured: (ByteArray) -> Unit
+        onPhotoCaptured: (ImageBitmap) -> Unit
     )
 
     /**
