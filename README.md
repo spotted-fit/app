@@ -48,28 +48,57 @@ A **social**, **motivating**, and **visually engaging** platform for fitness ent
 
 ---
 
-## 🐳 Docker Compose for WASM
+## 🌐 API Configuration
+
+The application supports two environment modes for API configuration:
+
+### Debug/Development Mode
+In debug/development mode, the application connects to a local backend server:
+- Android: `http://10.0.2.2:8080` (special IP that maps to host machine's localhost for Android emulators)
+- iOS: `http://localhost:8080`
+- WASM/JS: `http://localhost:8080`
+
+### Production Mode
+In production mode, the application gets the backend URL from environment variables:
+- Environment variable name: `BACKEND_URL`
+- Default fallback URL if not set: `https://api.spotted.fit`
+
+### Setting the Environment Mode
+You can set the environment mode during application initialization:
+
+```kotlin
+// For Android
+EnvironmentConfig.setEnvironment(Environment.PROD) // or Environment.DEBUG
+
+// For iOS
+EnvironmentConfig.setEnvironment(Environment.PROD) // or Environment.DEBUG
+
+// For WASM/JS
+EnvironmentConfig.setEnvironment(Environment.PROD) // or Environment.DEBUG
+```
+
+## 🐳 Docker for WASM
 
 ### Prerequisites
 - Docker
-- Docker Compose
 
 ### Usage
 To build and serve the WASM application, run:
 
 ```bash
-docker-compose up
+docker build -t spotted-app .
+docker run -p 80:80 spotted-app
 ```
 
 This will:
-1. Build the WASM application using Gradle
+1. Build the WASM application using Gradle inside a Docker container
 2. Serve the WASM application on http://localhost:8080
 
 ### How it works
-The Docker Compose setup consists of two services:
+The Dockerfile uses a multi-stage build approach:
 
-1. **build**: Runs the Gradle task `wasmJsBrowserDistribution` to generate the WASM artifacts
-2. **web**: Serves the WASM artifacts using Nginx
+1. **Build stage**: Uses Gradle to generate the WASM artifacts
+2. **Serve stage**: Uses Nginx to serve the generated WASM artifacts
 
 The WASM artifacts are generated in `composeApp/build/dist/wasmJs/productionExecutable` and served from there.
 
