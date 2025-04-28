@@ -2,7 +2,6 @@ package fit.spotted.app.api.models
 
 import kotlinx.serialization.Serializable
 
-// Request models
 @Serializable
 data class RegisterRequest(
     val email: String,

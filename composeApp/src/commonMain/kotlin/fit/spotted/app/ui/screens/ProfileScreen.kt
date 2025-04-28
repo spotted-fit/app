@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
@@ -21,6 +22,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fit.spotted.app.api.ApiProvider
+import fit.spotted.app.api.models.PostData
+import fit.spotted.app.api.models.UserProfileData
+import kotlinx.coroutines.launch
 import org.kodein.emoji.Emoji
 import org.kodein.emoji.activities.sport.BoxingGlove
 import org.kodein.emoji.compose.WithPlatformEmoji
@@ -33,9 +38,17 @@ import org.kodein.emoji.travel_places.transport_ground.Bicycle
  * Screen that displays the user's profile information and activity photos in a grid layout.
  * Simplified to match Instagram style.
  */
-class ProfileScreen : Screen {
+class ProfileScreen(private val username: String? = null) : Screen {
+    // API client
+    private val apiClient = ApiProvider.getApiClient()
 
-    // Mock data for user profile
+    // Helper function to format timestamp to date string
+    private fun formatDate(timestamp: Long): String {
+        // Simple formatting for now, in a real app we would use a proper date formatter
+        return "Posted: ${timestamp / (1000 * 60 * 60 * 24)} days ago"
+    }
+
+    // Mock user data (used as fallback)
     private val mockUser = User(
         id = "1",
         name = "John Doe",
@@ -139,17 +152,99 @@ class ProfileScreen : Screen {
 
     @Composable
     override fun Content() {
+        // Capture the username parameter in a local variable
+        val localUsername = username
+
+        // State for user profile, loading, and error handling
+        var userProfile by remember { mutableStateOf<UserProfileData?>(null) }
+        var isLoading by remember { mutableStateOf(true) }
+        var errorMessage by remember { mutableStateOf<String?>(null) }
+
         // State to track the selected photo for detail view
         var selectedPhoto by remember { mutableStateOf<ActivityPhoto?>(null) }
         var currentPhotoIndex by remember { mutableStateOf(0) } // 0 for before, 1 for after
         var selectedPhotoIndex by remember { mutableStateOf(0) } // Index of the selected photo in the list
 
+        // Coroutine scope for API calls
+        val coroutineScope = rememberCoroutineScope()
+
+        // Fetch user profile when the screen is first displayed
+        LaunchedEffect(Unit) {
+            coroutineScope.launch {
+                try {
+                    // If username is provided, search for the user ID first
+                    val userId = if (username != null) {
+                        // Search for user by username
+                        val searchResponse = apiClient.searchUsers(username)
+                        if (searchResponse.result == "ok" && searchResponse.response?.isNotEmpty() == true) {
+                            // Get the first matching user's ID
+                            searchResponse.response.first().id
+                        } else {
+                            // If search fails or returns no results, show error
+                            errorMessage = "User not found: $username"
+                            isLoading = false
+                            return@launch
+                        }
+                    } else {
+                        // Default to user ID 1 if no username is provided
+                        1
+                    }
+
+                    // Fetch user profile with the obtained ID
+                    val response = apiClient.getUserProfile(userId)
+                    if (response.result == "ok") {
+                        userProfile = response.response
+                    } else {
+                        errorMessage = response.message ?: "Failed to load profile"
+                    }
+                    isLoading = false
+                } catch (e: Exception) {
+                    errorMessage = e.message ?: "An error occurred"
+                    isLoading = false
+                }
+            }
+        }
+
+        // Show loading indicator
+        if (isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+            return
+        }
+
+        // Show error message
+        errorMessage?.let {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = it,
+                    color = MaterialTheme.colors.error,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+            return
+        }
+
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                // Profile header
-                ProfileHeader(mockUser)
+                // Profile header with user info from API or fallback to mock
+                userProfile?.let {
+                    // Convert API user profile to UI user model
+                    val user = User(
+                        id = it.id.toString(),
+                        name = localUsername ?: "Unknown User",
+                        bio = "Friends: ${it.friendsCount}" // Use friendsCount as bio for now
+                    )
+                    ProfileHeader(user)
+                } ?: ProfileHeader(mockUser) // Fallback to mock data if API call fails
 
                 Divider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -161,7 +256,41 @@ class ProfileScreen : Screen {
                     modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
                 )
 
-                PhotosGrid(
+                // Use posts from API if available, otherwise use mock data
+                userProfile?.let { profile ->
+                    if (profile.posts.isNotEmpty()) {
+                        // Convert API posts to UI activity photos
+                        val activityPhotos = profile.posts.map { post ->
+                            ActivityPhoto(
+                                id = post.id.toString(),
+                                activityType = Emoji.Running, // Default emoji since API doesn't provide activity type
+                                beforeImageUrl = post.photo1,
+                                afterImageUrl = post.photo2 ?: post.photo1, // Use photo1 as fallback if photo2 is null
+                                workoutDuration = "N/A", // API doesn't provide workout duration
+                                date = formatDate(post.createdAt),
+                                likes = post.likes,
+                                comments = emptyList() // We'll fetch comments separately if needed
+                            )
+                        }
+
+                        PhotosGrid(
+                            photos = activityPhotos,
+                            onPhotoClick = { photo ->
+                                selectedPhoto = photo
+                                currentPhotoIndex = 0 // Start with "before" photo
+                                selectedPhotoIndex = activityPhotos.indexOf(photo)
+                            }
+                        )
+                    } else {
+                        // Show message if no posts
+                        Box(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("No photos yet")
+                        }
+                    }
+                } ?: PhotosGrid(
                     photos = mockActivityPhotos,
                     onPhotoClick = { photo ->
                         selectedPhoto = photo

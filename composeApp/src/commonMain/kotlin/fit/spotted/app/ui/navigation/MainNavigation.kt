@@ -24,10 +24,13 @@ import fit.spotted.app.ui.screens.*
 fun MainNavigation() {
     // Check if user is logged in
     var isLoggedIn by remember { mutableStateOf(false) }
+    // Store the username when logged in
+    var username by remember { mutableStateOf("") }
 
     if (isLoggedIn) {
         // Show main screen with bottom navigation when logged in
         MainScreenWithBottomNav(
+            username = username,
             onLogout = { isLoggedIn = false }
         )
     } else {
@@ -35,7 +38,10 @@ fun MainNavigation() {
         Box(modifier = Modifier.fillMaxSize()) {
             // Pass the login callback to the LoginScreen
             LoginScreen(
-                onLogin = { isLoggedIn = true }
+                onLogin = { loggedInUsername -> 
+                    username = loggedInUsername
+                    isLoggedIn = true
+                }
             ).Content()
         }
     }
@@ -44,10 +50,11 @@ fun MainNavigation() {
 /**
  * Main screen with bottom navigation
  * 
+ * @param username The username of the logged-in user
  * @param onLogout Callback to be invoked when the user logs out
  */
 @Composable
-fun MainScreenWithBottomNav(onLogout: () -> Unit) {
+fun MainScreenWithBottomNav(username: String, onLogout: () -> Unit) {
     // Use remember to keep the state across recompositions
     var currentTab by remember { mutableStateOf(0) }
 
@@ -240,7 +247,7 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                     }
                 ).Content()
                 2 -> FriendsScreen().Content()
-                3 -> ProfileScreen().Content()
+                3 -> ProfileScreen(username).Content()
                 else -> FeedScreen().Content() // Default to Feed screen
             }
         }

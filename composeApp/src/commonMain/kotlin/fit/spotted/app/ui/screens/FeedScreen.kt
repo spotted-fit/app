@@ -2,11 +2,20 @@ package fit.spotted.app.ui.screens
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.runtime.Composable
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import fit.spotted.app.api.ApiProvider
+import fit.spotted.app.api.models.PostData
 import fit.spotted.app.ui.components.PostDetailView
+import kotlinx.coroutines.launch
 import org.kodein.emoji.Emoji
 import org.kodein.emoji.people_body.person_activity.Running
 import org.kodein.emoji.people_body.person_sport.Skier
@@ -17,8 +26,10 @@ import org.kodein.emoji.travel_places.transport_ground.Bicycle
  * Screen that displays the feed of photos from friends in a full-screen TikTok-like style.
  */
 class FeedScreen : Screen {
+    // API client
+    private val apiClient = ApiProvider.getApiClient()
 
-    // Mock data for the feed with emoji-only activity types
+    // Mock data for the feed with emoji-only activity types (used as fallback)
     private val mockPosts = listOf(
         Post(
             id = "1",
@@ -89,6 +100,61 @@ class FeedScreen : Screen {
 
     @Composable
     override fun Content() {
+        // State for posts, loading, and error handling
+        var posts by remember { mutableStateOf<List<PostData>?>(null) }
+        var isLoading by remember { mutableStateOf(true) }
+        var errorMessage by remember { mutableStateOf<String?>(null) }
+
+        // Coroutine scope for API calls
+        val coroutineScope = rememberCoroutineScope()
+
+        // Fetch posts when the screen is first displayed
+        LaunchedEffect(Unit) {
+            coroutineScope.launch {
+                try {
+                    // In a real app, we would fetch posts from the API
+                    // For now, we'll use mock data
+                    // TODO: Implement API call to fetch posts
+                    // Example: val response = apiClient.getPosts()
+
+                    // Simulate API delay
+                    kotlinx.coroutines.delay(1000)
+
+                    // Use mock data for now
+                    isLoading = false
+                } catch (e: Exception) {
+                    errorMessage = e.message ?: "An error occurred"
+                    isLoading = false
+                }
+            }
+        }
+
+        // Show loading indicator
+        if (isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+            return
+        }
+
+        // Show error message
+        errorMessage?.let {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = it,
+                    color = MaterialTheme.colors.error,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+            return
+        }
+
         // Use VerticalPager for TikTok-like swiping
         val pagerState = rememberPagerState(pageCount = { mockPosts.size })
 
