@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import org.kodein.emoji.Emoji
+import org.kodein.emoji.compose.WithPlatformEmoji
 
 /**
  * A modern iOS-style emoji picker for selecting activity types.
@@ -39,9 +41,9 @@ import androidx.compose.ui.window.PopupProperties
  */
 @Composable
 fun EmojiPicker(
-    activityTypes: List<String>,
-    selectedActivity: String,
-    onActivitySelected: (String) -> Unit,
+    activityTypes: List<Emoji>,
+    selectedActivity: Emoji,
+    onActivitySelected: (Emoji) -> Unit,
     onDismiss: () -> Unit
 ) {
     // Animation for the popup appearance
@@ -156,15 +158,20 @@ fun EmojiPicker(
                                 },
                             contentAlignment = Alignment.Center
                         ) {
-                            // iOS-style emoji with shadow effect
-                            Text(
-                                text = emoji,
-                                fontSize = 30.sp,
-                                modifier = Modifier
-                                    .graphicsLayer {
-                                        shadowElevation = 4f
-                                    }
+                            WithPlatformEmoji(
+                                emoji.toString()
                             )
+                            { text, inlineContent ->
+                                Text(
+                                    text = text,
+                                    inlineContent = inlineContent,
+                                    fontSize = 30.sp,
+                                    modifier = Modifier
+                                        .graphicsLayer {
+                                            shadowElevation = 4f
+                                        }
+                                )
+                            }
                         }
                     }
                 }

@@ -4,6 +4,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
+import org.kodein.emoji.Emoji
+import org.kodein.emoji.activities.sport.Basketball
+import org.kodein.emoji.activities.sport.BoxingGlove
+import org.kodein.emoji.people_body.person_activity.Running
+import org.kodein.emoji.people_body.person_sport.Skier
+import org.kodein.emoji.people_body.person_sport.Swimming
+import org.kodein.emoji.travel_places.transport_ground.Bicycle
 
 /**
  * ViewModel for the camera screen that manages all state.
@@ -11,22 +18,12 @@ import androidx.compose.ui.graphics.ImageBitmap
 class CameraViewModel {
     // Activity types - iOS-style emojis with more variety
     val activityTypes = listOf(
-        "🏃‍♂️", // running
-        "🚶‍♂️", // walking
-        "🚴‍♂️", // cycling
-        "🏊‍♂️", // swimming
-        "🧘‍♂️", // yoga
-        "🏋️‍♂️", // weight lifting
-        "⛹️‍♂️", // basketball
-        "🤸‍♂️", // gymnastics
-        "🧗‍♂️", // climbing
-        "🤾‍♂️", // handball
-        "🏄‍♂️", // surfing
-        "🚣‍♂️", // rowing
-        "⛷️", // skiing
-        "🏂", // snowboarding
-        "🏌️‍♂️", // golf
-        "🤼‍♂️" // wrestling
+        Emoji.Running,
+        Emoji.Bicycle,
+        Emoji.Swimming,
+        Emoji.Skier,
+        Emoji.BoxingGlove,
+        Emoji.Basketball
     )
 
     // Camera state

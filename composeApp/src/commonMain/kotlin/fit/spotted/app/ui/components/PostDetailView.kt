@@ -29,6 +29,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.kodein.emoji.Emoji
+import org.kodein.emoji.compose.WithPlatformEmoji
 
 /**
  * A reusable component that displays a post or photo detail view.
@@ -42,7 +44,7 @@ fun PostDetailView(
 
     // Common parameters
     workoutDuration: String,
-    activityType: String,
+    activityType: Emoji,
     userName: String,
 
     // Optional parameters with default values
@@ -93,7 +95,10 @@ fun PostDetailView(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.DarkGray),
+                    .background(Color.DarkGray)
+                    .graphicsLayer(
+                        scaleX = if (showAfterImage) -1f else 1f
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -182,7 +187,7 @@ data class Comment(
 private fun PostDetailViewImpl(
     // Common parameters
     workoutDuration: String,
-    activityType: String,
+    activityType: Emoji,
     userName: String,
 
     // Optional parameters with default values
@@ -224,7 +229,6 @@ private fun PostDetailViewImpl(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        // Before/After images with carousel-like display and modern styling
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -286,11 +290,16 @@ private fun PostDetailViewImpl(
                                     .padding(vertical = 2.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = activityType,
-                                    fontSize = 24.sp,  // Larger emoji size
-                                    color = Color.White
-                                )
+                                WithPlatformEmoji(
+                                    activityType.toString()
+                                ){ emojiString, inlineContent ->
+                                    Text(
+                                        text = emojiString,
+                                        inlineContent = inlineContent,
+                                        fontSize = 24.sp,
+                                        color = Color.White
+                                    )
+                                }
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             // Small dot separator with modern styling
@@ -512,7 +521,7 @@ fun PostDetailView(
 
     // Common parameters
     workoutDuration: String,
-    activityType: String,
+    activityType: Emoji,
     userName: String,
 
     // Optional parameters with default values

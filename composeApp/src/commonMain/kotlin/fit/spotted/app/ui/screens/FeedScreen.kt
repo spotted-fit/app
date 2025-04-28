@@ -7,6 +7,11 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import fit.spotted.app.ui.components.PostDetailView
+import org.kodein.emoji.Emoji
+import org.kodein.emoji.people_body.person_activity.Running
+import org.kodein.emoji.people_body.person_sport.Skier
+import org.kodein.emoji.people_body.person_sport.Swimming
+import org.kodein.emoji.travel_places.transport_ground.Bicycle
 
 /**
  * Screen that displays the feed of photos from friends in a full-screen TikTok-like style.
@@ -18,7 +23,7 @@ class FeedScreen : Screen {
         Post(
             id = "1",
             userName = "John Doe",
-            activityType = "🏃",
+            activityType = Emoji.Running,
             beforeImageUrl = "https://example.com/running_before.jpg",
             afterImageUrl = "https://example.com/running_after.jpg",
             workoutDuration = "25:30",
@@ -31,7 +36,7 @@ class FeedScreen : Screen {
         Post(
             id = "2",
             userName = "Jane Smith",
-            activityType = "🧘",
+            activityType = Emoji.Swimming,
             beforeImageUrl = "https://example.com/yoga_before.jpg",
             afterImageUrl = "https://example.com/yoga_after.jpg",
             workoutDuration = "45:00",
@@ -44,7 +49,7 @@ class FeedScreen : Screen {
         Post(
             id = "3",
             userName = "Mike Johnson",
-            activityType = "🚴",
+            activityType = Emoji.Bicycle,
             beforeImageUrl = "https://example.com/cycling_before.jpg",
             afterImageUrl = "https://example.com/cycling_after.jpg",
             workoutDuration = "01:15:45",
@@ -57,7 +62,7 @@ class FeedScreen : Screen {
         Post(
             id = "4",
             userName = "Sarah Williams",
-            activityType = "🏊",
+            activityType = Emoji.Swimming,
             beforeImageUrl = "https://example.com/swimming_before.jpg",
             afterImageUrl = "https://example.com/swimming_after.jpg",
             workoutDuration = "35:20",
@@ -70,7 +75,7 @@ class FeedScreen : Screen {
         Post(
             id = "5",
             userName = "David Brown",
-            activityType = "🥾",
+            activityType = Emoji.Skier,
             beforeImageUrl = "https://example.com/hiking_before.jpg",
             afterImageUrl = "https://example.com/hiking_after.jpg",
             workoutDuration = "02:30:15",
@@ -98,7 +103,6 @@ class FeedScreen : Screen {
     @Composable
     private fun FullScreenPost(post: Post) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // Use the enhanced PostDetailView component
             PostDetailView(
                 beforeImageUrl = post.beforeImageUrl,
                 afterImageUrl = post.afterImageUrl,
@@ -116,7 +120,7 @@ class FeedScreen : Screen {
     data class Post(
         val id: String,
         val userName: String,
-        val activityType: String,
+        val activityType: Emoji,
         val beforeImageUrl: String,
         val afterImageUrl: String,
         val workoutDuration: String,

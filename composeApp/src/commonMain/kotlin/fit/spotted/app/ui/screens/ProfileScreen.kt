@@ -21,6 +21,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.kodein.emoji.Emoji
+import org.kodein.emoji.activities.sport.BoxingGlove
+import org.kodein.emoji.compose.WithPlatformEmoji
+import org.kodein.emoji.people_body.person_activity.Running
+import org.kodein.emoji.people_body.person_sport.Skier
+import org.kodein.emoji.people_body.person_sport.Swimming
+import org.kodein.emoji.travel_places.transport_ground.Bicycle
 
 /**
  * Screen that displays the user's profile information and activity photos in a grid layout.
@@ -39,7 +46,7 @@ class ProfileScreen : Screen {
     private val mockActivityPhotos = listOf(
         ActivityPhoto(
             id = "1", 
-            activityType = "🏃", 
+            activityType = Emoji.Running,
             beforeImageUrl = "https://example.com/running1_before.jpg", 
             afterImageUrl = "https://example.com/running1_after.jpg", 
             workoutDuration = "25:30", 
@@ -51,21 +58,8 @@ class ProfileScreen : Screen {
             )
         ),
         ActivityPhoto(
-            id = "2", 
-            activityType = "🚴", 
-            beforeImageUrl = "https://example.com/cycling1_before.jpg", 
-            afterImageUrl = "https://example.com/cycling1_after.jpg", 
-            workoutDuration = "45:00", 
-            date = "2023-05-12",
-            likes = 23,
-            comments = listOf(
-                fit.spotted.app.ui.components.Comment("Charlie", "Impressive ride!"),
-                fit.spotted.app.ui.components.Comment("David", "How many miles?")
-            )
-        ),
-        ActivityPhoto(
             id = "3", 
-            activityType = "🏊", 
+            activityType = Emoji.Skier,
             beforeImageUrl = "https://example.com/swimming1_before.jpg", 
             afterImageUrl = "https://example.com/swimming1_after.jpg", 
             workoutDuration = "35:20", 
@@ -78,7 +72,7 @@ class ProfileScreen : Screen {
         ),
         ActivityPhoto(
             id = "4", 
-            activityType = "🧘", 
+            activityType = Emoji.BoxingGlove,
             beforeImageUrl = "https://example.com/yoga1_before.jpg", 
             afterImageUrl = "https://example.com/yoga1_after.jpg", 
             workoutDuration = "30:00", 
@@ -90,21 +84,8 @@ class ProfileScreen : Screen {
             )
         ),
         ActivityPhoto(
-            id = "5", 
-            activityType = "🏃", 
-            beforeImageUrl = "https://example.com/running2_before.jpg", 
-            afterImageUrl = "https://example.com/running2_after.jpg", 
-            workoutDuration = "28:45", 
-            date = "2023-05-05",
-            likes = 31,
-            comments = listOf(
-                fit.spotted.app.ui.components.Comment("Irene", "Fast pace!"),
-                fit.spotted.app.ui.components.Comment("Jack", "Great form!")
-            )
-        ),
-        ActivityPhoto(
             id = "6", 
-            activityType = "🚴", 
+            activityType = Emoji.Bicycle,
             beforeImageUrl = "https://example.com/cycling2_before.jpg", 
             afterImageUrl = "https://example.com/cycling2_after.jpg", 
             workoutDuration = "01:15:30", 
@@ -117,7 +98,7 @@ class ProfileScreen : Screen {
         ),
         ActivityPhoto(
             id = "7", 
-            activityType = "🏃", 
+            activityType = Emoji.Running,
             beforeImageUrl = "https://example.com/running3_before.jpg", 
             afterImageUrl = "https://example.com/running3_after.jpg", 
             workoutDuration = "22:15", 
@@ -130,7 +111,7 @@ class ProfileScreen : Screen {
         ),
         ActivityPhoto(
             id = "8", 
-            activityType = "🚴", 
+            activityType = Emoji.Bicycle,
             beforeImageUrl = "https://example.com/cycling3_before.jpg", 
             afterImageUrl = "https://example.com/cycling3_after.jpg", 
             workoutDuration = "50:10", 
@@ -143,7 +124,7 @@ class ProfileScreen : Screen {
         ),
         ActivityPhoto(
             id = "9", 
-            activityType = "🏊", 
+            activityType = Emoji.Swimming,
             beforeImageUrl = "https://example.com/swimming2_before.jpg", 
             afterImageUrl = "https://example.com/swimming2_after.jpg", 
             workoutDuration = "40:05", 
@@ -310,10 +291,15 @@ class ProfileScreen : Screen {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = photo.activityType,
-                    fontSize = 24.sp
-                )
+                WithPlatformEmoji(
+                    photo.activityType.toString(),
+                ) { text, inlineContent ->
+                    Text(
+                        text = text,
+                        inlineContent = inlineContent,
+                        fontSize = 24.sp
+                    )
+                }
                 Text(
                     text = photo.workoutDuration,
                     fontSize = 14.sp
@@ -348,7 +334,7 @@ class ProfileScreen : Screen {
 
     data class ActivityPhoto(
         val id: String,
-        val activityType: String,
+        val activityType: Emoji,
         val beforeImageUrl: String,
         val afterImageUrl: String,
         val workoutDuration: String,
