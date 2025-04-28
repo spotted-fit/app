@@ -22,5 +22,4 @@ data class UserSearchResultData(
     val avatar: String? = null
 )
 
-typealias UserSearchResult = UserSearchResultData
 typealias UserSearchResults = ApiResponse<List<UserSearchResultData>>

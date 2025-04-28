@@ -27,7 +27,6 @@ import org.kodein.emoji.travel_places.transport_ground.Bicycle
  */
 class FeedScreen : Screen {
     // API client
-    private val apiClient = ApiProvider.getApiClient()
 
     // Mock data for the feed with emoji-only activity types (used as fallback)
     private val mockPosts = listOf(
@@ -101,7 +100,6 @@ class FeedScreen : Screen {
     @Composable
     override fun Content() {
         // State for posts, loading, and error handling
-        var posts by remember { mutableStateOf<List<PostData>?>(null) }
         var isLoading by remember { mutableStateOf(true) }
         var errorMessage by remember { mutableStateOf<String?>(null) }
 

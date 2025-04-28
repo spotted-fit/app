@@ -1,6 +1,5 @@
 package fit.spotted.app.api
 
-import platform.Foundation.NSBundle
 import platform.Foundation.NSProcessInfo
 
 /**
