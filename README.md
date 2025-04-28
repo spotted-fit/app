@@ -56,7 +56,7 @@ The application supports two environment modes for API configuration:
 In debug/development mode, the application connects to a local backend server:
 - Android: `http://10.0.2.2:8080` (special IP that maps to host machine's localhost for Android emulators)
 - iOS: `http://localhost:8080`
-- WASM/JS: `http://localhost:8080`
+- WASM/JS: Uses a relative URL (`""`) to avoid CORS issues. This means the backend should be served from the same origin as the WASM application.
 
 ### Production Mode
 In production mode, the application gets the backend URL from environment variable:
@@ -110,3 +110,19 @@ python -m http.server 8080
 ```
 
 Note: Make sure to set the BASE_URL environment variable before running the Gradle task, as it's required by the build.gradle.kts file.
+
+#### Avoiding CORS Issues in WASM/JS Development
+To avoid CORS issues when developing the WASM/JS application, you have two options:
+
+1. **Serve the backend and frontend from the same origin:**
+   - Configure your backend to serve the WASM application's static files
+   - Or use a reverse proxy (like Nginx) to route requests to both the backend and frontend
+
+2. **Enable CORS on your backend server:**
+   - Configure your backend server to include the appropriate CORS headers:
+     ```
+     Access-Control-Allow-Origin: *
+     Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+     Access-Control-Allow-Headers: Content-Type, Authorization
+     ```
+   - In this case, you'll need to set the BASE_URL environment variable to the absolute URL of your backend server
