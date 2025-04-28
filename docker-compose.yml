@@ -1,0 +1,20 @@
+services:
+  build:
+    image: gradle:jdk17
+    volumes:
+      - .:/app
+      - gradle-cache:/home/gradle/.gradle
+    working_dir: /app
+    command: ./gradlew wasmJsBrowserDistribution
+
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    depends_on:
+      - build
+    volumes:
+      - ./composeApp/build/dist/wasmJs/productionExecutable:/usr/share/nginx/html
+
+volumes:
+  gradle-cache:

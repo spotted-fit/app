@@ -45,3 +45,44 @@ Maintaining fitness motivation can be challenging without social support and rec
 ## 🎉 Conclusion
 A **social**, **motivating**, and **visually engaging** platform for fitness enthusiasts! 💪
 - Transforming fitness activities into shareable moments that inspire and connect people.
+
+---
+
+## 🐳 Docker Compose for WASM
+
+### Prerequisites
+- Docker
+- Docker Compose
+
+### Usage
+To build and serve the WASM application, run:
+
+```bash
+docker-compose up
+```
+
+This will:
+1. Build the WASM application using Gradle
+2. Serve the WASM application on http://localhost:8080
+
+### How it works
+The Docker Compose setup consists of two services:
+
+1. **build**: Runs the Gradle task `wasmJsBrowserDistribution` to generate the WASM artifacts
+2. **web**: Serves the WASM artifacts using Nginx
+
+The WASM artifacts are generated in `composeApp/build/dist/wasmJs/productionExecutable` and served from there.
+
+### Development
+For development, you can run the Gradle task directly:
+
+```bash
+./gradlew wasmJsBrowserDistribution
+```
+
+And then serve the artifacts using any web server, for example:
+
+```bash
+cd composeApp/build/dist/wasmJs/productionExecutable
+python -m http.server 8080
+```
