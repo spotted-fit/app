@@ -50,52 +50,18 @@ A **social**, **motivating**, and **visually engaging** platform for fitness ent
 
 ## 🌐 API Configuration
 
-The application supports configuring the API base URL through environment variables:
+The application supports two environment modes for API configuration:
 
-### Environment Variables
+### Debug/Development Mode
+In debug/development mode, the application connects to a local backend server:
+- Android: `http://10.0.2.2:8080` (special IP that maps to host machine's localhost for Android emulators)
+- iOS: `http://localhost:8080`
+- WASM/JS: `http://localhost:8080`
 
-#### `LOCAL` (boolean)
-- Controls whether to use localhost IPs for API connections
-- Default: `true` (if not set)
-- When `true`:
-  - Android: Uses `http://10.0.2.2:8080` (special IP that maps to host machine's localhost for Android emulators)
-  - iOS: Uses `http://localhost:8080`
-  - WASM/JS: Uses `http://localhost:8080`
-
-#### `BASE_URL` (string)
-- Custom base URL for API connections when `LOCAL` is set to `false`
-- No default value
-- If not set when `LOCAL=false`, falls back to the platform-specific localhost URL
-
-### Platform-Specific Configuration
-
-#### Android
-Environment variables can be set through:
-- System properties: `System.setProperty("local", "false")`
-- Environment variables: `LOCAL=false` and `BASE_URL=https://api.example.com`
-
-#### iOS
-Environment variables are set through:
-- NSProcessInfo environment: Set `LOCAL` and `BASE_URL` in the app's environment
-
-#### WASM/JS
-Configuration is done through URL parameters:
-- `?local=false&baseUrl=https://api.example.com`
-
-### Example Usage
-
-```bash
-# Android/JVM
-export LOCAL=false
-export BASE_URL=https://api.spotted.fit
-
-# iOS (in Xcode scheme)
-LOCAL=false
-BASE_URL=https://api.spotted.fit
-
-# WASM/JS (in browser URL)
-https://app.spotted.fit/?local=false&baseUrl=https://api.spotted.fit
-```
+### Production Mode
+In production mode, the application gets the backend URL from environment variable:
+- Environment variable name: `BASE_URL`
+- This is configured in the build.gradle.kts file using BuildKonfig
 
 ## 🐳 Docker for WASM
 
@@ -106,8 +72,11 @@ https://app.spotted.fit/?local=false&baseUrl=https://api.spotted.fit
 To build and serve the WASM application, run:
 
 ```bash
+# Build the Docker image
 docker build -t spotted-app .
-docker run -p 80:80 spotted-app
+
+# Run the Docker container with the BASE_URL environment variable
+docker run -p 80:80 -e BASE_URL=https://your-api-url.com spotted-app
 ```
 
 This will:
@@ -123,9 +92,13 @@ The Dockerfile uses a multi-stage build approach:
 The WASM artifacts are generated in `composeApp/build/dist/wasmJs/productionExecutable` and served from there.
 
 ### Development
-For development, you can run the Gradle task directly:
+For development, you can run the Gradle task directly with the BASE_URL environment variable:
 
 ```bash
+# Set the BASE_URL environment variable
+export BASE_URL=http://localhost:8080
+
+# Run the Gradle task
 ./gradlew wasmJsBrowserDistribution
 ```
 
@@ -135,3 +108,5 @@ And then serve the artifacts using any web server, for example:
 cd composeApp/build/dist/wasmJs/productionExecutable
 python -m http.server 8080
 ```
+
+Note: Make sure to set the BASE_URL environment variable before running the Gradle task, as it's required by the build.gradle.kts file.

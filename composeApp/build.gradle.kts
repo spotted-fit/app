@@ -1,3 +1,4 @@
+import org.gradle.declarative.dsl.schema.FqName.Empty.packageName
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -9,6 +10,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinxSerialization)
+    alias(libs.plugins.buildkonfig)
 }
 
 kotlin {
@@ -54,7 +56,6 @@ kotlin {
     }
 
     sourceSets {
-
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
@@ -69,6 +70,7 @@ kotlin {
             implementation(libs.ktor.client.js)
         }
         commonMain.dependencies {
+            // Remove the BuildKonfig classpath from here
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material)
@@ -86,6 +88,7 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.logging)
+            implementation(libs.ktor.client.cors)
             implementation(libs.kotlinx.serialization.json)
 
             // Emoji support
@@ -119,6 +122,16 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+}
+
+// Properly configure BuildKonfig
+buildkonfig {
+    packageName = "fit.spotted.app"
+
+    // Default configuration that applies to all targets
+    defaultConfigs {
+        buildConfigField(com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING, "BASE_URL", System.getenv("BASE_URL"), nullable = true)
     }
 }
 
