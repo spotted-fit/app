@@ -82,6 +82,10 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.logging)
             implementation(libs.kotlinx.serialization.json)
+
+            // Emoji support
+            implementation(libs.emoji.kt)
+            implementation(libs.emoji.compose.m3)
         }
     }
 }
