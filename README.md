@@ -50,31 +50,51 @@ A **social**, **motivating**, and **visually engaging** platform for fitness ent
 
 ## 🌐 API Configuration
 
-The application supports two environment modes for API configuration:
+The application supports configuring the API base URL through environment variables:
 
-### Debug/Development Mode
-In debug/development mode, the application connects to a local backend server:
-- Android: `http://10.0.2.2:8080` (special IP that maps to host machine's localhost for Android emulators)
-- iOS: `http://localhost:8080`
-- WASM/JS: `http://localhost:8080`
+### Environment Variables
 
-### Production Mode
-In production mode, the application gets the backend URL from environment variables:
-- Environment variable name: `BACKEND_URL`
-- Default fallback URL if not set: `https://api.spotted.fit`
+#### `LOCAL` (boolean)
+- Controls whether to use localhost IPs for API connections
+- Default: `true` (if not set)
+- When `true`:
+  - Android: Uses `http://10.0.2.2:8080` (special IP that maps to host machine's localhost for Android emulators)
+  - iOS: Uses `http://localhost:8080`
+  - WASM/JS: Uses `http://localhost:8080`
 
-### Setting the Environment Mode
-You can set the environment mode during application initialization:
+#### `BASE_URL` (string)
+- Custom base URL for API connections when `LOCAL` is set to `false`
+- No default value
+- If not set when `LOCAL=false`, falls back to the platform-specific localhost URL
 
-```kotlin
-// For Android
-EnvironmentConfig.setEnvironment(Environment.PROD) // or Environment.DEBUG
+### Platform-Specific Configuration
 
-// For iOS
-EnvironmentConfig.setEnvironment(Environment.PROD) // or Environment.DEBUG
+#### Android
+Environment variables can be set through:
+- System properties: `System.setProperty("local", "false")`
+- Environment variables: `LOCAL=false` and `BASE_URL=https://api.example.com`
 
-// For WASM/JS
-EnvironmentConfig.setEnvironment(Environment.PROD) // or Environment.DEBUG
+#### iOS
+Environment variables are set through:
+- NSProcessInfo environment: Set `LOCAL` and `BASE_URL` in the app's environment
+
+#### WASM/JS
+Configuration is done through URL parameters:
+- `?local=false&baseUrl=https://api.example.com`
+
+### Example Usage
+
+```bash
+# Android/JVM
+export LOCAL=false
+export BASE_URL=https://api.spotted.fit
+
+# iOS (in Xcode scheme)
+LOCAL=false
+BASE_URL=https://api.spotted.fit
+
+# WASM/JS (in browser URL)
+https://app.spotted.fit/?local=false&baseUrl=https://api.spotted.fit
 ```
 
 ## 🐳 Docker for WASM

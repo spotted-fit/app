@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UserProfileData(
     val id: Int,
-    val username: String,
+    val username: String? = null,
     val avatar: String? = null,
     val friendsCount: Int,
     val posts: List<PostData> = emptyList()

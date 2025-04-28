@@ -33,6 +33,12 @@ interface ApiClient {
 
     // Search
     suspend fun searchUsers(query: String): UserSearchResults
+
+    // Friends
+    suspend fun sendFriendRequest(toId: Int): OkResponse
+    suspend fun respondToFriendRequest(requestId: Int, accepted: Boolean): FriendResponseResult
+    suspend fun getFriendRequests(): FriendRequests
+    suspend fun getFriends(): FriendsList
 }
 
 /**
@@ -138,7 +144,45 @@ class ApiClientImpl : ApiClient {
 
     override suspend fun searchUsers(query: String): UserSearchResults {
         return client.get("$baseUrl/search") {
-            parameter("query", query)
+            parameter("q", query)
+        }.body()
+    }
+
+    override suspend fun sendFriendRequest(toId: Int): OkResponse {
+        return client.post("$baseUrl/friends/request") {
+            setBody(FriendRequestRequest(toId))
+            authToken?.let {
+                header("Authorization", "Bearer $it")
+            }
+            accept(ContentType.Application.Json)
+        }.body()
+    }
+
+    override suspend fun respondToFriendRequest(requestId: Int, accepted: Boolean): FriendResponseResult {
+        return client.post("$baseUrl/friends/respond") {
+            setBody(FriendResponseRequest(requestId, accepted))
+            authToken?.let {
+                header("Authorization", "Bearer $it")
+            }
+            accept(ContentType.Application.Json)
+        }.body()
+    }
+
+    override suspend fun getFriendRequests(): FriendRequests {
+        return client.get("$baseUrl/friends/requests") {
+            authToken?.let {
+                header("Authorization", "Bearer $it")
+            }
+            accept(ContentType.Application.Json)
+        }.body()
+    }
+
+    override suspend fun getFriends(): FriendsList {
+        return client.get("$baseUrl/friends/") {
+            authToken?.let {
+                header("Authorization", "Bearer $it")
+            }
+            accept(ContentType.Application.Json)
         }.body()
     }
 }
