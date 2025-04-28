@@ -1,9 +1,5 @@
 package fit.spotted.app.api
 
-import android.os.Build
-import java.util.Properties
-import java.io.FileInputStream
-
 /**
  * Android implementation of PlatformConfig
  */

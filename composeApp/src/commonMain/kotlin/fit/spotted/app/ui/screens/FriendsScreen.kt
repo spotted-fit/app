@@ -15,7 +15,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fit.spotted.app.api.ApiProvider
-import fit.spotted.app.api.models.FriendData
 import kotlinx.coroutines.launch
 
 /**
