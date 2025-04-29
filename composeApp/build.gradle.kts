@@ -1,4 +1,4 @@
-import org.gradle.declarative.dsl.schema.FqName.Empty.packageName
+import com.codingfeline.buildkonfig.compiler.FieldSpec
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -119,7 +119,7 @@ android {
             // Check if keystore.properties exists (for CI/CD)
             val keystorePropertiesFile = rootProject.file("keystore.properties")
             if (keystorePropertiesFile.exists()) {
-                val properties = org.gradle.internal.impldep.org.apache.commons.io.FileUtils.readFileToString(keystorePropertiesFile, "UTF-8").lines()
+                val properties = keystorePropertiesFile.readLines()
                 val propsMap = properties.associate { 
                     val split = it.split("=", limit = 2)
                     if (split.size == 2) split[0] to split[1] else "" to ""
@@ -151,7 +151,7 @@ buildkonfig {
 
     // Default configuration that applies to all targets
     defaultConfigs {
-        buildConfigField(com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING, "BASE_URL", System.getenv("BASE_URL"), nullable = true)
+        buildConfigField(FieldSpec.Type.STRING, "BASE_URL", System.getenv("BASE_URL"), nullable = true)
     }
 }
 
