@@ -1,4 +1,3 @@
-import org.gradle.declarative.dsl.schema.FqName.Empty.packageName
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -113,9 +112,30 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    signingConfigs {
+        create("release") {
+            // Check if keystore.properties exists (for CI/CD)
+            val keystorePropertiesFile = rootProject.file("keystore.properties")
+            if (keystorePropertiesFile.exists()) {
+                val properties = org.gradle.internal.impldep.org.apache.commons.io.FileUtils.readFileToString(keystorePropertiesFile, "UTF-8").lines()
+                val propsMap = properties.associate { 
+                    val split = it.split("=", limit = 2)
+                    if (split.size == 2) split[0] to split[1] else "" to ""
+                }.filter { it.key.isNotEmpty() }
+
+                storeFile = file(propsMap["storeFile"] ?: "")
+                storePassword = propsMap["storePassword"] ?: ""
+                keyAlias = propsMap["keyAlias"] ?: ""
+                keyPassword = propsMap["keyPassword"] ?: ""
+            }
+        }
+    }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
         }
     }
     compileOptions {

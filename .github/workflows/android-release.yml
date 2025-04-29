@@ -24,8 +24,37 @@ jobs:
       - name: Grant Gradle permission
         run: chmod +x ./gradlew
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Create keystore file
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
+
+      - name: Create keystore.properties
+        run: |
+          echo "storeFile=../keystore.jks" > keystore.properties
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> keystore.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> keystore.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> keystore.properties
+
       - name: Build Android app (APK)
         run: ./gradlew assembleRelease
+        env:
+          BASE_URL: ${{ vars.BASE_URL || secrets.BASE_URL }}
+
+      - name: Check APK exists
+        run: |
+          ls -la composeApp/build/outputs/apk/release/
+          # Find the actual APK file name
+          APK_FILE=$(find composeApp/build/outputs/apk/release/ -name "*.apk" | head -n 1)
+          if [ -z "$APK_FILE" ]; then
+            echo "APK file not found!"
+            exit 1
+          else
+            echo "Found APK file: $APK_FILE"
+          fi
+          echo "APK_FILE=$APK_FILE" >> $GITHUB_ENV
 
       - name: Upload APK to GitHub Release
         uses: softprops/action-gh-release@v2
@@ -33,6 +62,6 @@ jobs:
           tag_name: android-main-${{ github.sha }}
           name: "Android Release - ${{ github.sha }}"
           files: |
-            composeApp/build/outputs/apk/release/*.apk
+            ${{ env.APK_FILE }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
