@@ -178,7 +178,7 @@ class ApiClientImpl : ApiClient {
     }
 
     override suspend fun getFriends(): FriendsList {
-        return client.get("$baseUrl/friends/") {
+        return client.get("$baseUrl/friends") {
             authToken?.let {
                 header("Authorization", "Bearer $it")
             }

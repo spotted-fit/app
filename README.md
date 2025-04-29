@@ -69,19 +69,39 @@ In production mode, the application gets the backend URL from environment variab
 - Docker
 
 ### Usage
-To build and serve the WASM application, run:
+To build and serve the WASM application, you have two options:
 
+#### Option 1: Using build arguments
 ```bash
-# Build the Docker image
+# Build the Docker image with a specific BASE_URL
+docker build -t --build-arg BASE=URL=https://your-api-url.com spotted-app .
+
+# Run the Docker container
+docker run -p 80:80 spotted-app
+```
+
+#### Option 2: Using a .env file
+You can also use a .env file to provide the BASE_URL:
+
+1. Create a .env file in the project root with the following content:
+```
+BASE_URL=https://your-api-url.com
+```
+
+2. Build and run the Docker image without specifying the build argument:
+```bash
+# Build the Docker image (will use BASE_URL from .env file)
 docker build -t spotted-app .
 
-# Run the Docker container with the BASE_URL environment variable
-docker run -p 80:80 -e BASE_URL=https://your-api-url.com spotted-app
+# Run the Docker container
+docker run -p 80:80 spotted-app
 ```
+
+Note: If both a .env file exists and the BASE_URL build argument is provided, the build argument takes precedence.
 
 This will:
 1. Build the WASM application using Gradle inside a Docker container
-2. Serve the WASM application on http://localhost:8080
+2. Serve the WASM application on http://localhost:80
 
 ### How it works
 The Dockerfile uses a multi-stage build approach:
@@ -89,7 +109,7 @@ The Dockerfile uses a multi-stage build approach:
 1. **Build stage**: Uses Gradle to generate the WASM artifacts
 2. **Serve stage**: Uses Nginx to serve the generated WASM artifacts
 
-The WASM artifacts are generated in `composeApp/build/dist/wasmJs/productionExecutable` and served from there.
+The WASM artifacts are generated in `composeApp/build/dist/wasmJs/developmentExecutable` and served from there.
 
 ### Development
 For development, you can run the Gradle task directly with the BASE_URL environment variable:
@@ -99,14 +119,14 @@ For development, you can run the Gradle task directly with the BASE_URL environm
 export BASE_URL=http://localhost:8080
 
 # Run the Gradle task
-./gradlew wasmJsBrowserDistribution
+./gradlew wasmJsBrowserDevelopmentExecutableDistribution
 ```
 
 And then serve the artifacts using any web server, for example:
 
 ```bash
-cd composeApp/build/dist/wasmJs/productionExecutable
-python -m http.server 8080
+cd composeApp/build/dist/wasmJs/developmentExecutable
+python3 -m http.server 80
 ```
 
 Note: Make sure to set the BASE_URL environment variable before running the Gradle task, as it's required by the build.gradle.kts file.
