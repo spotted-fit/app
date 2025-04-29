@@ -5,9 +5,15 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write  # Required to create a release with GITHUB_TOKEN
+
 jobs:
   release:
     runs-on: ubuntu-latest
+
+    env:
+      BASE_URL: ${{ secrets.PROD_BASE_URL }}
 
     steps:
       - name: Checkout code
@@ -25,7 +31,7 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            --build-arg BASE_URL=https://api.example.com \
+            --build-arg BASE_URL=$BASE_URL \
             -t spotted-wasm-build .
 
       - name: Copy WASM build from container
