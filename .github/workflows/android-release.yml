@@ -1,0 +1,38 @@
+name: Release Android
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Grant Gradle permission
+        run: chmod +x ./gradlew
+
+      - name: Build Android app (APK)
+        run: ./gradlew assembleRelease
+
+      - name: Upload APK to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-main-${{ github.sha }}
+          name: "Android Release - ${{ github.sha }}"
+          files: |
+            composeApp/build/outputs/apk/release/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
