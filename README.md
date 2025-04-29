@@ -63,6 +63,13 @@ In production mode, the application gets the backend URL from environment variab
 - Environment variable name: `BASE_URL`
 - This is configured in the build.gradle.kts file using BuildKonfig
 
+#### GitHub Actions Configuration
+For GitHub Actions workflow, the `BASE_URL` can be set in two ways:
+- As a GitHub Variable (recommended): Set a repository or organization variable named `BASE_URL`
+- As a GitHub Secret (legacy): Set a repository or organization secret named `BASE_URL`
+
+If both are set, the GitHub Variable takes precedence. This allows for more flexibility and visibility in your CI/CD pipeline.
+
 ## 🐳 Docker for WASM
 
 ### Prerequisites
