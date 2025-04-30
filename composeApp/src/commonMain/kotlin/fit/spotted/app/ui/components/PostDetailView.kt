@@ -407,11 +407,17 @@ private fun PostDetailViewImpl(
                                 .clickable { showDeleteConfirmation = true },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "🗑️",
-                                color = Color.White,
-                                fontSize = 18.sp
-                            )
+                            WithPlatformEmoji(
+                                "🗑️"
+                            ) { emojiString, inlineContent ->
+                                Text(
+                                    text = emojiString,
+                                    color = Color.White,
+                                    inlineContent = inlineContent,
+                                    fontSize = 18.sp
+                                )
+                            }
+
                         }
                     }
                 }
