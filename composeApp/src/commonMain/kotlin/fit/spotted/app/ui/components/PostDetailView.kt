@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import fit.spotted.app.api.models.CommentData
-import org.kodein.emoji.Emoji
+import fit.spotted.app.emoji.ActivityType
 import org.kodein.emoji.compose.WithPlatformEmoji
 
 /**
@@ -46,7 +46,7 @@ fun PostDetailView(
 
     // Common parameters
     workoutDuration: String,
-    activityType: Emoji,
+    activityType: ActivityType,
     userName: String,
 
     // Optional parameters with default values
@@ -55,7 +55,7 @@ fun PostDetailView(
 
     // Likes and comments
     likes: Int = 0,
-    comments: List<Comment> = emptyList(),
+    comments: List<CommentData> = emptyList(),
 
     // Action buttons (for backward compatibility)
     actionButtons: @Composable ColumnScope.() -> Unit = {},
@@ -63,7 +63,13 @@ fun PostDetailView(
     // Optional close action
     onClose: (() -> Unit)? = null,
 
-    onActivityTypeClick: (() -> Unit)? = null
+    onActivityTypeClick: (() -> Unit)? = null,
+
+    // Callback for adding a comment
+    onAddComment: ((text: String) -> Unit)? = null,
+
+    // Post ID for comment functionality
+    postId: Int? = null
 ) {
     PostDetailViewImpl(
         workoutDuration = workoutDuration,
@@ -75,7 +81,9 @@ fun PostDetailView(
         comments = comments,
         actionButtons = actionButtons,
         onClose = onClose,
-        onActivityTypeClick = onActivityTypeClick
+        onActivityTypeClick = onActivityTypeClick,
+        onAddComment = onAddComment,
+        postId = postId
     ) { showAfterImage, imageTransition ->
         // URL-based images
         Box(
@@ -174,24 +182,6 @@ fun ActionButton(
 }
 
 /**
- * Data class for comments.
- */
-data class Comment(
-    val userName: String,
-    val text: String
-)
-
-/**
- * Extension function to convert CommentData to Comment
- */
-fun CommentData.toUiComment(usernameProvider: (Int) -> String): Comment {
-    return Comment(
-        userName = usernameProvider(userId),
-        text = text
-    )
-}
-
-/**
  * Private implementation of PostDetailView that handles the common UI structure.
  * This is used by both public PostDetailView functions to avoid code duplication.
  */
@@ -199,7 +189,7 @@ fun CommentData.toUiComment(usernameProvider: (Int) -> String): Comment {
 private fun PostDetailViewImpl(
     // Common parameters
     workoutDuration: String,
-    activityType: Emoji,
+    activityType: ActivityType,
     userName: String,
 
     // Optional parameters with default values
@@ -208,7 +198,7 @@ private fun PostDetailViewImpl(
 
     // Likes and comments
     likes: Int = 0,
-    comments: List<Comment> = emptyList(),
+    comments: List<CommentData> = emptyList(),
 
     showLikesAndComments: Boolean = true,
 
@@ -220,6 +210,12 @@ private fun PostDetailViewImpl(
 
     // Optional callback for activity type click
     onActivityTypeClick: (() -> Unit)? = null,
+
+    // Callback for adding a comment
+    onAddComment: ((text: String) -> Unit)? = null,
+
+    // Post ID for comment functionality
+    postId: Int? = null,
 
     // Image content - this is the part that differs between implementations
     imageContent: @Composable (showAfterImage: Boolean, imageTransition: State<Float>) -> Unit
@@ -303,7 +299,7 @@ private fun PostDetailViewImpl(
                                 contentAlignment = Alignment.Center
                             ) {
                                 WithPlatformEmoji(
-                                    activityType.toString()
+                                    activityType.emoji
                                 ){ emojiString, inlineContent ->
                                     Text(
                                         text = emojiString,
@@ -490,7 +486,7 @@ private fun PostDetailViewImpl(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = comment.userName.first().toString(),
+                                    text = comment.username.first().toString(),
                                     color = MaterialTheme.colors.onSurface,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -501,7 +497,7 @@ private fun PostDetailViewImpl(
                             // Comment content
                             Column {
                                 Text(
-                                    text = comment.userName,
+                                    text = comment.username,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White,
                                     fontSize = 14.sp
@@ -511,6 +507,60 @@ private fun PostDetailViewImpl(
                                     text = comment.text,
                                     color = Color.White.copy(alpha = 0.9f),
                                     fontSize = 14.sp
+                                )
+                            }
+                        }
+                    }
+
+                    // Add comment input field
+                    if (onAddComment != null) {
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        var commentText by remember { mutableStateOf("") }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Text field for comment
+                            androidx.compose.material.TextField(
+                                value = commentText,
+                                onValueChange = { commentText = it },
+                                placeholder = { Text("Add a comment...", color = Color.White.copy(alpha = 0.6f)) },
+                                modifier = Modifier.weight(1f),
+                                colors = androidx.compose.material.TextFieldDefaults.textFieldColors(
+                                    backgroundColor = Color.White.copy(alpha = 0.1f),
+                                    cursorColor = Color.White,
+                                    textColor = Color.White,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent
+                                ),
+                                singleLine = true
+                            )
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            // Submit button
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colors.primary)
+                                    .clickable {
+                                        if (commentText.isNotBlank()) {
+                                            onAddComment(commentText)
+                                            commentText = ""
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "→",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp
                                 )
                             }
                         }
@@ -533,7 +583,7 @@ fun PostDetailView(
 
     // Common parameters
     workoutDuration: String,
-    activityType: Emoji,
+    activityType: ActivityType,
     userName: String,
 
     // Optional parameters with default values
@@ -550,7 +600,13 @@ fun PostDetailView(
     onClose: (() -> Unit)? = null,
 
     // Optional callback for activity type click
-    onActivityTypeClick: (() -> Unit)? = null
+    onActivityTypeClick: (() -> Unit)? = null,
+
+    // Callback for adding a comment
+    onAddComment: ((text: String) -> Unit)? = null,
+
+    // Post ID for comment functionality
+    postId: Int? = null
 ) {
     // Use the common implementation with ImageBitmap image content
     PostDetailViewImpl(
@@ -565,7 +621,9 @@ fun PostDetailView(
         showLikesAndComments = showLikesAndComments,
         actionButtons = actionButtons,
         onClose = onClose,
-        onActivityTypeClick = onActivityTypeClick
+        onActivityTypeClick = onActivityTypeClick,
+        onAddComment = onAddComment,
+        postId = postId
     ) { showAfterImage, imageTransition ->
         // Display the ImageBitmap images directly
         Box(
@@ -597,4 +655,3 @@ fun PostDetailView(
         }
     }
 }
-

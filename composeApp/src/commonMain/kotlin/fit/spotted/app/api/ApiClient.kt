@@ -1,7 +1,6 @@
 package fit.spotted.app.api
 
 import fit.spotted.app.api.models.*
-import fit.spotted.app.ui.screens.FeedScreen
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -40,6 +39,8 @@ interface ApiClient {
     suspend fun respondToFriendRequest(requestId: Int, accepted: Boolean): FriendResponseResult
     suspend fun getFriendRequests(): FriendRequests
     suspend fun getFriends(): FriendsList
+
+    suspend fun getFeed(): Feed
 }
 
 /**
@@ -48,6 +49,17 @@ interface ApiClient {
 internal class ApiClientImpl : ApiClient {
     private val baseUrl = PlatformConfig.getBaseUrl()
     private var authToken: String? = null
+
+    /**
+     * Adds authorization header to the request if an auth token is available.
+     * Also sets the accept content type to JSON.
+     */
+    private fun HttpRequestBuilder.addAuth() {
+        accept(ContentType.Application.Json)
+        authToken?.let {
+            header(HttpHeaders.Authorization, "Bearer $it")
+        }
+    }
 
     private val client = HttpClient {
         install(ContentNegotiation) {
@@ -73,24 +85,43 @@ internal class ApiClientImpl : ApiClient {
         authToken = token
     }
 
+    /**
+     * Registers a new user with the provided credentials.
+     * Sets the auth token if registration is successful.
+     */
     override suspend fun register(email: String, password: String, username: String): AuthResponse {
         val response = client.post("$baseUrl/register") {
             setBody(RegisterRequest(email, password, username))
+            addAuth()
         }
         val authResponse = response.body<AuthResponse>()
         authResponse.response?.token?.let { setAuthToken(it) }
         return authResponse
     }
 
+    /**
+     * Logs in a user with the provided credentials.
+     * Sets the auth token if login is successful.
+     */
     override suspend fun login(password: String, username: String): AuthResponse {
         val response = client.post("$baseUrl/login") {
             setBody(LoginRequest(password, username))
+            addAuth()
         }
         val authResponse = response.body<AuthResponse>()
         authResponse.response?.token?.let { setAuthToken(it) }
         return authResponse
     }
 
+    /**
+     * Creates a new post with before and after workout photos.
+     * 
+     * @param photo1 The before workout photo as a byte array
+     * @param photo2 The after workout photo as a byte array
+     * @param emoji Optional emoji representing the workout type
+     * @param text Optional text description of the workout
+     * @return OkResponse if successful
+     */
     override suspend fun createPost(
         photo1: ByteArray,
         photo2: ByteArray,
@@ -113,6 +144,7 @@ internal class ApiClientImpl : ApiClient {
             }
         ) {
             method = HttpMethod.Post
+            accept(ContentType.Application.Json)
             authToken?.let {
                 header(HttpHeaders.Authorization, "Bearer $it")
             }
@@ -120,99 +152,145 @@ internal class ApiClientImpl : ApiClient {
         return response.body()
     }
 
+    /**
+     * Gets a post by its ID.
+     * 
+     * @param id The ID of the post to retrieve
+     * @return The post details
+     */
     override suspend fun getPost(id: Int): GetPostResponse {
         return client.get("$baseUrl/posts/$id") {
-            authToken?.let {
-                header(HttpHeaders.Authorization, "Bearer $it")
-            }
+            addAuth()
         }.body()
     }
 
+    /**
+     * Likes a post.
+     * 
+     * @param id The ID of the post to like
+     * @return OkResponse if successful
+     */
     override suspend fun likePost(id: Int): OkResponse {
         return client.post("$baseUrl/posts/$id/like") {
-            authToken?.let {
-                header(HttpHeaders.Authorization, "Bearer $it")
-            }
+            addAuth()
         }.body()
     }
 
+    /**
+     * Unlikes a post.
+     * 
+     * @param id The ID of the post to unlike
+     * @return OkResponse if successful
+     */
     override suspend fun unlikePost(id: Int): OkResponse {
         return client.delete("$baseUrl/posts/$id/like") {
-            authToken?.let {
-                header(HttpHeaders.Authorization, "Bearer $it")
-            }
+            addAuth()
         }.body()
     }
 
+    /**
+     * Adds a comment to a post.
+     * 
+     * @param postId The ID of the post to comment on
+     * @param text The comment text
+     * @return OkResponse if successful
+     */
     override suspend fun addComment(postId: Int, text: String): OkResponse {
         return client.post("$baseUrl/posts/$postId/comment") {
             setBody(CommentRequest(text))
-            authToken?.let {
-                header(HttpHeaders.Authorization, "Bearer $it")
-            }
+            addAuth()
         }.body()
     }
 
+    /**
+     * Gets all comments for a post.
+     * 
+     * @param postId The ID of the post to get comments for
+     * @return List of comments
+     */
     override suspend fun getComments(postId: Int): CommentsList {
         return client.get("$baseUrl/posts/$postId/comments") {
-            authToken?.let {
-                header(HttpHeaders.Authorization, "Bearer $it")
-            }
+            addAuth()
         }.body()
     }
 
+    /**
+     * Gets a user's profile by their ID.
+     * 
+     * @param id The ID of the user
+     * @return The user's profile
+     */
     override suspend fun getUserProfile(id: Int): Profile {
         return client.get("$baseUrl/profile/$id") {
-            authToken?.let {
-                header(HttpHeaders.Authorization, "Bearer $it")
-            }
+            addAuth()
         }.body()
     }
 
+    /**
+     * Searches for users by query string.
+     * 
+     * @param query The search query
+     * @return List of matching users
+     */
     override suspend fun searchUsers(query: String): UserSearchResults {
         return client.get("$baseUrl/search") {
             parameter("q", query)
-            authToken?.let {
-                header(HttpHeaders.Authorization, "Bearer $it")
-            }
+            addAuth()
         }.body()
     }
 
+    /**
+     * Sends a friend request to another user.
+     * 
+     * @param toId The ID of the user to send the request to
+     * @return OkResponse if successful
+     */
     override suspend fun sendFriendRequest(toId: Int): OkResponse {
         return client.post("$baseUrl/friends/request") {
             setBody(FriendRequestRequest(toId))
-            authToken?.let {
-                header(HttpHeaders.Authorization, "Bearer $it")
-            }
-            accept(ContentType.Application.Json)
+            addAuth()
         }.body()
     }
 
+    /**
+     * Responds to a friend request.
+     * 
+     * @param requestId The ID of the friend request
+     * @param accepted Whether the request was accepted
+     * @return Result of the response
+     */
     override suspend fun respondToFriendRequest(requestId: Int, accepted: Boolean): FriendResponseResult {
         return client.post("$baseUrl/friends/respond") {
             setBody(FriendResponseRequest(requestId, accepted))
-            authToken?.let {
-                header(HttpHeaders.Authorization, "Bearer $it")
-            }
-            accept(ContentType.Application.Json)
+            addAuth()
         }.body()
     }
 
+    /**
+     * Gets all pending friend requests for the current user.
+     * 
+     * @return List of friend requests
+     */
     override suspend fun getFriendRequests(): FriendRequests {
         return client.get("$baseUrl/friends/requests") {
-            authToken?.let {
-                header(HttpHeaders.Authorization, "Bearer $it")
-            }
-            accept(ContentType.Application.Json)
+            addAuth()
         }.body()
     }
 
+    /**
+     * Gets all friends of the current user.
+     * 
+     * @return List of friends
+     */
     override suspend fun getFriends(): FriendsList {
         return client.get("$baseUrl/friends") {
-            authToken?.let {
-                header(HttpHeaders.Authorization, "Bearer $it")
-            }
-            accept(ContentType.Application.Json)
+            addAuth()
+        }.body()
+    }
+
+    override suspend fun getFeed(): Feed {
+        return client.get("$baseUrl/feed") {
+            addAuth()
         }.body()
     }
 }
