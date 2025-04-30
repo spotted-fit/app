@@ -56,12 +56,23 @@ jobs:
           fi
           echo "APK_FILE=$APK_FILE" >> $GITHUB_ENV
 
-      - name: Upload APK to GitHub Release
+      - name: Upload APK to GitHub Release (with commit SHA)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-main-${{ github.sha }}
           name: "Android Release - ${{ github.sha }}"
           files: |
             ${{ env.APK_FILE }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload APK to Latest Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "Latest Android Release"
+          files: |
+            ${{ env.APK_FILE }}
+          body: "This is always the latest Android APK build from the main branch. Last updated from commit ${{ github.sha }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
