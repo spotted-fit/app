@@ -11,7 +11,7 @@ RUN if [ -z "$BASE_URL" ] && [ -f .env ]; then \
         echo "Using provided BASE_URL: $BASE_URL"; \
     fi && \
     ./gradlew generateBuildKonfig && \
-    ./gradlew wasmJsBrowserDevelopmentExecutableDistribution --no-daemon -PBASE_URL=$BASE_URL
+    ./gradlew wasmJsBrowserDevelopmentExecutableDistribution --no-daemon -Dorg.gradle.jvmargs="-Xmx4096M" -PBASE_URL=$BASE_URL
 
 FROM --platform=linux/amd64 nginx:alpine
 COPY --from=build /home/gradle/src/composeApp/build/dist/wasmJs/developmentExecutable/ /usr/share/nginx/html
