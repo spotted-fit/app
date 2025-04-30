@@ -265,7 +265,30 @@ class ProfileScreen(private val userId: Int? = null) : Screen {
                                                             }
                                                         }
                                                     }
-                                                } catch (e: Exception) {
+                                                } catch (_: Exception) {
+                                                    // Handle error
+                                                }
+                                            }
+                                        },
+                                        onDeletePost = {
+                                            coroutineScope.launch {
+                                                try {
+                                                    val response = apiClient.deletePost(post.id)
+                                                    if (response.result == "ok") {
+                                                        // Remove the post from the list
+                                                        detailedPosts = detailedPosts.filter { it.id != post.id }
+
+                                                        // If there are no more posts, go back to grid view
+                                                        if (detailedPosts.isEmpty()) {
+                                                            viewMode = ViewMode.GRID
+                                                        }
+
+                                                        // Also update the profile data to remove the post
+                                                        profileData = profileData?.copy(
+                                                            posts = profileData?.posts?.filter { it.id != post.id } ?: emptyList()
+                                                        )
+                                                    }
+                                                } catch (_: Exception) {
                                                     // Handle error
                                                 }
                                             }

@@ -9,9 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Favorite
@@ -68,6 +66,9 @@ fun PostDetailView(
     // Callback for adding a comment
     onAddComment: ((text: String) -> Unit)? = null,
 
+    // Callback for deleting a post
+    onDeletePost: (() -> Unit)? = null,
+
     // Post ID for comment functionality
     postId: Int? = null
 ) {
@@ -83,6 +84,7 @@ fun PostDetailView(
         onClose = onClose,
         onActivityTypeClick = onActivityTypeClick,
         onAddComment = onAddComment,
+        onDeletePost = onDeletePost,
         postId = postId
     ) { showAfterImage, imageTransition ->
         // URL-based images
@@ -214,6 +216,9 @@ private fun PostDetailViewImpl(
     // Callback for adding a comment
     onAddComment: ((text: String) -> Unit)? = null,
 
+    // Callback for deleting a post
+    onDeletePost: (() -> Unit)? = null,
+
     // Post ID for comment functionality
     postId: Int? = null,
 
@@ -223,9 +228,10 @@ private fun PostDetailViewImpl(
     // State for tracking which image to show (before or after)
     var showAfterImage by remember { mutableStateOf(initialShowAfterImage) }
 
-    // State for like button and comments
+    // State for like button, comments, and delete confirmation
     var isLiked by remember { mutableStateOf(false) }
     var showComments by remember { mutableStateOf(false) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
 
     // Use animation for smooth transitions between before/after images
     val imageTransition = animateFloatAsState(
@@ -390,6 +396,24 @@ private fun PostDetailViewImpl(
                         onClick = { showComments = !showComments },
                         animated = true
                     )
+
+                    // Delete button (only shown if onDeletePost is provided)
+                    onDeletePost?.let {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.7f))
+                                .clickable { showDeleteConfirmation = true },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "🗑️",
+                                color = Color.White,
+                                fontSize = 18.sp
+                            )
+                        }
+                    }
                 }
 
 
@@ -525,12 +549,12 @@ private fun PostDetailViewImpl(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             // Text field for comment
-                            androidx.compose.material.TextField(
+                            TextField(
                                 value = commentText,
                                 onValueChange = { commentText = it },
                                 placeholder = { Text("Add a comment...", color = Color.White.copy(alpha = 0.6f)) },
                                 modifier = Modifier.weight(1f),
-                                colors = androidx.compose.material.TextFieldDefaults.textFieldColors(
+                                colors = TextFieldDefaults.textFieldColors(
                                     backgroundColor = Color.White.copy(alpha = 0.1f),
                                     cursorColor = Color.White,
                                     textColor = Color.White,
@@ -567,6 +591,33 @@ private fun PostDetailViewImpl(
                     }
                 }
             }
+        }
+
+        // Delete confirmation dialog
+        if (showDeleteConfirmation) {
+            AlertDialog(
+                onDismissRequest = { showDeleteConfirmation = false },
+                title = { Text("Delete Post") },
+                text = { Text("Are you sure you want to delete this post?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDeleteConfirmation = false
+                            onDeletePost?.invoke()
+                        }
+                    ) {
+                        Text("Delete", color = Color.Red)
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDeleteConfirmation = false }
+                    ) {
+                        Text("Cancel")
+                    }
+                },
+                backgroundColor = MaterialTheme.colors.surface
+            )
         }
     }
 }
@@ -605,6 +656,9 @@ fun PostDetailView(
     // Callback for adding a comment
     onAddComment: ((text: String) -> Unit)? = null,
 
+    // Callback for deleting a post
+    onDeletePost: (() -> Unit)? = null,
+
     // Post ID for comment functionality
     postId: Int? = null
 ) {
@@ -623,6 +677,7 @@ fun PostDetailView(
         onClose = onClose,
         onActivityTypeClick = onActivityTypeClick,
         onAddComment = onAddComment,
+        onDeletePost = onDeletePost,
         postId = postId
     ) { showAfterImage, imageTransition ->
         // Display the ImageBitmap images directly
