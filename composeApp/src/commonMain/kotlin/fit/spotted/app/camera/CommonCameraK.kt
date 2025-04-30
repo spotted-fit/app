@@ -13,16 +13,16 @@ import kotlinx.coroutines.launch
  */
 class CommonCameraK(private val platform: CameraKPlatform) : Camera {
     private var currentCameraFacing = CameraFacing.BACK
-    private var onPhotoCapturedCallback: ((ImageBitmap) -> Unit)? = null
+    private var onPhotoCapturedCallback: ((CapturedImage) -> Unit)? = null
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     @Composable
     override fun Preview(
         modifier: Modifier,
-        onPhotoCaptured: (ImageBitmap) -> Unit
+        onPhotoCaptured: (CapturedImage) -> Unit
     ) {
         onPhotoCapturedCallback = onPhotoCaptured
-        
+
         platform.CreateCameraPreview(
             modifier = modifier,
             cameraFacing = currentCameraFacing,
@@ -39,11 +39,11 @@ class CommonCameraK(private val platform: CameraKPlatform) : Camera {
     }
 
     private suspend fun handleImageCapture(
-        onImageCaptured: (ImageBitmap) -> Unit
+        onImageCaptured: (CapturedImage) -> Unit
     ) {
         platform.captureImage().fold(
-            onSuccess = { bitmap ->
-                onImageCaptured(bitmap)
+            onSuccess = { capturedImage ->
+                onImageCaptured(capturedImage)
             },
             onFailure = { exception ->
                 println("Image Capture Error: ${exception.message}")

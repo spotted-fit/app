@@ -29,6 +29,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
+import fit.spotted.app.api.models.CommentData
 import org.kodein.emoji.Emoji
 import org.kodein.emoji.compose.WithPlatformEmoji
 
@@ -90,7 +92,6 @@ fun PostDetailView(
             // In a real app, you would use an image loading library
             // to load the image from the URL
             val currentUrl = if (showAfterImage) afterImageUrl else beforeImageUrl
-
             // Display a placeholder for now
             Box(
                 modifier = Modifier
@@ -101,10 +102,11 @@ fun PostDetailView(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "Image: $currentUrl",
-                    color = Color.White,
-                    fontSize = 12.sp
+                AsyncImage(
+                    model = currentUrl,
+                    contentDescription = "Post Image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }
@@ -178,6 +180,16 @@ data class Comment(
     val userName: String,
     val text: String
 )
+
+/**
+ * Extension function to convert CommentData to Comment
+ */
+fun CommentData.toUiComment(usernameProvider: (Int) -> String): Comment {
+    return Comment(
+        userName = usernameProvider(userId),
+        text = text
+    )
+}
 
 /**
  * Private implementation of PostDetailView that handles the common UI structure.
@@ -585,3 +597,4 @@ fun PostDetailView(
         }
     }
 }
+

@@ -26,6 +26,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fit.spotted.app.api.ApiClient
+import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.camera.getCamera
 import fit.spotted.app.ui.camera.CameraControls
 import fit.spotted.app.ui.camera.CameraPreview
@@ -46,8 +48,11 @@ class CameraScreen(
 
     @Composable
     override fun Content() {
+        // Get the singleton API client
+        val apiClient = remember { ApiProvider.getApiClient() }
+
         // Create the view model
-        val viewModel = remember { CameraViewModel() }
+        val viewModel = remember { CameraViewModel(apiClient) }
 
         // Notify when isAfterWorkoutMode changes
         LaunchedEffect(viewModel.isAfterWorkoutMode) {
@@ -158,8 +163,9 @@ class CameraScreen(
                         photoData = viewModel.photoData,
                         isVisible = isVisible,
                         photoTaken = viewModel.photoTaken,
-                        onPhotoCaptured = { bitmap ->
-                            viewModel.photoData = bitmap
+                        onPhotoCaptured = { capturedPhoto ->
+                            viewModel.photoData = capturedPhoto.bitmap
+                            viewModel.currentPhotoBytes = capturedPhoto.byteArray
                             viewModel.photoTaken = true
                         }
                     )

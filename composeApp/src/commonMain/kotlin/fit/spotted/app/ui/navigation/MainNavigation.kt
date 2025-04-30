@@ -1,5 +1,6 @@
 package fit.spotted.app.ui.navigation
 
+import ProfileScreen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -15,7 +16,9 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.ui.screens.*
+import kotlinx.coroutines.launch
 
 /**
  * Main navigation component that handles navigation between screens.
@@ -26,11 +29,19 @@ fun MainNavigation() {
     var isLoggedIn by remember { mutableStateOf(false) }
     // Store the username when logged in
     var username by remember { mutableStateOf("") }
+    // Store the user ID when logged in
+    var userId by remember { mutableStateOf<Int?>(null) }
+
+    // Coroutine scope for API calls
+    val coroutineScope = rememberCoroutineScope()
+    // API client
+    val apiClient = ApiProvider.getApiClient()
 
     if (isLoggedIn) {
         // Show main screen with bottom navigation when logged in
         MainScreenWithBottomNav(
             username = username,
+            userId = userId,
             onLogout = { isLoggedIn = false }
         )
     } else {
@@ -40,7 +51,25 @@ fun MainNavigation() {
             LoginScreen(
                 onLogin = { loggedInUsername -> 
                     username = loggedInUsername
-                    isLoggedIn = true
+
+                    // Search for the user to get their ID
+                    coroutineScope.launch {
+                        try {
+                            val searchResults = apiClient.searchUsers(loggedInUsername)
+                            if (searchResults.result == "ok" && searchResults.response != null && searchResults.response.isNotEmpty()) {
+                                // Get the first user that matches the username
+                                val user = searchResults.response.firstOrNull { it.username == loggedInUsername }
+                                if (user != null) {
+                                    userId = user.id
+                                }
+                            }
+                            // Set logged in state even if we couldn't get the user ID
+                            isLoggedIn = true
+                        } catch (e: Exception) {
+                            // If there's an error, still log in but without the user ID
+                            isLoggedIn = true
+                        }
+                    }
                 }
             ).Content()
         }
@@ -51,10 +80,11 @@ fun MainNavigation() {
  * Main screen with bottom navigation
  * 
  * @param username The username of the logged-in user
+ * @param userId The ID of the logged-in user, or null if not available
  * @param onLogout Callback to be invoked when the user logs out
  */
 @Composable
-fun MainScreenWithBottomNav(username: String, onLogout: () -> Unit) {
+fun MainScreenWithBottomNav(username: String, userId: Int? = null, onLogout: () -> Unit) {
     // Use remember to keep the state across recompositions
     var currentTab by remember { mutableStateOf(0) }
 
@@ -247,7 +277,7 @@ fun MainScreenWithBottomNav(username: String, onLogout: () -> Unit) {
                     }
                 ).Content()
                 2 -> FriendsScreen().Content()
-                3 -> ProfileScreen(username).Content()
+                3 -> ProfileScreen(userId).Content()
                 else -> FeedScreen().Content() // Default to Feed screen
             }
         }

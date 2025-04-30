@@ -70,6 +70,9 @@ kotlin {
             implementation(libs.ktor.client.js)
         }
         commonMain.dependencies {
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor3)
+
             // Remove the BuildKonfig classpath from here
             implementation(compose.runtime)
             implementation(compose.foundation)
