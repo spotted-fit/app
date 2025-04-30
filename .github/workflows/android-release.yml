@@ -55,7 +55,7 @@ jobs:
         run: |
           APK_PATH=$(find composeApp/build/outputs/apk/release -name '*.apk' | head -n1)
           if [ -z "$APK_PATH" ]; then
-n            echo "::error::No APK found in composeApp/build/outputs/apk/release"
+            echo "::error::No APK found in composeApp/build/outputs/apk/release"
             exit 1
           fi
           echo "APK_PATH=$APK_PATH" >> $GITHUB_ENV
