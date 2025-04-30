@@ -21,6 +21,7 @@ import com.kashif.cameraK.result.ImageCaptureResult
 import com.kashif.cameraK.ui.CameraPreview
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.decodeToImageBitmap
+import java.io.ByteArrayOutputStream
 
 /**
  * Android implementation of CameraKPlatform.
@@ -95,6 +96,28 @@ class AndroidCameraKPlatform : CameraKPlatform {
         }
     }
 
+    /**
+     * Compresses an image byte array to reduce its size.
+     * 
+     * @param imageByteArray The original image byte array
+     * @param quality The compression quality (0-100)
+     * @return The compressed image byte array
+     */
+    @OptIn(ExperimentalResourceApi::class)
+    private fun compressImage(imageByteArray: ByteArray, quality: Int = 80): ByteArray {
+        // Decode the byte array to a bitmap
+        val bitmap = imageByteArray.decodeToImageBitmap().asAndroidBitmap()
+
+        // Create a new byte array output stream
+        val outputStream = ByteArrayOutputStream()
+
+        // Compress the bitmap to JPEG format with the specified quality
+        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+
+        // Return the compressed byte array
+        return outputStream.toByteArray()
+    }
+
     @OptIn(ExperimentalResourceApi::class)
     override suspend fun captureImage(): Result<CapturedImage> {
         val controller = cameraController ?: return Result.failure(
@@ -103,14 +126,15 @@ class AndroidCameraKPlatform : CameraKPlatform {
 
         return when (val result = controller.takePicture()) {
             is ImageCaptureResult.Success -> {
-                var bitmap = result.byteArray.decodeToImageBitmap()
+                // Compress the image before returning
+                val compressedByteArray = compressImage(result.byteArray)
+                var bitmap = compressedByteArray.decodeToImageBitmap()
 
-                // If the current camera is the front camera, flip the image horizontally
                 if (currentCameraLens == CameraLens.FRONT) {
                     bitmap = flipImageHorizontally(bitmap)
                 }
 
-                Result.success(CapturedImage(bitmap, result.byteArray))
+                Result.success(CapturedImage(bitmap, compressedByteArray))
             }
             is ImageCaptureResult.Error -> {
                 Result.failure(result.exception)
