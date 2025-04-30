@@ -13,8 +13,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import fit.spotted.app.api.ApiProvider
-import fit.spotted.app.api.models.PostData
+import fit.spotted.app.api.models.GetPostResponse
+import fit.spotted.app.ui.components.Comment
 import fit.spotted.app.ui.components.PostDetailView
+import fit.spotted.app.ui.components.toUiComment
 import kotlinx.coroutines.launch
 import org.kodein.emoji.Emoji
 import org.kodein.emoji.people_body.person_activity.Running
@@ -27,75 +29,10 @@ import org.kodein.emoji.travel_places.transport_ground.Bicycle
  */
 class FeedScreen : Screen {
     // API client
+    private val apiClient = ApiProvider.getApiClient()
 
-    // Mock data for the feed with emoji-only activity types (used as fallback)
-    private val mockPosts = listOf(
-        Post(
-            id = "1",
-            userName = "John Doe",
-            activityType = Emoji.Running,
-            beforeImageUrl = "https://example.com/running_before.jpg",
-            afterImageUrl = "https://example.com/running_after.jpg",
-            workoutDuration = "25:30",
-            likes = 15,
-            comments = listOf(
-                Comment("Alice", "Great job!"),
-                Comment("Bob", "Keep it up!")
-            )
-        ),
-        Post(
-            id = "2",
-            userName = "Jane Smith",
-            activityType = Emoji.Swimming,
-            beforeImageUrl = "https://example.com/yoga_before.jpg",
-            afterImageUrl = "https://example.com/yoga_after.jpg",
-            workoutDuration = "45:00",
-            likes = 23,
-            comments = listOf(
-                Comment("Charlie", "Impressive pose!"),
-                Comment("David", "Looking good!")
-            )
-        ),
-        Post(
-            id = "3",
-            userName = "Mike Johnson",
-            activityType = Emoji.Bicycle,
-            beforeImageUrl = "https://example.com/cycling_before.jpg",
-            afterImageUrl = "https://example.com/cycling_after.jpg",
-            workoutDuration = "01:15:45",
-            likes = 8,
-            comments = listOf(
-                Comment("Eve", "Nice ride!"),
-                Comment("Frank", "How many miles?")
-            )
-        ),
-        Post(
-            id = "4",
-            userName = "Sarah Williams",
-            activityType = Emoji.Swimming,
-            beforeImageUrl = "https://example.com/swimming_before.jpg",
-            afterImageUrl = "https://example.com/swimming_after.jpg",
-            workoutDuration = "35:20",
-            likes = 19,
-            comments = listOf(
-                Comment("George", "Nice form!"),
-                Comment("Hannah", "Water looks great!")
-            )
-        ),
-        Post(
-            id = "5",
-            userName = "David Brown",
-            activityType = Emoji.Skier,
-            beforeImageUrl = "https://example.com/hiking_before.jpg",
-            afterImageUrl = "https://example.com/hiking_after.jpg",
-            workoutDuration = "02:30:15",
-            likes = 31,
-            comments = listOf(
-                Comment("Irene", "Beautiful view!"),
-                Comment("Jack", "Where is this trail?")
-            )
-        )
-    )
+    // Post IDs to fetch (in a real app, these would come from a feed endpoint)
+    private val postIds = listOf(1, 2, 3, 4, 5)
 
     @Composable
     override fun Content() {
@@ -151,16 +88,6 @@ class FeedScreen : Screen {
                 )
             }
             return
-        }
-
-        // Use VerticalPager for TikTok-like swiping
-        val pagerState = rememberPagerState(pageCount = { mockPosts.size })
-
-        VerticalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize()
-        ) { page ->
-            FullScreenPost(mockPosts[page])
         }
     }
 

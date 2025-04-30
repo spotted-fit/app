@@ -1,6 +1,7 @@
 package fit.spotted.app.api
 
 import fit.spotted.app.api.models.*
+import fit.spotted.app.ui.screens.FeedScreen
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -18,18 +19,18 @@ import kotlinx.serialization.json.Json
 interface ApiClient {
     // Authentication
     suspend fun register(email: String, password: String, username: String): AuthResponse
-    suspend fun login(email: String, password: String, username: String): AuthResponse
+    suspend fun login(password: String, username: String): AuthResponse
 
     // Posts
-    suspend fun createPost(photo1: ByteArray, photo2: ByteArray, emoji: String? = null, description: String? = null): OkResponse
-    suspend fun getPost(id: Int): Post
+    suspend fun createPost(photo1: ByteArray, photo2: ByteArray, emoji: String? = null, text: String? = null): OkResponse
+    suspend fun getPost(id: Int): GetPostResponse
     suspend fun likePost(id: Int): OkResponse
     suspend fun unlikePost(id: Int): OkResponse
     suspend fun addComment(postId: Int, text: String): OkResponse
     suspend fun getComments(postId: Int): CommentsList
 
     // Profile
-    suspend fun getUserProfile(id: Int): UserProfile
+    suspend fun getUserProfile(id: Int): Profile
 
     // Search
     suspend fun searchUsers(query: String): UserSearchResults
@@ -44,7 +45,7 @@ interface ApiClient {
 /**
  * Implementation of the Spotted API client using Ktor
  */
-class ApiClientImpl : ApiClient {
+internal class ApiClientImpl : ApiClient {
     private val baseUrl = PlatformConfig.getBaseUrl()
     private var authToken: String? = null
 
@@ -63,7 +64,7 @@ class ApiClientImpl : ApiClient {
         defaultRequest {
             contentType(ContentType.Application.Json)
             authToken?.let {
-                header("Authorization", "Bearer $it")
+                header(HttpHeaders.Authorization, "Bearer $it")
             }
         }
     }
@@ -81,9 +82,9 @@ class ApiClientImpl : ApiClient {
         return authResponse
     }
 
-    override suspend fun login(email: String, password: String, username: String): AuthResponse {
+    override suspend fun login(password: String, username: String): AuthResponse {
         val response = client.post("$baseUrl/login") {
-            setBody(LoginRequest(email, password, username))
+            setBody(LoginRequest(password, username))
         }
         val authResponse = response.body<AuthResponse>()
         authResponse.response?.token?.let { setAuthToken(it) }
@@ -94,7 +95,7 @@ class ApiClientImpl : ApiClient {
         photo1: ByteArray,
         photo2: ByteArray,
         emoji: String?,
-        description: String?
+        text: String?
     ): OkResponse {
         val response = client.submitFormWithBinaryData(
             url = "$baseUrl/posts",
@@ -108,43 +109,72 @@ class ApiClientImpl : ApiClient {
                     append(HttpHeaders.ContentType, "image/jpeg")
                 })
                 emoji?.let { append("emoji", it) }
-                description?.let { append("description", it) }
+                text?.let { append("text", it) }
             }
         ) {
             method = HttpMethod.Post
+            authToken?.let {
+                header(HttpHeaders.Authorization, "Bearer $it")
+            }
         }
         return response.body()
     }
 
-    override suspend fun getPost(id: Int): Post {
-        return client.get("$baseUrl/posts/$id").body()
+    override suspend fun getPost(id: Int): GetPostResponse {
+        return client.get("$baseUrl/posts/$id") {
+            authToken?.let {
+                header(HttpHeaders.Authorization, "Bearer $it")
+            }
+        }.body()
     }
 
     override suspend fun likePost(id: Int): OkResponse {
-        return client.post("$baseUrl/posts/$id/like").body()
+        return client.post("$baseUrl/posts/$id/like") {
+            authToken?.let {
+                header(HttpHeaders.Authorization, "Bearer $it")
+            }
+        }.body()
     }
 
     override suspend fun unlikePost(id: Int): OkResponse {
-        return client.delete("$baseUrl/posts/$id/like").body()
+        return client.delete("$baseUrl/posts/$id/like") {
+            authToken?.let {
+                header(HttpHeaders.Authorization, "Bearer $it")
+            }
+        }.body()
     }
 
     override suspend fun addComment(postId: Int, text: String): OkResponse {
         return client.post("$baseUrl/posts/$postId/comment") {
             setBody(CommentRequest(text))
+            authToken?.let {
+                header(HttpHeaders.Authorization, "Bearer $it")
+            }
         }.body()
     }
 
     override suspend fun getComments(postId: Int): CommentsList {
-        return client.get("$baseUrl/posts/$postId/comments").body()
+        return client.get("$baseUrl/posts/$postId/comments") {
+            authToken?.let {
+                header(HttpHeaders.Authorization, "Bearer $it")
+            }
+        }.body()
     }
 
-    override suspend fun getUserProfile(id: Int): UserProfile {
-        return client.get("$baseUrl/profile/$id").body()
+    override suspend fun getUserProfile(id: Int): Profile {
+        return client.get("$baseUrl/profile/$id") {
+            authToken?.let {
+                header(HttpHeaders.Authorization, "Bearer $it")
+            }
+        }.body()
     }
 
     override suspend fun searchUsers(query: String): UserSearchResults {
         return client.get("$baseUrl/search") {
             parameter("q", query)
+            authToken?.let {
+                header(HttpHeaders.Authorization, "Bearer $it")
+            }
         }.body()
     }
 
@@ -152,7 +182,7 @@ class ApiClientImpl : ApiClient {
         return client.post("$baseUrl/friends/request") {
             setBody(FriendRequestRequest(toId))
             authToken?.let {
-                header("Authorization", "Bearer $it")
+                header(HttpHeaders.Authorization, "Bearer $it")
             }
             accept(ContentType.Application.Json)
         }.body()
@@ -162,7 +192,7 @@ class ApiClientImpl : ApiClient {
         return client.post("$baseUrl/friends/respond") {
             setBody(FriendResponseRequest(requestId, accepted))
             authToken?.let {
-                header("Authorization", "Bearer $it")
+                header(HttpHeaders.Authorization, "Bearer $it")
             }
             accept(ContentType.Application.Json)
         }.body()
@@ -171,7 +201,7 @@ class ApiClientImpl : ApiClient {
     override suspend fun getFriendRequests(): FriendRequests {
         return client.get("$baseUrl/friends/requests") {
             authToken?.let {
-                header("Authorization", "Bearer $it")
+                header(HttpHeaders.Authorization, "Bearer $it")
             }
             accept(ContentType.Application.Json)
         }.body()
@@ -180,7 +210,7 @@ class ApiClientImpl : ApiClient {
     override suspend fun getFriends(): FriendsList {
         return client.get("$baseUrl/friends") {
             authToken?.let {
-                header("Authorization", "Bearer $it")
+                header(HttpHeaders.Authorization, "Bearer $it")
             }
             accept(ContentType.Application.Json)
         }.body()

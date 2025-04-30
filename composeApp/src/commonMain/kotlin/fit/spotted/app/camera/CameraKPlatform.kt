@@ -31,13 +31,12 @@ interface CameraKPlatform {
     /**
      * Captures an image from the camera.
      * 
-     * @return Result containing the captured image bitmap or an error
+     * @return Result containing the captured image (bitmap and byteArray) or an error
      */
-    suspend fun captureImage(): Result<ImageBitmap>
+    suspend fun captureImage(): Result<CapturedImage>
 
     /**
      * Releases camera resources.
      */
     fun releaseResources()
 }
-

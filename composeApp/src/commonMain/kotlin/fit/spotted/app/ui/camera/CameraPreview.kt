@@ -16,6 +16,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fit.spotted.app.camera.Camera
+import fit.spotted.app.camera.CapturedImage
 
 /**
  * A composable that displays either the camera preview or a captured photo.
@@ -26,7 +27,7 @@ fun CameraPreview(
     photoData: ImageBitmap?,
     isVisible: Boolean,
     photoTaken: Boolean,
-    onPhotoCaptured: (ImageBitmap) -> Unit,
+    onPhotoCaptured: (CapturedImage) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -59,8 +60,8 @@ fun CameraPreview(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(0.dp)),
-                onPhotoCaptured = { bitmap ->
-                    onPhotoCaptured(bitmap)
+                onPhotoCaptured = { capturedImage ->
+                    onPhotoCaptured(capturedImage)
                 }
             )
         } else {

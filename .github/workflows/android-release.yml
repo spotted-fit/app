@@ -41,7 +41,7 @@ jobs:
       - name: Build Android app (APK)
         run: ./gradlew assembleRelease
         env:
-          BASE_URL: ${{ vars.BASE_URL || secrets.BASE_URL }}
+          BASE_URL: ${{ secrets.PROD_BASE_URL }}
 
       - name: Check APK exists
         run: |
