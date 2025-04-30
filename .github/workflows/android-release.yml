@@ -55,10 +55,15 @@ jobs:
         run: |
           APK_PATH=$(find composeApp/build/outputs/apk/release -name '*.apk' | head -n1)
           if [ -z "$APK_PATH" ]; then
-            echo "::error::No APK found in app/build/outputs/apk/release"
+n            echo "::error::No APK found in composeApp/build/outputs/apk/release"
             exit 1
           fi
-          echo "APK=$APK_PATH" >> $GITHUB_ENV
+          echo "APK_PATH=$APK_PATH" >> $GITHUB_ENV
+
+      - name: Normalize APK filename
+        run: |
+          cp "$APK_PATH" spotted.apk
+          echo "STANDARD_APK=spotted.apk" >> $GITHUB_ENV
 
       - name: Create or update GitHub Release
         uses: softprops/action-gh-release@v2
@@ -68,6 +73,6 @@ jobs:
           body: |
             Automated build for ${{ github.ref_name }}
             • Commit: ${{ github.sha }}
-          files: ${{ env.APK }}
+          files: ${{ env.STANDARD_APK }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
