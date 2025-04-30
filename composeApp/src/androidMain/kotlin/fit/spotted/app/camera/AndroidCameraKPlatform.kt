@@ -92,7 +92,6 @@ class AndroidCameraKPlatform : CameraKPlatform {
         currentCameraLens = when (currentCameraLens) {
             CameraLens.BACK -> CameraLens.FRONT
             CameraLens.FRONT -> CameraLens.BACK
-            else -> currentCameraLens
         }
     }
 
@@ -129,12 +128,17 @@ class AndroidCameraKPlatform : CameraKPlatform {
                 // Compress the image before returning
                 val compressedByteArray = compressImage(result.byteArray)
                 var bitmap = compressedByteArray.decodeToImageBitmap()
+                var finalByteArray = compressedByteArray
 
                 if (currentCameraLens == CameraLens.FRONT) {
                     bitmap = flipImageHorizontally(bitmap)
+                    // Convert the flipped bitmap back to a byte array
+                    val outputStream = ByteArrayOutputStream()
+                    bitmap.asAndroidBitmap().compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+                    finalByteArray = outputStream.toByteArray()
                 }
 
-                Result.success(CapturedImage(bitmap, compressedByteArray))
+                Result.success(CapturedImage(bitmap, finalByteArray))
             }
             is ImageCaptureResult.Error -> {
                 Result.failure(result.exception)

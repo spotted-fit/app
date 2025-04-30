@@ -142,8 +142,11 @@ class CameraScreen(
                                     modifier = Modifier
                                         .size(48.dp)
                                         .clip(CircleShape)
-                                        .background(Color.Black.copy(alpha = 0.7f))
-                                        .clickable(onClick = { viewModel.postWorkout() }),
+                                        .background(Color.Black.copy(alpha = if (viewModel.isPublishing) 0.4f else 0.7f))
+                                        .clickable(
+                                            enabled = !viewModel.isPublishing,
+                                            onClick = { viewModel.postWorkout() }
+                                        ),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(

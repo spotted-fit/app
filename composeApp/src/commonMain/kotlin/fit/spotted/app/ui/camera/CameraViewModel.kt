@@ -43,6 +43,9 @@ class CameraViewModel(private val apiClient: ApiClient) {
     var showPostAnimation by mutableStateOf(false)
     var postAnimationFinished by mutableStateOf(false)
 
+    // Publishing state
+    var isPublishing by mutableStateOf(false)
+
     /**
      * Formats the timer as MM:SS.
      */
@@ -112,6 +115,13 @@ class CameraViewModel(private val apiClient: ApiClient) {
             return
         }
 
+        // Prevent multiple publish actions
+        if (isPublishing) {
+            return
+        }
+
+        isPublishing = true
+
         val emojiName = selectedActivity.name
         val beforeBytes = beforeWorkoutPhotoBytes ?: return
         val afterBytes = afterWorkoutPhotoBytes ?: return
@@ -128,6 +138,7 @@ class CameraViewModel(private val apiClient: ApiClient) {
                 showPostAnimation = true
             } catch (_: Exception) {
                 // Error handling could be improved in a future update
+                isPublishing = false
             }
         }
     }
@@ -137,6 +148,7 @@ class CameraViewModel(private val apiClient: ApiClient) {
      */
     fun completePostAnimation() {
         postAnimationFinished = true
+        isPublishing = false
     }
 
     /**
@@ -157,6 +169,7 @@ class CameraViewModel(private val apiClient: ApiClient) {
         selectedActivity = activityTypes.first()
         showPostAnimation = false
         postAnimationFinished = false
+        isPublishing = false
         currentPhotoIndex = 0
     }
 }
