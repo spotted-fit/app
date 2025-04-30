@@ -23,6 +23,7 @@ interface ApiClient {
     // Posts
     suspend fun createPost(photo1: ByteArray, photo2: ByteArray, emoji: String? = null, text: String? = null): OkResponse
     suspend fun getPost(id: Int): GetPostResponse
+    suspend fun deletePost(id: Int): OkResponse
     suspend fun likePost(id: Int): OkResponse
     suspend fun unlikePost(id: Int): OkResponse
     suspend fun addComment(postId: Int, text: String): OkResponse
@@ -184,6 +185,18 @@ internal class ApiClientImpl : ApiClient {
      */
     override suspend fun unlikePost(id: Int): OkResponse {
         return client.delete("$baseUrl/posts/$id/like") {
+            addAuth()
+        }.body()
+    }
+
+    /**
+     * Deletes a post.
+     * 
+     * @param id The ID of the post to delete
+     * @return OkResponse if successful
+     */
+    override suspend fun deletePost(id: Int): OkResponse {
+        return client.delete("$baseUrl/posts/$id") {
             addAuth()
         }.body()
     }
