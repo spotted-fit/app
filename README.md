@@ -48,6 +48,14 @@ A **social**, **motivating**, and **visually engaging** platform for fitness ent
 
 ---
 
+## 📱 Android APK Downloads
+
+### Latest Release
+The latest Android APK is always available at a constant URL:
+```
+https://github.com/super-duper-gym/mobile-app/releases/download/latest/composeApp-release.apk
+```
+
 ## 🌐 API Configuration
 
 The application supports two environment modes for API configuration:
