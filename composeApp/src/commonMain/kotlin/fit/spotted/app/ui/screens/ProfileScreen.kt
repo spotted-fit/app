@@ -4,12 +4,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +29,7 @@ import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.api.models.PostDetailedData
 import fit.spotted.app.api.models.ProfilePost
 import fit.spotted.app.api.models.ProfileResponse
+import fit.spotted.app.emoji.ActivityType
 import fit.spotted.app.ui.components.PostDetailView
 import fit.spotted.app.ui.components.toUiComment
 import fit.spotted.app.ui.screens.Screen
@@ -33,9 +37,35 @@ import kotlinx.coroutines.launch
 import org.kodein.emoji.Emoji
 import org.kodein.emoji.people_body.person_activity.Running
 
+/**
+ * Screen that displays a user's profile, including their avatar, stats, and posts.
+ * 
+ * @property userId Optional ID of the user to display. If null, displays the current user's profile.
+ */
 class ProfileScreen(private val userId: Int? = null) : Screen {
 
     private val apiClient = ApiProvider.getApiClient()
+
+    // Default user ID for development/testing purposes
+    private val DEFAULT_USER_ID = 1
+
+    /**
+     * Formats a user ID into a display name.
+     * 
+     * TODO: Replace with actual username lookup in production code
+     * 
+     * @param userId The ID of the user
+     * @return A formatted display name
+     */
+    private fun formatUserName(userId: Int): String {
+        return "User $userId"
+    }
+
+    // Enum to track the current view mode
+    private enum class ViewMode {
+        GRID,
+        TIKTOK
+    }
 
     @Composable
     override fun Content() {
@@ -45,6 +75,16 @@ class ProfileScreen(private val userId: Int? = null) : Screen {
         var profileData by remember { mutableStateOf<ProfileResponse?>(null) }
         var selectedPost: PostDetailedData? by remember { mutableStateOf<PostDetailedData?>(null) }
 
+        // State for view mode
+        var viewMode by remember { mutableStateOf(ViewMode.GRID) }
+
+        // State for detailed post data (for TikTok view)
+        var detailedPosts by remember { mutableStateOf<List<PostDetailedData>>(emptyList()) }
+        var isLoadingDetailedPosts by remember { mutableStateOf(false) }
+
+        // State to track the selected post index in TikTok view
+        var selectedPostIndex by remember { mutableStateOf(0) }
+
         // Coroutine scope for API calls
         val coroutineScope = rememberCoroutineScope()
 
@@ -52,8 +92,9 @@ class ProfileScreen(private val userId: Int? = null) : Screen {
         LaunchedEffect(userId) {
             coroutineScope.launch {
                 try {
-                    // Use userId if provided, otherwise use current user's profile
-                    val id = userId ?: 1 // Default to user ID 1 if not specified
+                    // Use userId if provided, otherwise use the default user ID
+                    // In a production app, this would come from a user session or auth service
+                    val id = userId ?: DEFAULT_USER_ID
                     val response = apiClient.getUserProfile(id)
 
                     if (response.result == "ok" && response.response != null) {
@@ -66,6 +107,40 @@ class ProfileScreen(private val userId: Int? = null) : Screen {
                 } catch (e: Exception) {
                     errorMessage = e.message ?: "An error occurred"
                     isLoading = false
+                }
+            }
+        }
+
+        // Function to load detailed post data for TikTok view
+        fun loadDetailedPosts(selectedPostId: Int? = null) {
+            if (profileData?.posts.isNullOrEmpty()) return
+
+            isLoadingDetailedPosts = true
+            coroutineScope.launch {
+                val posts = mutableListOf<PostDetailedData>()
+
+                profileData?.posts?.forEach { post ->
+                    try {
+                        val request = apiClient.getPost(post.id)
+                        if (request.result == "ok" && request.response != null) {
+                            posts.add(request.response)
+
+                            // If this is the selected post, update the index
+                            if (selectedPostId != null && post.id == selectedPostId) {
+                                selectedPostIndex = posts.size - 1
+                            }
+                        }
+                    } catch (e: Exception) {
+                        // Skip failed posts
+                    }
+                }
+
+                detailedPosts = posts
+                isLoadingDetailedPosts = false
+
+                // Switch to TikTok view after loading posts
+                if (posts.isNotEmpty()) {
+                    viewMode = ViewMode.TIKTOK
                 }
             }
         }
@@ -97,67 +172,117 @@ class ProfileScreen(private val userId: Int? = null) : Screen {
         }
 
         profileData?.let { profile ->
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                // Profile header
-                ProfileHeader(profile)
+            when (viewMode) {
+                ViewMode.GRID -> {
+                    Column(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        // Profile header
+                        ProfileHeader(profile)
 
-                // Photos grid
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(4.dp)
-                ) {
-                    items(profile.posts) { post ->
-                        PhotoGridItem(
-                            post = post,
-                            onClick = {
-                                coroutineScope.launch {
-                                    try {
-                                        val request = apiClient.getPost(post.id)
-                                        if(request.result == "ok" && request.response != null) {
-                                            selectedPost = request.response
-                                        } else {
-                                            println("Failed to get post ${post.id}")
-                                        }
-                                    } catch (e: Exception) {
-                                        // Handle error
-                                        errorMessage = e.message ?: "Failed to load post"
+
+                        // Photos grid
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(3),
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(4.dp)
+                        ) {
+                            items(profile.posts) { post ->
+                                PhotoGridItem(
+                                    post = post,
+                                    onClick = {
+                                        // Load detailed posts and switch to TikTok view
+                                        loadDetailedPosts(post.id)
                                     }
+                                )
+                            }
+                        }
+                    }
+
+                }
+
+                ViewMode.TIKTOK -> {
+                    // TikTok-like full-screen post view
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        // Back button to return to grid view
+                        Box(
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.7f))
+                                .clickable { viewMode = ViewMode.GRID }
+                                .align(Alignment.TopStart),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back to Grid",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        if (isLoadingDetailedPosts) {
+                            // Show loading indicator while fetching detailed posts
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        } else if (detailedPosts.isEmpty()) {
+                            // Show message if no posts are available
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "No posts to display",
+                                    color = MaterialTheme.colors.onBackground
+                                )
+                            }
+                        } else {
+                            // Vertical pager for TikTok-like scrolling
+                            val pagerState = rememberPagerState(
+                                initialPage = selectedPostIndex,
+                                pageCount = { detailedPosts.size }
+                            )
+
+                            VerticalPager(
+                                state = pagerState,
+                                modifier = Modifier.fillMaxSize()
+                            ) { page ->
+                                val post = detailedPosts[page]
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Color.Black)
+                                ) {
+                                    PostDetailView(
+                                        beforeImageUrl = post.photo1,
+                                        afterImageUrl = post.photo2 ?: post.photo1,
+                                        workoutDuration = formatTimestamp(post.createdAt),
+                                        activityType = ActivityType.valueOf(post.emoji ?: "RUNNING"),
+                                        userName = formatUserName(post.userId),
+                                        likes = post.likes,
+                                        comments = post.comments.map { it.toUiComment { id -> formatUserName(id) } },
+                                        onClose = null // No close button needed in pager view
+                                    )
                                 }
                             }
-                        )
-                    }
-                }
-            }
-
-            // Show full post detail only when a post is selected
-            selectedPost?.let { post ->
-                Dialog(
-                    onDismissRequest = { selectedPost = null }
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black)
-                    ) {
-                        PostDetailView(
-                            beforeImageUrl = post.photo1,
-                            afterImageUrl = post.photo2 ?: post.photo1,
-                            workoutDuration = formatTimestamp(post.createdAt),
-                            activityType = Emoji.Running, // Use actual activity type
-                            userName = "User ${post.userId}",
-                            likes = post.likes,
-                            comments = post.comments.map { it.toUiComment { id -> "User $id" } },
-                            onClose = { selectedPost = null }
-                        )
+                        }
                     }
                 }
             }
         }
     }
 
+    /**
+     * Displays the user's profile header with avatar and stats.
+     *
+     * @param profile The user profile data to display
+     */
     @Composable
     private fun ProfileHeader(profile: ProfileResponse) {
         Row(
@@ -196,7 +321,7 @@ class ProfileScreen(private val userId: Int? = null) : Screen {
             // Profile info
             Column {
                 Text(
-                    text = "User ${profile.id}", // Use user ID instead of username
+                    text = formatUserName(profile.id),
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
@@ -222,6 +347,12 @@ class ProfileScreen(private val userId: Int? = null) : Screen {
         Spacer(modifier = Modifier.height(16.dp))
     }
 
+    /**
+     * Displays a single post thumbnail in the profile grid.
+     *
+     * @param post The post data to display
+     * @param onClick Callback for when the thumbnail is clicked
+     */
     @Composable
     private fun PhotoGridItem(post: ProfilePost, onClick: () -> Unit) {
         Box(
@@ -240,8 +371,15 @@ class ProfileScreen(private val userId: Int? = null) : Screen {
     }
 
 
+    /**
+     * Formats a timestamp into a human-readable duration string.
+     *
+     * @param timestamp The timestamp in milliseconds
+     * @return Formatted string in the format "HH:MM:SS" or "MM:SS"
+     */
     private fun formatTimestamp(timestamp: Long): String {
-        // Simple timestamp formatting - in a real app, you'd use a proper date formatter
+        // Basic timestamp formatting for development purposes
+        // TODO: Replace with DateTimeFormatter or similar in production code
         val seconds = (timestamp / 1000) % 60
         val minutes = (timestamp / (1000 * 60)) % 60
         val hours = timestamp / (1000 * 60 * 60)

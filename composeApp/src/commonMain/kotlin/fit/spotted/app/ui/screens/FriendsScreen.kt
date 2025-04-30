@@ -24,28 +24,6 @@ class FriendsScreen : Screen {
     // API client
     private val apiClient = ApiProvider.getApiClient()
 
-    // Mock data for friends (used as fallback)
-    private val mockFriends = listOf(
-        Friend("1", "John Doe", "Running enthusiast", true),
-        Friend("2", "Jane Smith", "Yoga instructor", true),
-        Friend("3", "Mike Johnson", "Cycling pro", true),
-        Friend("4", "Sarah Williams", "Fitness coach", true)
-    )
-
-    // Mock data for friend requests
-    private val mockFriendRequests = listOf(
-        Friend("5", "Alex Brown", "Basketball player", false),
-        Friend("6", "Emily Davis", "Swimmer", false)
-    )
-
-    // Mock data for search results
-    private val mockSearchResults = listOf(
-        Friend("7", "David Wilson", "Tennis player", false),
-        Friend("8", "Olivia Moore", "Dancer", false),
-        Friend("9", "James Taylor", "Hiker", false),
-        Friend("10", "Sophia Anderson", "Pilates instructor", false)
-    )
-
     @Composable
     override fun Content() {
         var searchQuery by remember { mutableStateOf("") }
@@ -189,9 +167,9 @@ class FriendsScreen : Screen {
 
             // Content based on tab and search state
             when {
-                isSearching -> SearchResultsList(searchQuery, searchResults ?: mockSearchResults)
-                currentTab == 0 -> FriendsList(friends ?: mockFriends)
-                currentTab == 1 -> FriendRequestsList(friendRequests ?: mockFriendRequests)
+                isSearching -> SearchResultsList(searchQuery, searchResults ?: emptyList())
+                currentTab == 0 -> FriendsList(friends ?: emptyList())
+                currentTab == 1 -> FriendRequestsList(friendRequests ?: emptyList())
             }
         }
     }

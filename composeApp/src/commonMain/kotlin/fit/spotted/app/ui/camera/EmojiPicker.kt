@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import org.kodein.emoji.Emoji
+import fit.spotted.app.emoji.ActivityType
 import org.kodein.emoji.compose.WithPlatformEmoji
 
 /**
@@ -41,9 +41,9 @@ import org.kodein.emoji.compose.WithPlatformEmoji
  */
 @Composable
 fun EmojiPicker(
-    activityTypes: List<Emoji>,
-    selectedActivity: Emoji,
-    onActivitySelected: (Emoji) -> Unit,
+    activityTypes: List<ActivityType>,
+    selectedActivity: ActivityType,
+    onActivitySelected: (ActivityType) -> Unit,
     onDismiss: () -> Unit
 ) {
     // Animation for the popup appearance
@@ -159,7 +159,7 @@ fun EmojiPicker(
                             contentAlignment = Alignment.Center
                         ) {
                             WithPlatformEmoji(
-                                emoji.toString()
+                                emoji.emoji
                             )
                             { text, inlineContent ->
                                 Text(

@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import fit.spotted.app.api.models.CommentData
-import org.kodein.emoji.Emoji
+import fit.spotted.app.emoji.ActivityType
 import org.kodein.emoji.compose.WithPlatformEmoji
 
 /**
@@ -46,7 +46,7 @@ fun PostDetailView(
 
     // Common parameters
     workoutDuration: String,
-    activityType: Emoji,
+    activityType: ActivityType,
     userName: String,
 
     // Optional parameters with default values
@@ -199,7 +199,7 @@ fun CommentData.toUiComment(usernameProvider: (Int) -> String): Comment {
 private fun PostDetailViewImpl(
     // Common parameters
     workoutDuration: String,
-    activityType: Emoji,
+    activityType: ActivityType,
     userName: String,
 
     // Optional parameters with default values
@@ -303,7 +303,7 @@ private fun PostDetailViewImpl(
                                 contentAlignment = Alignment.Center
                             ) {
                                 WithPlatformEmoji(
-                                    activityType.toString()
+                                    activityType.emoji
                                 ){ emojiString, inlineContent ->
                                     Text(
                                         text = emojiString,
@@ -533,7 +533,7 @@ fun PostDetailView(
 
     // Common parameters
     workoutDuration: String,
-    activityType: Emoji,
+    activityType: ActivityType,
     userName: String,
 
     // Optional parameters with default values
