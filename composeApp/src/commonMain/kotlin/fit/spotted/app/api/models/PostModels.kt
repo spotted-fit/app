@@ -20,6 +20,7 @@ import kotlinx.serialization.Serializable
 data class PostDetailedData(
     val id: Int,
     val userId: Int,
+    val username: String,
     val photo1: String,
     val photo2: String?,
     val text: String?,
@@ -67,6 +68,7 @@ data class ProfilePost(
 data class CommentData(
     val id: Int,
     val userId: Int,
+    val username: String,
     val text: String,
     val createdAt: Long
 )
@@ -85,3 +87,5 @@ typealias CommentsList = ApiResponse<List<CommentData>>
 data class CommentRequest(
     val text: String
 )
+
+typealias Feed = ApiResponse<List<PostDetailedData>>

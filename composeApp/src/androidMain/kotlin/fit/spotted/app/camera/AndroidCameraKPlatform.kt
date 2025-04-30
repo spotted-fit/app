@@ -1,5 +1,7 @@
 package fit.spotted.app.camera
 
+import android.graphics.Bitmap
+import android.graphics.Matrix
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -7,6 +9,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import com.kashif.cameraK.controller.CameraController
 import com.kashif.cameraK.enums.CameraLens
 import com.kashif.cameraK.enums.Directory
@@ -23,6 +27,30 @@ import org.jetbrains.compose.resources.decodeToImageBitmap
  */
 class AndroidCameraKPlatform : CameraKPlatform {
     private var cameraController: CameraController? = null
+    private var currentCameraLens: CameraLens = CameraLens.BACK
+
+    /**
+     * Flips an ImageBitmap horizontally.
+     * 
+     * @param bitmap The ImageBitmap to flip
+     * @return A new ImageBitmap that is flipped horizontally
+     */
+    private fun flipImageHorizontally(bitmap: ImageBitmap): ImageBitmap {
+        val androidBitmap = bitmap.asAndroidBitmap()
+        val matrix = Matrix().apply {
+            preScale(-1f, 1f)
+        }
+        val flippedBitmap = Bitmap.createBitmap(
+            androidBitmap,
+            0,
+            0,
+            androidBitmap.width,
+            androidBitmap.height,
+            matrix,
+            true
+        )
+        return flippedBitmap.asImageBitmap()
+    }
 
     @Composable
     override fun CreateCameraPreview(
@@ -32,16 +60,17 @@ class AndroidCameraKPlatform : CameraKPlatform {
     ) {
         val cameraControllerState = remember { mutableStateOf<CameraController?>(null) }
 
+        // Set the current camera lens based on the cameraFacing parameter
+        currentCameraLens = when (cameraFacing) {
+            CameraFacing.BACK -> CameraLens.BACK
+            CameraFacing.FRONT -> CameraLens.FRONT
+        }
+
         Box(modifier = modifier) {
             CameraPreview(
                 modifier = Modifier.fillMaxSize(),
                 cameraConfiguration = {
-                    setCameraLens(
-                        when (cameraFacing) {
-                            CameraFacing.BACK -> CameraLens.BACK
-                            CameraFacing.FRONT -> CameraLens.FRONT
-                        }
-                    )
+                    setCameraLens(currentCameraLens)
                     setFlashMode(FlashMode.OFF)
                     setImageFormat(ImageFormat.PNG)
                     setDirectory(Directory.PICTURES)
@@ -58,6 +87,12 @@ class AndroidCameraKPlatform : CameraKPlatform {
 
     override fun toggleCameraLens() {
         cameraController?.toggleCameraLens()
+        // Update the current camera lens
+        currentCameraLens = when (currentCameraLens) {
+            CameraLens.BACK -> CameraLens.FRONT
+            CameraLens.FRONT -> CameraLens.BACK
+            else -> currentCameraLens
+        }
     }
 
     @OptIn(ExperimentalResourceApi::class)
@@ -68,7 +103,13 @@ class AndroidCameraKPlatform : CameraKPlatform {
 
         return when (val result = controller.takePicture()) {
             is ImageCaptureResult.Success -> {
-                val bitmap = result.byteArray.decodeToImageBitmap()
+                var bitmap = result.byteArray.decodeToImageBitmap()
+
+                // If the current camera is the front camera, flip the image horizontally
+                if (currentCameraLens == CameraLens.FRONT) {
+                    bitmap = flipImageHorizontally(bitmap)
+                }
+
                 Result.success(CapturedImage(bitmap, result.byteArray))
             }
             is ImageCaptureResult.Error -> {

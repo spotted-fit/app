@@ -70,6 +70,7 @@ kotlin {
             implementation(libs.ktor.client.js)
         }
         commonMain.dependencies {
+            implementation(libs.kotlinx.datetime)
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor3)
 

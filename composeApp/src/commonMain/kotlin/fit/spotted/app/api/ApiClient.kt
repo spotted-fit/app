@@ -39,6 +39,8 @@ interface ApiClient {
     suspend fun respondToFriendRequest(requestId: Int, accepted: Boolean): FriendResponseResult
     suspend fun getFriendRequests(): FriendRequests
     suspend fun getFriends(): FriendsList
+
+    suspend fun getFeed(): Feed
 }
 
 /**
@@ -282,6 +284,12 @@ internal class ApiClientImpl : ApiClient {
      */
     override suspend fun getFriends(): FriendsList {
         return client.get("$baseUrl/friends") {
+            addAuth()
+        }.body()
+    }
+
+    override suspend fun getFeed(): Feed {
+        return client.get("$baseUrl/feed") {
             addAuth()
         }.body()
     }

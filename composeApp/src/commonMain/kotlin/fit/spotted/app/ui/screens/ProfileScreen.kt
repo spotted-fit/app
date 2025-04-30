@@ -1,3 +1,5 @@
+package fit.spotted.app.ui.screens
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,7 +14,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,7 +25,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import coil3.compose.AsyncImage
 import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.api.models.PostDetailedData
@@ -31,11 +32,8 @@ import fit.spotted.app.api.models.ProfilePost
 import fit.spotted.app.api.models.ProfileResponse
 import fit.spotted.app.emoji.ActivityType
 import fit.spotted.app.ui.components.PostDetailView
-import fit.spotted.app.ui.components.toUiComment
-import fit.spotted.app.ui.screens.Screen
+import fit.spotted.app.utils.DateTimeUtils
 import kotlinx.coroutines.launch
-import org.kodein.emoji.Emoji
-import org.kodein.emoji.people_body.person_activity.Running
 
 /**
  * Screen that displays a user's profile, including their avatar, stats, and posts.
@@ -45,21 +43,6 @@ import org.kodein.emoji.people_body.person_activity.Running
 class ProfileScreen(private val userId: Int? = null) : Screen {
 
     private val apiClient = ApiProvider.getApiClient()
-
-    // Default user ID for development/testing purposes
-    private val DEFAULT_USER_ID = 1
-
-    /**
-     * Formats a user ID into a display name.
-     * 
-     * TODO: Replace with actual username lookup in production code
-     * 
-     * @param userId The ID of the user
-     * @return A formatted display name
-     */
-    private fun formatUserName(userId: Int): String {
-        return "User $userId"
-    }
 
     // Enum to track the current view mode
     private enum class ViewMode {
@@ -73,7 +56,6 @@ class ProfileScreen(private val userId: Int? = null) : Screen {
         var isLoading by remember { mutableStateOf(true) }
         var errorMessage by remember { mutableStateOf<String?>(null) }
         var profileData by remember { mutableStateOf<ProfileResponse?>(null) }
-        var selectedPost: PostDetailedData? by remember { mutableStateOf<PostDetailedData?>(null) }
 
         // State for view mode
         var viewMode by remember { mutableStateOf(ViewMode.GRID) }
@@ -130,7 +112,7 @@ class ProfileScreen(private val userId: Int? = null) : Screen {
                                 selectedPostIndex = posts.size - 1
                             }
                         }
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         // Skip failed posts
                     }
                 }
@@ -216,7 +198,7 @@ class ProfileScreen(private val userId: Int? = null) : Screen {
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.ArrowBack,
+                                imageVector = Icons.AutoMirrored.Default.ArrowBack,
                                 contentDescription = "Back to Grid",
                                 tint = Color.White,
                                 modifier = Modifier.size(24.dp)
@@ -264,10 +246,30 @@ class ProfileScreen(private val userId: Int? = null) : Screen {
                                         afterImageUrl = post.photo2 ?: post.photo1,
                                         workoutDuration = formatTimestamp(post.createdAt),
                                         activityType = ActivityType.valueOf(post.emoji ?: "RUNNING"),
-                                        userName = formatUserName(post.userId),
+                                        userName = post.username,
                                         likes = post.likes,
-                                        comments = post.comments.map { it.toUiComment { id -> formatUserName(id) } },
-                                        onClose = null // No close button needed in pager view
+                                        comments = post.comments,
+                                        onClose = { viewMode = ViewMode.GRID }, // Add close button to exit TikTok view
+                                        postId = post.id,
+                                        onAddComment = { commentText ->
+                                            coroutineScope.launch {
+                                                try {
+                                                    val response = apiClient.addComment(post.id, commentText)
+                                                    if (response.result == "ok") {
+                                                        // Refresh the post to show the new comment
+                                                        val updatedPost = apiClient.getPost(post.id)
+                                                        if (updatedPost.result == "ok" && updatedPost.response != null) {
+                                                            // Update the post in the list
+                                                            detailedPosts = detailedPosts.map { 
+                                                                if (it.id == post.id) updatedPost.response else it 
+                                                            }
+                                                        }
+                                                    }
+                                                } catch (e: Exception) {
+                                                    // Handle error
+                                                }
+                                            }
+                                        }
                                     )
                                 }
                             }
@@ -321,7 +323,7 @@ class ProfileScreen(private val userId: Int? = null) : Screen {
             // Profile info
             Column {
                 Text(
-                    text = formatUserName(profile.id),
+                    text = profile.username,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
@@ -372,26 +374,17 @@ class ProfileScreen(private val userId: Int? = null) : Screen {
 
 
     /**
-     * Formats a timestamp into a human-readable duration string.
+     * Formats a timestamp into a human-readable string in Instagram style.
      *
      * @param timestamp The timestamp in milliseconds
-     * @return Formatted string in the format "HH:MM:SS" or "MM:SS"
+     * @return Formatted string in Instagram style (e.g., "just now", "5m ago", "2h ago", "3d ago", "2w ago", or "Jan 15")
      */
     private fun formatTimestamp(timestamp: Long): String {
-        // Basic timestamp formatting for development purposes
-        // TODO: Replace with DateTimeFormatter or similar in production code
-        val seconds = (timestamp / 1000) % 60
-        val minutes = (timestamp / (1000 * 60)) % 60
-        val hours = timestamp / (1000 * 60 * 60)
+        return DateTimeUtils.formatInstagramStyle(timestamp)
+    }
 
-        val paddedSeconds = seconds.toString().padStart(2, '0')
-        val paddedMinutes = minutes.toString().padStart(2, '0')
-        val paddedHours = hours.toString().padStart(2, '0')
-
-        return if (hours > 0) {
-            "$paddedHours:$paddedMinutes:$paddedSeconds"
-        } else {
-            "$paddedMinutes:$paddedSeconds"
-        }
+    companion object {
+        // Default user ID for development/testing purposes
+        private const val DEFAULT_USER_ID = 0
     }
 }
