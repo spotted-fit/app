@@ -2,18 +2,6 @@ package fit.spotted.app.api.models
 
 import kotlinx.serialization.Serializable
 
-// User profile model
-@Serializable
-data class UserProfileData(
-    val id: Int,
-    val username: String? = null,
-    val avatar: String? = null,
-    val friendsCount: Int,
-    val posts: List<PostData> = emptyList()
-)
-
-typealias UserProfile = ApiResponse<UserProfileData>
-
 // User search result model
 @Serializable
 data class UserSearchResultData(
@@ -23,3 +11,14 @@ data class UserSearchResultData(
 )
 
 typealias UserSearchResults = ApiResponse<List<UserSearchResultData>>
+
+// Profile response model
+@Serializable
+data class ProfileResponse(
+    val id: Int,
+    val avatar: String?,
+    val friendsCount: Int,
+    val posts: List<ProfilePost>
+)
+
+typealias Profile = ApiResponse<ProfileResponse>

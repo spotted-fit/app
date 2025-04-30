@@ -25,7 +25,7 @@ interface Camera {
     @Composable
     fun Preview(
         modifier: Modifier,
-        onPhotoCaptured: (ImageBitmap) -> Unit
+        onPhotoCaptured: (CapturedImage) -> Unit
     )
 
     /**

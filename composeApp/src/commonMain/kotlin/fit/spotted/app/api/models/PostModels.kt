@@ -2,24 +2,34 @@ package fit.spotted.app.api.models
 
 import kotlinx.serialization.Serializable
 
-// Post models
+// Post preview model
 @Serializable
-data class PostData(
+data class PostDetailedData(
     val id: Int,
     val userId: Int,
     val photo1: String,
-    val photo2: String? = null,
-    val text: String? = null,
-    val emoji: String? = null,
+    val photo2: String?,
+    val text: String?,
+    val emoji: String?,
     val createdAt: Long,
     val likes: Int,
     val isLikedByMe: Boolean,
-    val comments: List<CommentData> = emptyList()
+    val comments: List<CommentData>
 )
 
-typealias Post = ApiResponse<PostData>
+typealias GetPostResponse = ApiResponse<PostDetailedData>
 
-// Comment models
+// Profile Post model
+@Serializable
+data class ProfilePost(
+    val id: Int,
+    val photo1: String,
+    val photo2: String?,
+    val emoji: String?,
+    val text: String?,
+    val createdAt: Long
+)
+
 @Serializable
 data class CommentData(
     val id: Int,
@@ -28,7 +38,6 @@ data class CommentData(
     val createdAt: Long
 )
 
-typealias Comment = CommentData
 typealias CommentsList = ApiResponse<List<CommentData>>
 
 // Request models

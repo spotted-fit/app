@@ -4,6 +4,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
+import fit.spotted.app.api.ApiClient
+import fit.spotted.app.camera.CapturedImage
+import fit.spotted.app.utils.ImageUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import org.kodein.emoji.Emoji
 import org.kodein.emoji.activities.sport.Basketball
 import org.kodein.emoji.activities.sport.BoxingGlove
@@ -15,7 +22,9 @@ import org.kodein.emoji.travel_places.transport_ground.Bicycle
 /**
  * ViewModel for the camera screen that manages all state.
  */
-class CameraViewModel {
+class CameraViewModel(private val apiClient: ApiClient) {
+    // Create a CoroutineScope for this ViewModel
+    private val viewModelScope = CoroutineScope(Dispatchers.Main)
     // Activity types - iOS-style emojis with more variety
     val activityTypes = listOf(
         Emoji.Running,
@@ -31,6 +40,11 @@ class CameraViewModel {
     var photoTaken by mutableStateOf(false)
     var showEmojiPicker by mutableStateOf(false)
     var photoData by mutableStateOf<ImageBitmap?>(null)
+
+    // Photo byte arrays
+    var currentPhotoBytes: ByteArray? = null
+    private var beforeWorkoutPhotoBytes: ByteArray? = null
+    private var afterWorkoutPhotoBytes: ByteArray? = null
 
     // Before/after workout photos
     var beforeWorkoutPhoto by mutableStateOf<ImageBitmap?>(null)
@@ -66,9 +80,21 @@ class CameraViewModel {
             if (!isAfterWorkoutMode) {
                 // First photo (before workout)
                 println("Before workout photo captured!")
+                println("Debug - currentPhotoBytes before assignment: ${currentPhotoBytes != null}")
+
+                // Store the before workout photo
                 beforeWorkoutPhoto = photoData
+                currentPhotoBytes?.let { bytes ->
+                    beforeWorkoutPhotoBytes = bytes.copyOf()
+                }
+
+                println("Debug - beforeWorkoutPhoto after assignment: ${beforeWorkoutPhoto != null}")
+                println("Debug - beforeWorkoutPhotoBytes after assignment: ${beforeWorkoutPhotoBytes != null}")
+
+                // Reset state for next photo
                 photoTaken = false
                 photoData = null
+                currentPhotoBytes = null
                 isAfterWorkoutMode = true
 
                 // Start the timer
@@ -76,7 +102,16 @@ class CameraViewModel {
                 isTimerRunning = true
             } else {
                 // Store the after workout photo
+                println("After workout photo captured!")
+                println("Debug - currentPhotoBytes before assignment: ${currentPhotoBytes != null}")
+
                 afterWorkoutPhoto = photoData
+                currentPhotoBytes?.let { bytes ->
+                    afterWorkoutPhotoBytes = bytes.copyOf()
+                }
+
+                println("Debug - afterWorkoutPhoto after assignment: ${afterWorkoutPhoto != null}")
+                println("Debug - afterWorkoutPhotoBytes after assignment: ${afterWorkoutPhotoBytes != null}")
 
                 // Stop the timer
                 isTimerRunning = false
@@ -85,6 +120,7 @@ class CameraViewModel {
                 showPreview = true
                 photoTaken = false
                 photoData = null
+                currentPhotoBytes = null
             }
         }
     }
@@ -101,7 +137,42 @@ class CameraViewModel {
      * Handles posting a workout.
      */
     fun postWorkout() {
-        showPostAnimation = true
+        // Debug logging to see what's happening
+        println("Debug - beforeWorkoutPhoto: ${beforeWorkoutPhoto != null}")
+        println("Debug - afterWorkoutPhoto: ${afterWorkoutPhoto != null}")
+        println("Debug - beforeWorkoutPhotoBytes: ${beforeWorkoutPhotoBytes != null}")
+        println("Debug - afterWorkoutPhotoBytes: ${afterWorkoutPhotoBytes != null}")
+
+        // Check if we have both photos and their byte arrays
+        if (beforeWorkoutPhoto == null || afterWorkoutPhoto == null ||
+            beforeWorkoutPhotoBytes == null || afterWorkoutPhotoBytes == null) {
+            // Handle error case - both photos are required
+            println("Debug - Exiting postWorkout early because one of the required properties is null")
+            return
+        }
+
+        // Get emoji as string
+        val emojiString = selectedActivity.toString()
+
+        // Launch coroutine to call API
+        viewModelScope.launch {
+            try {
+                // Call API to create post
+                val response = apiClient.createPost(
+                    photo1 = beforeWorkoutPhotoBytes!!,
+                    photo2 = afterWorkoutPhotoBytes!!,
+                    emoji = emojiString,
+                    text = "" // No text description for now
+                )
+
+                // Show success animation
+                showPostAnimation = true
+            } catch (e: Exception) {
+                // Handle error
+                println("Error creating post: ${e.message}")
+                // We could show an error message to the user here
+            }
+        }
     }
 
     /**
@@ -117,8 +188,11 @@ class CameraViewModel {
     fun resetToStart() {
         photoTaken = false
         photoData = null
+        currentPhotoBytes = null
         beforeWorkoutPhoto = null
+        beforeWorkoutPhotoBytes = null
         afterWorkoutPhoto = null
+        afterWorkoutPhotoBytes = null
         isAfterWorkoutMode = false
         showPreview = false
         seconds = 0
@@ -127,5 +201,12 @@ class CameraViewModel {
         showPostAnimation = false
         postAnimationFinished = false
         currentPhotoIndex = 0
+    }
+
+    /**
+     * Cleans up resources when the ViewModel is no longer needed.
+     */
+    fun onCleared() {
+        viewModelScope.cancel()
     }
 }

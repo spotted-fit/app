@@ -98,12 +98,12 @@ class LoginScreen(
             if (isLogin) {
                 LoginForm(
                     isLoading = isLoading,
-                    onLoginSubmit = { email, password, username ->
+                    onLoginSubmit = { password, username ->
                         errorMessage = null
                         isLoading = true
                         coroutineScope.launch {
                             try {
-                                val response = apiClient.login(email, password, username)
+                                val response = apiClient.login(password, username)
                                 if (response.result == "ok") {
                                     onLogin(username)
                                 } else {
@@ -146,9 +146,8 @@ class LoginScreen(
     @Composable
     private fun LoginForm(
         isLoading: Boolean = false,
-        onLoginSubmit: (email: String, password: String, username: String) -> Unit = { _, _, _ -> }
+        onLoginSubmit: (password: String, username: String) -> Unit = { _, _ -> }
     ) {
-        var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
         var username by remember { mutableStateOf("") }
 
@@ -170,23 +169,6 @@ class LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp)
-            )
-
-            // Email field
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Email,
-                        contentDescription = "Email"
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
 
             // Password field
@@ -212,12 +194,12 @@ class LoginScreen(
             // Login button
             Button(
                 onClick = { 
-                    onLoginSubmit(email, password, username)
+                    onLoginSubmit(password, username)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                enabled = !isLoading && email.isNotBlank() && password.isNotBlank() && username.isNotBlank()
+                enabled = !isLoading && password.isNotBlank() && username.isNotBlank()
             ) {
                 Text("Login")
             }
