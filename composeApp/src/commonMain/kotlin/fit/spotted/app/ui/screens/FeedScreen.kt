@@ -19,6 +19,7 @@ import fit.spotted.app.api.models.PostDetailedData
 import fit.spotted.app.emoji.ActivityType
 import fit.spotted.app.ui.components.PostDetailView
 import fit.spotted.app.utils.DateTimeUtils
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -115,7 +116,9 @@ class FeedScreen : Screen {
                     userName = post.username,
                     likes = post.likes,
                     comments = post.comments,
+                    isLikedByMe = post.isLikedByMe,
                     postId = post.id,
+                    apiClient = apiClient,
                     onAddComment = { commentText ->
                         coroutineScope.launch {
                             try {
@@ -128,6 +131,24 @@ class FeedScreen : Screen {
                                         posts = posts.map { 
                                             if (it.id == post.id) updatedPost.response else it 
                                         }
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                // Handle error
+                            }
+                        }
+                    },
+                    onLikeStateChanged = { postId, isLiked ->
+                        // Refresh the post data when like state changes
+                        coroutineScope.launch {
+                            try {
+                                // Give the API a moment to process the like/unlike
+                                delay(300)
+                                val updatedPost = apiClient.getPost(postId)
+                                if (updatedPost.result == "ok" && updatedPost.response != null) {
+                                    // Update the post in the list
+                                    posts = posts.map { 
+                                        if (it.id == postId) updatedPost.response else it 
                                     }
                                 }
                             } catch (e: Exception) {

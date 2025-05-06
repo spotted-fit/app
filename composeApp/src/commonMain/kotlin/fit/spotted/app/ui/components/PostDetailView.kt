@@ -28,8 +28,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import fit.spotted.app.api.ApiClient
 import fit.spotted.app.api.models.CommentData
 import fit.spotted.app.emoji.ActivityType
+import kotlinx.coroutines.launch
 import org.kodein.emoji.compose.WithPlatformEmoji
 
 /**
@@ -54,6 +56,7 @@ fun PostDetailView(
     // Likes and comments
     likes: Int = 0,
     comments: List<CommentData> = emptyList(),
+    isLikedByMe: Boolean = false,
 
     // Action buttons (for backward compatibility)
     actionButtons: @Composable ColumnScope.() -> Unit = {},
@@ -70,7 +73,13 @@ fun PostDetailView(
     onDeletePost: (() -> Unit)? = null,
 
     // Post ID for comment functionality
-    postId: Int? = null
+    postId: Int? = null,
+
+    // API client for like functionality
+    apiClient: ApiClient? = null,
+
+    // Callback for when a post is liked/unliked
+    onLikeStateChanged: ((postId: Int, isLiked: Boolean) -> Unit)? = null
 ) {
     PostDetailViewImpl(
         workoutDuration = workoutDuration,
@@ -80,12 +89,15 @@ fun PostDetailView(
         initialShowAfterImage = initialShowAfterImage,
         likes = likes,
         comments = comments,
+        isLikedByMe = isLikedByMe,
         actionButtons = actionButtons,
         onClose = onClose,
         onActivityTypeClick = onActivityTypeClick,
         onAddComment = onAddComment,
         onDeletePost = onDeletePost,
-        postId = postId
+        postId = postId,
+        apiClient = apiClient,
+        onLikeStateChanged = onLikeStateChanged
     ) { showAfterImage, imageTransition ->
         // URL-based images
         Box(
@@ -201,6 +213,7 @@ private fun PostDetailViewImpl(
     // Likes and comments
     likes: Int = 0,
     comments: List<CommentData> = emptyList(),
+    isLikedByMe: Boolean = false,
 
     showLikesAndComments: Boolean = true,
 
@@ -222,6 +235,12 @@ private fun PostDetailViewImpl(
     // Post ID for comment functionality
     postId: Int? = null,
 
+    // API client for like functionality
+    apiClient: ApiClient? = null,
+
+    // Callback for when a post is liked/unliked
+    onLikeStateChanged: ((postId: Int, isLiked: Boolean) -> Unit)? = null,
+
     // Image content - this is the part that differs between implementations
     imageContent: @Composable (showAfterImage: Boolean, imageTransition: State<Float>) -> Unit
 ) {
@@ -229,7 +248,7 @@ private fun PostDetailViewImpl(
     var showAfterImage by remember { mutableStateOf(initialShowAfterImage) }
 
     // State for like button, comments, and delete confirmation
-    var isLiked by remember { mutableStateOf(false) }
+    var isLiked by remember { mutableStateOf(isLikedByMe) }
     var showComments by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
 
@@ -306,7 +325,7 @@ private fun PostDetailViewImpl(
                             ) {
                                 WithPlatformEmoji(
                                     activityType.emoji
-                                ){ emojiString, inlineContent ->
+                                ) { emojiString, inlineContent ->
                                     Text(
                                         text = emojiString,
                                         inlineContent = inlineContent,
@@ -343,8 +362,7 @@ private fun PostDetailViewImpl(
         ) {
             Column(
                 modifier = Modifier
-                    .padding(end = 16.dp, bottom = 24.dp)
-                    ,
+                    .padding(end = 16.dp, bottom = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
@@ -369,7 +387,7 @@ private fun PostDetailViewImpl(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = if (showAfterImage) "B" else "A",
+                            text = if (showAfterImage) "A" else "B",
                             color = Color.White,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
@@ -377,14 +395,40 @@ private fun PostDetailViewImpl(
                     }
                 }
 
-                if(showLikesAndComments) {
+                if (showLikesAndComments) {
                     // Modern like button with animation
+                    val coroutineScope = rememberCoroutineScope()
                     ActionButton(
                         icon = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = "Like",
-                        count = if (isLiked) likes + 1 else likes,
+                        count = if (isLiked && !isLikedByMe) likes + 1
+                        else if (!isLiked && isLikedByMe) likes - 1
+                        else likes,
                         tint = if (isLiked) Color.Red else Color.White,
-                        onClick = { isLiked = !isLiked },
+                        onClick = {
+                            isLiked = !isLiked
+
+                            // Notify parent component about like state change
+                            postId?.let { id ->
+                                onLikeStateChanged?.invoke(id, isLiked)
+
+                                apiClient?.let { client ->
+                                    coroutineScope.launch {
+                                        try {
+                                            if (isLiked) {
+                                                client.likePost(id)
+                                            } else {
+                                                client.unlikePost(id)
+                                            }
+                                        } catch (_: Exception) {
+                                            isLiked = !isLiked
+                                            // Also notify about the revert
+                                            onLikeStateChanged?.invoke(id, isLiked)
+                                        }
+                                    }
+                                }
+                            }
+                        },
                         animated = true
                     )
 
@@ -650,6 +694,9 @@ fun PostDetailView(
     showBeforeAfterToggle: Boolean = true,
     initialShowAfterImage: Boolean = false,
 
+    // Likes state
+    isLikedByMe: Boolean = false,
+
     // Action buttons (for backward compatibility)
     actionButtons: @Composable ColumnScope.() -> Unit = {},
 
@@ -666,7 +713,13 @@ fun PostDetailView(
     onDeletePost: (() -> Unit)? = null,
 
     // Post ID for comment functionality
-    postId: Int? = null
+    postId: Int? = null,
+
+    // API client for like functionality
+    apiClient: ApiClient? = null,
+
+    // Callback for when a post is liked/unliked
+    onLikeStateChanged: ((postId: Int, isLiked: Boolean) -> Unit)? = null
 ) {
     // Use the common implementation with ImageBitmap image content
     PostDetailViewImpl(
@@ -678,13 +731,16 @@ fun PostDetailView(
         // No likes or comments for preview
         likes = 0,
         comments = emptyList(),
+        isLikedByMe = isLikedByMe,
         showLikesAndComments = showLikesAndComments,
         actionButtons = actionButtons,
         onClose = onClose,
         onActivityTypeClick = onActivityTypeClick,
         onAddComment = onAddComment,
         onDeletePost = onDeletePost,
-        postId = postId
+        postId = postId,
+        apiClient = apiClient,
+        onLikeStateChanged = onLikeStateChanged
     ) { showAfterImage, imageTransition ->
         // Display the ImageBitmap images directly
         Box(
@@ -708,8 +764,7 @@ fun PostDetailView(
                         .fillMaxSize()
                         .graphicsLayer(
                             scaleX = if (showAfterImage) -1f else 1f
-                        )
-                    ,
+                        ),
                     contentScale = ContentScale.Fit
                 )
             }
