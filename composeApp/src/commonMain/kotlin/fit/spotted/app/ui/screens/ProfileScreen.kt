@@ -38,9 +38,9 @@ import kotlinx.coroutines.launch
 /**
  * Screen that displays a user's profile, including their avatar, stats, and posts.
  * 
- * @property userId Optional ID of the user to display. If null, displays the current user's profile.
+ * @property username Optional username of the user to display. If null, displays the current user's profile.
  */
-class ProfileScreen(private val userId: Int? = null) : Screen {
+class ProfileScreen(private val username: String? = null) : Screen {
 
     private val apiClient = ApiProvider.getApiClient()
 
@@ -48,6 +48,15 @@ class ProfileScreen(private val userId: Int? = null) : Screen {
     private enum class ViewMode {
         GRID,
         TIKTOK
+    }
+
+    private suspend fun getLoggedInUser(): String {
+        val response = apiClient.getMe()
+        if(response.result == "ok" && response.response != null) {
+            return response.response.username
+        } else {
+            throw IllegalStateException("Failed to get logged in user")
+        }
     }
 
     @Composable
@@ -71,13 +80,12 @@ class ProfileScreen(private val userId: Int? = null) : Screen {
         val coroutineScope = rememberCoroutineScope()
 
         // Fetch profile data when the screen is first displayed
-        LaunchedEffect(userId) {
+        LaunchedEffect(username) {
             coroutineScope.launch {
                 try {
-                    // Use userId if provided, otherwise use the default user ID
-                    // In a production app, this would come from a user session or auth service
-                    val id = userId ?: DEFAULT_USER_ID
-                    val response = apiClient.getUserProfile(id)
+                    val response = apiClient.getUserProfile(
+                        username ?: getLoggedInUser()
+                    )
 
                     if (response.result == "ok" && response.response != null) {
                         profileData = response.response
@@ -406,8 +414,4 @@ class ProfileScreen(private val userId: Int? = null) : Screen {
         return DateTimeUtils.formatInstagramStyle(timestamp)
     }
 
-    companion object {
-        // Default user ID for development/testing purposes
-        private const val DEFAULT_USER_ID = 0
-    }
 }

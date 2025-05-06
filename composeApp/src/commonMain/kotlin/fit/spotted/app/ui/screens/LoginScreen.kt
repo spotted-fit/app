@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
  * @param onLogin Callback to be invoked when the user successfully logs in, passing the username
  */
 class LoginScreen(
-    private val onLogin: (username: String) -> Unit = {}
+    private val onLogin: () -> Unit = {}
 ) : Screen {
     // API client
     private val apiClient = ApiProvider.getApiClient()
@@ -38,6 +38,10 @@ class LoginScreen(
 
         // Coroutine scope for API calls
         val coroutineScope = rememberCoroutineScope()
+        if(apiClient.isLoggedIn()) {
+            onLogin()
+            return
+        }
 
         Column(
             modifier = Modifier
@@ -105,7 +109,7 @@ class LoginScreen(
                             try {
                                 val response = apiClient.login(password, username)
                                 if (response.result == "ok") {
-                                    onLogin(username)
+                                    onLogin()
                                 } else {
                                     errorMessage = response.message ?: "Login failed"
                                 }
@@ -127,7 +131,7 @@ class LoginScreen(
                             try {
                                 val response = apiClient.register(email, password, username)
                                 if (response.result == "ok") {
-                                    onLogin(username)
+                                    onLogin()
                                 } else {
                                     errorMessage = response.message ?: "Registration failed"
                                 }

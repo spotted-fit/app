@@ -1,5 +1,7 @@
 package fit.spotted.app.api
 
+import com.russhwolf.settings.Settings
+import com.russhwolf.settings.contains
 import fit.spotted.app.api.models.*
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -19,6 +21,8 @@ interface ApiClient {
     // Authentication
     suspend fun register(email: String, password: String, username: String): AuthResponse
     suspend fun login(password: String, username: String): AuthResponse
+    fun isLoggedIn(): Boolean
+    fun logOut()
 
     // Posts
     suspend fun createPost(photo1: ByteArray, photo2: ByteArray, emoji: String? = null, text: String? = null): OkResponse
@@ -30,7 +34,8 @@ interface ApiClient {
     suspend fun getComments(postId: Int): CommentsList
 
     // Profile
-    suspend fun getUserProfile(id: Int): Profile
+    suspend fun getUserProfile(username: String): Profile
+    suspend fun getMe(): GetMeResponse
 
     // Search
     suspend fun searchUsers(query: String): UserSearchResults
@@ -49,7 +54,18 @@ interface ApiClient {
  */
 internal class ApiClientImpl : ApiClient {
     private val baseUrl = PlatformConfig.getBaseUrl()
-    private var authToken: String? = null
+    private var authToken: String?
+        get() = settings.getStringOrNull("authToken")
+        set(value) {
+            if (value != null) {
+                settings.putString("authToken", value)
+            } else {
+                settings.remove("authToken")
+            }
+        }
+    private val settings = Settings()
+    override fun isLoggedIn() = "authToken" in settings
+    override fun logOut() = settings.remove("authToken")
 
     /**
      * Adds authorization header to the request if an auth token is available.
@@ -82,10 +98,6 @@ internal class ApiClientImpl : ApiClient {
         }
     }
 
-    fun setAuthToken(token: String) {
-        authToken = token
-    }
-
     /**
      * Registers a new user with the provided credentials.
      * Sets the auth token if registration is successful.
@@ -96,7 +108,7 @@ internal class ApiClientImpl : ApiClient {
             addAuth()
         }
         val authResponse = response.body<AuthResponse>()
-        authResponse.response?.token?.let { setAuthToken(it) }
+        authToken = authResponse.response?.token
         return authResponse
     }
 
@@ -110,7 +122,7 @@ internal class ApiClientImpl : ApiClient {
             addAuth()
         }
         val authResponse = response.body<AuthResponse>()
-        authResponse.response?.token?.let { setAuthToken(it) }
+        authToken = authResponse.response?.token
         return authResponse
     }
 
@@ -230,11 +242,22 @@ internal class ApiClientImpl : ApiClient {
     /**
      * Gets a user's profile by their ID.
      * 
-     * @param id The ID of the user
+     * @param username The username of the user
      * @return The user's profile
      */
-    override suspend fun getUserProfile(id: Int): Profile {
-        return client.get("$baseUrl/profile/$id") {
+    override suspend fun getUserProfile(username: String): Profile {
+        return client.get("$baseUrl/profile/$username") {
+            addAuth()
+        }.body()
+    }
+
+    /**
+     * Retrieves the authenticated user's information.
+     *
+     * @return UserInfo containing the details of the current user.
+     */
+    override suspend fun getMe(): GetMeResponse {
+        return client.get("$baseUrl/me") {
             addAuth()
         }.body()
     }
