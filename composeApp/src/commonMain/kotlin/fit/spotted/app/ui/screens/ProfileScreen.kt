@@ -33,6 +33,7 @@ import fit.spotted.app.api.models.ProfileResponse
 import fit.spotted.app.emoji.ActivityType
 import fit.spotted.app.ui.components.PostDetailView
 import fit.spotted.app.utils.DateTimeUtils
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -257,8 +258,10 @@ class ProfileScreen(private val username: String? = null) : Screen {
                                         userName = post.username,
                                         likes = post.likes,
                                         comments = post.comments,
+                                        isLikedByMe = post.isLikedByMe,
                                         onClose = { viewMode = ViewMode.GRID }, // Add close button to exit TikTok view
                                         postId = post.id,
+                                        apiClient = apiClient,
                                         onAddComment = { commentText ->
                                             coroutineScope.launch {
                                                 try {
@@ -295,6 +298,24 @@ class ProfileScreen(private val username: String? = null) : Screen {
                                                         profileData = profileData?.copy(
                                                             posts = profileData?.posts?.filter { it.id != post.id } ?: emptyList()
                                                         )
+                                                    }
+                                                } catch (_: Exception) {
+                                                    // Handle error
+                                                }
+                                            }
+                                        },
+                                        onLikeStateChanged = { postId, isLiked ->
+                                            // Refresh the post data when like state changes
+                                            coroutineScope.launch {
+                                                try {
+                                                    // Give the API a moment to process the like/unlike
+                                                    delay(300)
+                                                    val updatedPost = apiClient.getPost(postId)
+                                                    if (updatedPost.result == "ok" && updatedPost.response != null) {
+                                                        // Update the post in the list
+                                                        detailedPosts = detailedPosts.map { 
+                                                            if (it.id == postId) updatedPost.response else it 
+                                                        }
                                                     }
                                                 } catch (_: Exception) {
                                                     // Handle error
