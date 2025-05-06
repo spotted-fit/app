@@ -11,5 +11,5 @@ actual object PlatformConfig {
      * Using BuildKonfig to get the base URL from build configuration
      * For WASM/JS, we use a relative URL to avoid CORS issues in development
      */
-    actual fun getBaseUrl(): String = BuildKonfig.BASE_URL ?: ""
+    actual fun getBaseUrl(): String = BuildKonfig.BASE_URL ?: "localhost:8080"
 }

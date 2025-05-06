@@ -70,6 +70,10 @@ kotlin {
             implementation(libs.ktor.client.js)
         }
         commonMain.dependencies {
+            // multiplatform-settings
+            implementation(libs.multiplatform.settings.no.arg)
+
+            // ktor
             implementation(libs.kotlinx.datetime)
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor3)

@@ -26,10 +26,6 @@ import kotlinx.coroutines.launch
 fun MainNavigation() {
     // Check if user is logged in
     var isLoggedIn by remember { mutableStateOf(false) }
-    // Store the username when logged in
-    var username by remember { mutableStateOf("") }
-    // Store the user ID when logged in
-    var userId by remember { mutableStateOf<Int?>(null) }
 
     // Coroutine scope for API calls
     val coroutineScope = rememberCoroutineScope()
@@ -39,35 +35,19 @@ fun MainNavigation() {
     if (isLoggedIn) {
         // Show main screen with bottom navigation when logged in
         MainScreenWithBottomNav(
-            username = username,
-            userId = userId,
-            onLogout = { isLoggedIn = false }
+            onLogout = {
+                isLoggedIn = false
+                apiClient.logOut()
+            }
         )
     } else {
         // Show login screen when not logged in
         Box(modifier = Modifier.fillMaxSize()) {
             // Pass the login callback to the LoginScreen
             LoginScreen(
-                onLogin = { loggedInUsername -> 
-                    username = loggedInUsername
-
-                    // Search for the user to get their ID
+                onLogin = {
                     coroutineScope.launch {
-                        try {
-                            val searchResults = apiClient.searchUsers(loggedInUsername)
-                            if (searchResults.result == "ok" && searchResults.response != null && searchResults.response.isNotEmpty()) {
-                                // Get the first user that matches the username
-                                val user = searchResults.response.firstOrNull { it.username == loggedInUsername }
-                                if (user != null) {
-                                    userId = user.id
-                                }
-                            }
-                            // Set logged in state even if we couldn't get the user ID
-                            isLoggedIn = true
-                        } catch (e: Exception) {
-                            // If there's an error, still log in but without the user ID
-                            isLoggedIn = true
-                        }
+                        isLoggedIn = true
                     }
                 }
             ).Content()
@@ -78,12 +58,10 @@ fun MainNavigation() {
 /**
  * Main screen with bottom navigation
  * 
- * @param username The username of the logged-in user
- * @param userId The ID of the logged-in user, or null if not available
  * @param onLogout Callback to be invoked when the user logs out
  */
 @Composable
-fun MainScreenWithBottomNav(username: String, userId: Int? = null, onLogout: () -> Unit) {
+fun MainScreenWithBottomNav(onLogout: () -> Unit) {
     // Use remember to keep the state across recompositions
     var currentTab by remember { mutableStateOf(0) }
 
@@ -276,8 +254,8 @@ fun MainScreenWithBottomNav(username: String, userId: Int? = null, onLogout: () 
                     }
                 ).Content()
                 2 -> FriendsScreen().Content()
-                3 -> ProfileScreen(userId).Content()
-                else -> FeedScreen().Content() // Default to Feed screen
+                3 -> ProfileScreen().Content()
+                else -> FeedScreen().Content()
             }
         }
     }

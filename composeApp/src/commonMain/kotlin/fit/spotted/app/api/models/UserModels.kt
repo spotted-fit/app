@@ -4,13 +4,14 @@ import kotlinx.serialization.Serializable
 
 // User search result model
 @Serializable
-data class UserSearchResultData(
+data class UserInfo(
     val id: Int,
     val username: String,
     val avatar: String? = null
 )
 
-typealias UserSearchResults = ApiResponse<List<UserSearchResultData>>
+typealias GetMeResponse = ApiResponse<UserInfo>
+typealias UserSearchResults = ApiResponse<List<UserInfo>>
 
 // Profile response model
 @Serializable
