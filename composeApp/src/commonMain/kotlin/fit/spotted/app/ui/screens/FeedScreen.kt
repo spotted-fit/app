@@ -111,7 +111,8 @@ class FeedScreen : Screen {
                 PostDetailView(
                     beforeImageUrl = post.photo1,
                     afterImageUrl = post.photo2 ?: post.photo1,
-                    workoutDuration = formatTimestamp(post.createdAt),
+                    workoutDuration = formatDuration(post.timer),
+                    postedAt = formatTimestamp(post.createdAt),
                     activityType = ActivityType.valueOf(post.emoji ?: "RUNNING"),
                     userName = post.username,
                     likes = post.likes,
@@ -119,7 +120,7 @@ class FeedScreen : Screen {
                     isLikedByMe = post.isLikedByMe,
                     postId = post.id,
                     apiClient = apiClient,
-                    onAddComment = { commentText ->
+                    onAddComment = { commentText: String ->
                         coroutineScope.launch {
                             try {
                                 val response = apiClient.addComment(post.id, commentText)
@@ -138,7 +139,7 @@ class FeedScreen : Screen {
                             }
                         }
                     },
-                    onLikeStateChanged = { postId, isLiked ->
+                    onLikeStateChanged = { postId: Int, isLiked: Boolean ->
                         // Refresh the post data when like state changes
                         coroutineScope.launch {
                             try {
@@ -169,5 +170,23 @@ class FeedScreen : Screen {
      */
     private fun formatTimestamp(timestamp: Long): String {
         return DateTimeUtils.formatInstagramStyle(timestamp)
+    }
+
+    /**
+     * Formats a duration in seconds into a human-readable string.
+     *
+     * @param durationSeconds The duration in seconds
+     * @return Formatted string (e.g., "00:05:30" for 5 minutes and 30 seconds)
+     */
+    private fun formatDuration(durationSeconds: Int): String {
+        val hours = durationSeconds / 3600
+        val minutes = (durationSeconds % 3600) / 60
+        val seconds = durationSeconds % 60
+
+        return if (hours > 0) {
+            "${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
+        } else {
+            "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
+        }
     }
 }

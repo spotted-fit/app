@@ -61,7 +61,7 @@ class IOSCameraKPlatform : CameraKPlatform {
     }
 
     @OptIn(ExperimentalResourceApi::class)
-    override suspend fun captureImage(): Result<ImageBitmap> {
+    override suspend fun captureImage(): Result<CapturedImage> {
         val controller = cameraController ?: return Result.failure(
             IllegalStateException("Camera controller is not initialized")
         )
@@ -69,7 +69,7 @@ class IOSCameraKPlatform : CameraKPlatform {
         return when (val result = controller.takePicture()) {
             is ImageCaptureResult.Success -> {
                 val bitmap = result.byteArray.decodeToImageBitmap()
-                Result.success(bitmap)
+                Result.success(CapturedImage(bitmap, result.byteArray))
             }
             is ImageCaptureResult.Error -> {
                 Result.failure(result.exception)

@@ -184,7 +184,6 @@ class FriendsScreen : Screen {
                 return@Column
             }
 
-            // Content based on tab and search state
             when {
                 isSearching -> SearchResultsList(searchQuery, searchResults ?: emptyList())
                 currentTab == 0 -> FriendsList(friends ?: emptyList())
