@@ -1,4 +1,4 @@
-import org.gradle.declarative.dsl.schema.FqName.Empty.packageName
+import com.codingfeline.buildkonfig.compiler.FieldSpec
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -159,7 +159,7 @@ buildkonfig {
 
     // Default configuration that applies to all targets
     defaultConfigs {
-        buildConfigField(com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING, "BASE_URL", System.getenv("BASE_URL"), nullable = true)
+        buildConfigField(FieldSpec.Type.STRING, "BASE_URL", System.getenv("BASE_URL"), nullable = true)
     }
 }
 
