@@ -40,41 +40,60 @@ class FriendsScreen : Screen {
         // Coroutine scope for API calls
         val coroutineScope = rememberCoroutineScope()
 
-        // Fetch friends and friend requests when the screen is first displayed
-        LaunchedEffect(Unit) {
+        // Function to fetch friends
+        suspend fun fetchFriends() {
+            try {
+                isLoading = true
+                errorMessage = null
+                val friendsResponse = apiClient.getFriends()
+                if (friendsResponse.result == "ok") {
+                    friends = friendsResponse.response?.friends?.map { friendData ->
+                        Friend(
+                            id = friendData.id.toString(),
+                            name = friendData.username,
+                            bio = "", // API doesn't provide bio
+                            isFriend = true
+                        )
+                    } ?: emptyList()
+                }
+                isLoading = false
+            } catch (e: Exception) {
+                errorMessage = e.message ?: "An error occurred"
+                isLoading = false
+            }
+        }
+
+        // Function to fetch friend requests
+        suspend fun fetchFriendRequests() {
+            try {
+                isLoading = true
+                errorMessage = null
+                val requestsResponse = apiClient.getFriendRequests()
+                if (requestsResponse.result == "ok") {
+                    friendRequests = requestsResponse.response?.requests?.map { requestPreview ->
+                        Friend(
+                            id = requestPreview.requestId.toString(),
+                            name = requestPreview.username,
+                            bio = "", // API doesn't provide bio
+                            isFriend = false,
+                            fromId = requestPreview.fromId
+                        )
+                    } ?: emptyList()
+                }
+                isLoading = false
+            } catch (e: Exception) {
+                errorMessage = e.message ?: "An error occurred"
+                isLoading = false
+            }
+        }
+
+        // Fetch initial data and refresh when tab changes
+        LaunchedEffect(currentTab) {
             coroutineScope.launch {
-                try {
-                    // Fetch friends
-                    val friendsResponse = apiClient.getFriends()
-                    if (friendsResponse.result == "ok") {
-                        friends = friendsResponse.response?.friends?.map { friendData ->
-                            Friend(
-                                id = friendData.id.toString(),
-                                name = friendData.username,
-                                bio = "", // API doesn't provide bio
-                                isFriend = true
-                            )
-                        } ?: emptyList()
-                    }
-
-                    // Fetch friend requests
-                    val requestsResponse = apiClient.getFriendRequests()
-                    if (requestsResponse.result == "ok") {
-                        friendRequests = requestsResponse.response?.requests?.map { requestPreview ->
-                            Friend(
-                                id = requestPreview.requestId.toString(),
-                                name = requestPreview.username,
-                                bio = "", // API doesn't provide bio
-                                isFriend = false,
-                                fromId = requestPreview.fromId
-                            )
-                        } ?: emptyList()
-                    }
-
-                    isLoading = false
-                } catch (e: Exception) {
-                    errorMessage = e.message ?: "An error occurred"
-                    isLoading = false
+                // Fetch data based on current tab
+                when (currentTab) {
+                    0 -> fetchFriends()
+                    1 -> fetchFriendRequests()
                 }
             }
         }
@@ -169,7 +188,9 @@ class FriendsScreen : Screen {
             when {
                 isSearching -> SearchResultsList(searchQuery, searchResults ?: emptyList())
                 currentTab == 0 -> FriendsList(friends ?: emptyList())
-                currentTab == 1 -> FriendRequestsList(friendRequests ?: emptyList())
+                currentTab == 1 -> FriendRequestsList(
+                    initialRequests = friendRequests ?: emptyList(),
+                )
             }
         }
     }
@@ -213,10 +234,16 @@ class FriendsScreen : Screen {
     }
 
     @Composable
-    private fun FriendRequestsList(requests: List<Friend>) {
+    private fun FriendRequestsList(
+        initialRequests: List<Friend>,
+    ) {
         // State for request handling
         var isLoading by remember { mutableStateOf(false) }
         var errorMessage by remember { mutableStateOf<String?>(null) }
+        // Track requests that have been accepted or rejected
+        var requests by remember { mutableStateOf(initialRequests) }
+        // Track which requests have been accepted (to show "added" text)
+        var acceptedRequestIds by remember { mutableStateOf(setOf<String>()) }
 
         // Coroutine scope for API calls
         val coroutineScope = rememberCoroutineScope()
@@ -276,59 +303,75 @@ class FriendsScreen : Screen {
                             modifier = Modifier.weight(0.4f),
                             horizontalArrangement = Arrangement.End
                         ) {
-                            // Accept button
-                            Button(
-                                onClick = { 
-                                    isLoading = true
-                                    errorMessage = null
-                                    coroutineScope.launch {
-                                        try {
-                                            // Accept friend request
-                                            val response = apiClient.respondToFriendRequest(
-                                                requestId = friend.id.toInt(), // id is the requestId for friend requests
-                                                accepted = true
-                                            )
-                                            if (response.result != "ok") {
-                                                errorMessage = response.message ?: "Failed to accept request"
+                            // Check if this request has been accepted
+                            if (acceptedRequestIds.contains(friend.id)) {
+                                // Show "added" text
+                                Text(
+                                    text = "Added",
+                                    color = MaterialTheme.colors.primary,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(end = 8.dp)
+                                )
+                            } else {
+                                // Accept button
+                                Button(
+                                    onClick = { 
+                                        isLoading = true
+                                        errorMessage = null
+                                        coroutineScope.launch {
+                                            try {
+                                                // Accept friend request
+                                                val response = apiClient.respondToFriendRequest(
+                                                    requestId = friend.id.toInt(), // id is the requestId for friend requests
+                                                    accepted = true
+                                                )
+                                                if (response.result != "ok") {
+                                                    errorMessage = response.message ?: "Failed to accept request"
+                                                } else {
+                                                    requests = requests.filter { it.id != friend.id }
+                                                }
+                                            } catch (e: Exception) {
+                                                errorMessage = e.message ?: "An error occurred"
+                                            } finally {
+                                                isLoading = false
                                             }
-                                        } catch (e: Exception) {
-                                            errorMessage = e.message ?: "An error occurred"
-                                        } finally {
-                                            isLoading = false
                                         }
-                                    }
-                                },
-                                modifier = Modifier.padding(end = 8.dp),
-                                enabled = !isLoading
-                            ) {
-                                Text("Accept")
-                            }
+                                    },
+                                    modifier = Modifier.padding(end = 8.dp),
+                                    enabled = !isLoading
+                                ) {
+                                    Text("Accept")
+                                }
 
-                            // Reject button
-                            OutlinedButton(
-                                onClick = { 
-                                    isLoading = true
-                                    errorMessage = null
-                                    coroutineScope.launch {
-                                        try {
-                                            // Reject friend request
-                                            val response = apiClient.respondToFriendRequest(
-                                                requestId = friend.id.toInt(), // id is the requestId for friend requests
-                                                accepted = false
-                                            )
-                                            if (response.result != "ok") {
-                                                errorMessage = response.message ?: "Failed to reject request"
+                                // Reject button
+                                OutlinedButton(
+                                    onClick = { 
+                                        isLoading = true
+                                        errorMessage = null
+                                        coroutineScope.launch {
+                                            try {
+                                                // Reject friend request
+                                                val response = apiClient.respondToFriendRequest(
+                                                    requestId = friend.id.toInt(), // id is the requestId for friend requests
+                                                    accepted = false
+                                                )
+                                                if (response.result != "ok") {
+                                                    errorMessage = response.message ?: "Failed to reject request"
+                                                } else {
+                                                    // Remove the request from the list
+                                                    requests = requests.filter { it.id != friend.id }
+                                                }
+                                            } catch (e: Exception) {
+                                                errorMessage = e.message ?: "An error occurred"
+                                            } finally {
+                                                isLoading = false
                                             }
-                                        } catch (e: Exception) {
-                                            errorMessage = e.message ?: "An error occurred"
-                                        } finally {
-                                            isLoading = false
                                         }
-                                    }
-                                },
-                                enabled = !isLoading
-                            ) {
-                                Text("Reject")
+                                    },
+                                    enabled = !isLoading
+                                ) {
+                                    Text("Reject")
+                                }
                             }
                         }
                     }
@@ -369,11 +412,6 @@ class FriendsScreen : Screen {
                 Text(
                     text = friend.name,
                     fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = friend.bio.ifEmpty { "Spotted user" },
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
                 )
 
                 // Show error message if any
