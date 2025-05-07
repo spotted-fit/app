@@ -132,7 +132,8 @@ class CameraViewModel(private val apiClient: ApiClient) {
                     photo1 = beforeBytes,
                     photo2 = afterBytes,
                     emoji = emojiName,
-                    text = ""
+                    text = "",
+                    timer = seconds
                 )
 
                 showPostAnimation = true

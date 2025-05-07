@@ -26,7 +26,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import fit.spotted.app.api.ApiClient
 import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.camera.getCamera
 import fit.spotted.app.ui.camera.CameraControls
@@ -129,6 +128,7 @@ class CameraScreen(
                             beforeWorkoutPhoto = viewModel.beforeWorkoutPhoto,
                             afterWorkoutPhoto = viewModel.afterWorkoutPhoto,
                             workoutDuration = viewModel.formatTimer(),
+                            postedAt = "Just now", // This is a preview, so "Just now" makes sense
                             activityType = viewModel.selectedActivity,
                             userName = "You", // Using "You" as the default username for preview
                             initialShowAfterImage = viewModel.currentPhotoIndex == 1,

@@ -31,6 +31,7 @@ import coil3.compose.AsyncImage
 import fit.spotted.app.api.ApiClient
 import fit.spotted.app.api.models.CommentData
 import fit.spotted.app.emoji.ActivityType
+import fit.spotted.app.ui.camera.TimerDisplay
 import kotlinx.coroutines.launch
 import org.kodein.emoji.compose.WithPlatformEmoji
 
@@ -46,6 +47,7 @@ fun PostDetailView(
 
     // Common parameters
     workoutDuration: String,
+    postedAt: String,
     activityType: ActivityType,
     userName: String,
 
@@ -83,6 +85,7 @@ fun PostDetailView(
 ) {
     PostDetailViewImpl(
         workoutDuration = workoutDuration,
+        postedAt = postedAt,
         activityType = activityType,
         userName = userName,
         showBeforeAfterToggle = showBeforeAfterToggle,
@@ -203,6 +206,7 @@ fun ActionButton(
 private fun PostDetailViewImpl(
     // Common parameters
     workoutDuration: String,
+    postedAt: String,
     activityType: ActivityType,
     userName: String,
 
@@ -271,6 +275,13 @@ private fun PostDetailViewImpl(
             // Call the provided image content composable
             imageContent(showAfterImage, imageTransition)
         }
+
+        // Add TimerDisplay in the bottom-left corner, above the user info section
+        TimerDisplay(
+            timerText = workoutDuration,
+            showPostAnimation = false,
+            modifier = Modifier.align(Alignment.BottomStart).padding(bottom = 100.dp)
+        )
 
         // Modern overlay with user info at the bottom with animation
         AnimatedVisibility(
@@ -344,7 +355,7 @@ private fun PostDetailViewImpl(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = workoutDuration,
+                                text = postedAt,
                                 fontSize = 14.sp,
                                 color = Color.White.copy(alpha = 0.8f)
                             )
@@ -684,6 +695,7 @@ fun PostDetailView(
 
     // Common parameters
     workoutDuration: String,
+    postedAt: String,
     activityType: ActivityType,
     userName: String,
 
@@ -724,6 +736,7 @@ fun PostDetailView(
     // Use the common implementation with ImageBitmap image content
     PostDetailViewImpl(
         workoutDuration = workoutDuration,
+        postedAt = postedAt,
         activityType = activityType,
         userName = userName,
         showBeforeAfterToggle = showBeforeAfterToggle,

@@ -26,6 +26,7 @@ data class PostDetailedData(
     val text: String?,
     val emoji: String?,
     val createdAt: Long,
+    val timer: Int,
     val likes: Int,
     val isLikedByMe: Boolean,
     val comments: List<CommentData>

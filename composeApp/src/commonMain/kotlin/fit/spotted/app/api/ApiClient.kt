@@ -25,7 +25,7 @@ interface ApiClient {
     fun logOut()
 
     // Posts
-    suspend fun createPost(photo1: ByteArray, photo2: ByteArray, emoji: String? = null, text: String? = null): OkResponse
+    suspend fun createPost(photo1: ByteArray, photo2: ByteArray, emoji: String? = null, text: String? = null, timer: Int): OkResponse
     suspend fun getPost(id: Int): GetPostResponse
     suspend fun deletePost(id: Int): OkResponse
     suspend fun likePost(id: Int): OkResponse
@@ -139,7 +139,8 @@ internal class ApiClientImpl : ApiClient {
         photo1: ByteArray,
         photo2: ByteArray,
         emoji: String?,
-        text: String?
+        text: String?,
+        timer: Int
     ): OkResponse {
         val response = client.submitFormWithBinaryData(
             url = "$baseUrl/posts",
@@ -154,6 +155,7 @@ internal class ApiClientImpl : ApiClient {
                 })
                 emoji?.let { append("emoji", it) }
                 text?.let { append("text", it) }
+                timer?.let { append("timer", it) }
             }
         ) {
             method = HttpMethod.Post
