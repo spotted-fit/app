@@ -139,7 +139,10 @@ open class ProfileScreen(
             coroutineScope.launch {
                 val posts = mutableListOf<PostDetailedData>()
 
-                profileData?.posts?.forEach { post ->
+                // Reverse the posts so newest appear first
+                val reversedPosts = profileData?.posts?.reversed() ?: emptyList()
+
+                reversedPosts.forEach { post ->
                     try {
                         val request = apiClient.getPost(post.id)
                         if (request.result == "ok" && request.response != null) {
@@ -255,7 +258,7 @@ open class ProfileScreen(
                                 horizontalArrangement = Arrangement.spacedBy(2.dp),
                                 verticalArrangement = Arrangement.spacedBy(2.dp)
                             ) {
-                                items(profile.posts) { post ->
+                                items(profile.posts.reversed()) { post ->
                                     PhotoGridItem(
                                         post = post,
                                         onClick = {
