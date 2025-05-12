@@ -6,6 +6,7 @@ import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -22,6 +23,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -47,8 +49,7 @@ import fit.spotted.app.emoji.ActivityType
 import fit.spotted.app.ui.components.PostDetailView
 import fit.spotted.app.ui.components.ProfileSkeletonLoading
 import fit.spotted.app.ui.components.PullToRefreshLayout
-import fit.spotted.app.ui.theme.LocalSpacing
-import fit.spotted.app.ui.theme.ThemePreferences
+import fit.spotted.app.ui.theme.*
 import fit.spotted.app.utils.DateTimeUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -81,11 +82,28 @@ open class ProfileScreen(
             throw IllegalStateException("Failed to get logged in user")
         }
     }
+    
+    // Helper function to determine if using tablet layout
+    @Composable
+    private fun isTabletLayout(): Boolean {
+        val windowSize = LocalWindowSize.current
+        return windowSize.widthSizeClass == WindowSizeClass.EXPANDED ||
+               (windowSize.widthSizeClass == WindowSizeClass.MEDIUM && 
+                windowSize.heightSizeClass != WindowSizeClass.COMPACT)
+    }
+    
+    // Helper function to determine grid columns based on screen size
+    @Composable
+    private fun getGridColumns(): GridCells {
+        val adaptiveSpacing = LocalAdaptiveSpacing.current
+        return GridCells.Fixed(adaptiveSpacing.gridColumns)
+    }
 
     @Composable
     override fun Content() {
-        // Get standardized spacing values
+        // Get standardized spacing values and adaptive spacing
         val spacing = LocalSpacing.current
+        val adaptiveSpacing = LocalAdaptiveSpacing.current
         
         // State for profile data
         var isLoading by remember { mutableStateOf(true) }
@@ -204,9 +222,9 @@ open class ProfileScreen(
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    Text(
-                        text = it,
-                        color = MaterialTheme.colors.error,
+                Text(
+                    text = it,
+                    color = MaterialTheme.colors.error,
                         modifier = Modifier.padding(horizontal = spacing.large)
                     )
                     
@@ -245,28 +263,28 @@ open class ProfileScreen(
             enter = fadeIn(animationSpec = tween(durationMillis = 300)),
             exit = fadeOut(animationSpec = tween(durationMillis = 300))
         ) {
-            profileData?.let { profile ->
-                when (viewMode) {
-                    ViewMode.GRID -> {
+        profileData?.let { profile ->
+            when (viewMode) {
+                ViewMode.GRID -> {
                         // Add pull-to-refresh functionality
                         PullToRefreshLayout(
                             isRefreshing = isLoading,
                             onRefresh = { loadProfileData() },
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            Column(
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                // Profile header
-                                ProfileHeader(profile)
+                    Column(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        // Profile header
+                        ProfileHeader(profile)
 
-                                // Photos grid
-                                LazyVerticalGrid(
-                                    columns = GridCells.Fixed(3),
-                                    modifier = Modifier.fillMaxSize(),
+                        // Photos grid
+                        LazyVerticalGrid(
+                                    columns = getGridColumns(),
+                            modifier = Modifier.fillMaxSize(),
                                     contentPadding = PaddingValues(4.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(adaptiveSpacing.gridItemSpacing),
+                                    verticalArrangement = Arrangement.spacedBy(adaptiveSpacing.gridItemSpacing)
                                 ) {
                                     items(profile.posts.reversed()) { post ->
                                         // Create a staggered animation for each grid item
@@ -286,174 +304,341 @@ open class ProfileScreen(
                                                         expandFrom = Alignment.Center
                                                     )
                                         ) {
-                                            PhotoGridItem(
-                                                post = post,
-                                                onClick = {
-                                                    // Load detailed posts and switch to TikTok view
-                                                    loadDetailedPosts(post.id)
-                                                }
-                                            )
-                                        }
+                                PhotoGridItem(
+                                    post = post,
+                                    onClick = {
+                                        // Load detailed posts and switch to TikTok view
+                                        loadDetailedPosts(post.id)
                                     }
-                                }
+                                )
                             }
                         }
                     }
+                            }
+                        }
+                }
 
-                    ViewMode.TIKTOK -> {
+                ViewMode.TIKTOK -> {
                         // Get standardized spacing values
                         val spacing = LocalSpacing.current
                         
                         // Haptic feedback for interactions
                         val haptic = LocalHapticFeedback.current
                         
-                        // TikTok-like full-screen post view
-                        Box(modifier = Modifier.fillMaxSize()) {
-                            // Back button to return to grid view
-                            Box(
-                                modifier = Modifier
-                                    .padding(top = spacing.statusBarPadding, start = spacing.medium)
-                                    .size(spacing.huge) // Increased size for better tap target
-                                    .shadow(4.dp, CircleShape) // Add shadow for better visibility
-                                    .clip(CircleShape)
-                                    .background(Color.Black.copy(alpha = 0.7f))
-                                    .clickable { 
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        viewMode = ViewMode.GRID 
-                                    }
-                                    .align(Alignment.TopStart)
-                                    // Add semantic description for accessibility
-                                    .semantics {
-                                        contentDescription = "Back to photo grid"
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                                    contentDescription = null, // null because we set it on the parent
-                                    tint = Color.White,
-                                    modifier = Modifier.size(28.dp) // Slightly larger icon
-                                )
-                            }
-
-                            if (isLoadingDetailedPosts) {
-                                // Show loading indicator while fetching detailed posts
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
+                        // For tablet layouts, we'll show a split view with grid on one side and post detail on the other
+                        if (isTabletLayout()) {
+                            Row(modifier = Modifier.fillMaxSize()) {
+                                // Show grid on left side, taking up 40% of width
+                                Box(modifier = Modifier
+                                    .fillMaxHeight()
+                                    .weight(0.4f)
                                 ) {
-                                    CircularProgressIndicator(
-                                        color = MaterialTheme.colors.primary,
-                                        strokeWidth = 3.dp,
-                                        modifier = Modifier.size(60.dp)
-                                    )
-                                }
-                            } else if (detailedPosts.isEmpty()) {
-                                // Show message if no posts are available
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "No posts to display",
-                                        color = MaterialTheme.colors.onBackground,
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            } else {
-                                // Vertical pager for TikTok-like scrolling
-                                val pagerState = rememberPagerState(
-                                    initialPage = selectedPostIndex,
-                                    pageCount = { detailedPosts.size }
-                                )
-
-                                VerticalPager(
-                                    state = pagerState,
-                                    modifier = Modifier.fillMaxSize()
-                                ) { page ->
-                                    val post = detailedPosts[page]
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(Color.Black)
+                                    Column(
+                                        modifier = Modifier.fillMaxSize()
                                     ) {
-                                        PostDetailView(
-                                            beforeImageUrl = post.photo1,
-                                            afterImageUrl = post.photo2 ?: post.photo1,
-                                            workoutDuration = formatDuration(post.timer),
-                                            postedAt = formatTimestamp(post.createdAt),
-                                            activityType = ActivityType.valueOf(post.emoji ?: "RUNNING"),
-                                            userName = post.username,
-                                            likes = post.likes,
-                                            comments = post.comments,
-                                            isLikedByMe = post.isLikedByMe,
-                                            onClose = { viewMode = ViewMode.GRID }, // Add close button to exit TikTok view
-                                            postId = post.id,
-                                            apiClient = apiClient,
-                                            onAddComment = { commentText: String ->
-                                                coroutineScope.launch {
-                                                    try {
-                                                        val response = apiClient.addComment(post.id, commentText)
-                                                        if (response.result == "ok") {
-                                                            // Refresh the post to show the new comment
-                                                            val updatedPost = apiClient.getPost(post.id)
+                                        // Profile header
+                                        ProfileHeader(profile)
+
+                                        // Photos grid
+                                        LazyVerticalGrid(
+                                            columns = GridCells.Fixed(2), // 2 columns in split view
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentPadding = PaddingValues(4.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(adaptiveSpacing.gridItemSpacing),
+                                            verticalArrangement = Arrangement.spacedBy(adaptiveSpacing.gridItemSpacing)
+                                        ) {
+                                            items(profile.posts.reversed()) { post ->
+                                                PhotoGridItem(
+                                                    post = post,
+                                                    onClick = {
+                                                        // Just load the post for viewing, don't switch modes
+                                                        loadDetailedPosts(post.id)
+                                                    },
+                                                    isSelected = detailedPosts.isNotEmpty() && 
+                                                                detailedPosts[selectedPostIndex].id == post.id
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Divider
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .width(1.dp)
+                                        .background(MaterialTheme.colors.onSurface.copy(alpha = 0.1f))
+                                )
+                                
+                                // Show selected post on right side, taking up 60% of width
+                                Box(modifier = Modifier
+                                    .fillMaxHeight()
+                                    .weight(0.6f)
+                                ) {
+                                    if (isLoadingDetailedPosts) {
+                                        // Show loading indicator while fetching detailed posts
+                                        Box(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator(
+                                                color = MaterialTheme.colors.primary,
+                                                strokeWidth = 3.dp,
+                                                modifier = Modifier.size(60.dp)
+                                            )
+                                        }
+                                    } else if (detailedPosts.isEmpty()) {
+                                        // Show message if no posts are available
+                                        Box(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "Select a post to view details",
+                                                color = MaterialTheme.colors.onBackground,
+                                                fontSize = 18.sp,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
+                                    } else {
+                                        // Show selected post
+                                        val post = detailedPosts[selectedPostIndex]
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(Color.Black)
+                                        ) {
+                                            PostDetailView(
+                                                beforeImageUrl = post.photo1,
+                                                afterImageUrl = post.photo2 ?: post.photo1,
+                                                workoutDuration = formatDuration(post.timer),
+                                                postedAt = formatTimestamp(post.createdAt),
+                                                activityType = ActivityType.valueOf(post.emoji ?: "RUNNING"),
+                                                userName = post.username,
+                                                likes = post.likes,
+                                                comments = post.comments,
+                                                isLikedByMe = post.isLikedByMe,
+                                                postId = post.id,
+                                                apiClient = apiClient,
+                                                onClose = { viewMode = ViewMode.GRID }, 
+                                                // Same post functionality as standard view
+                                                onAddComment = { commentText: String ->
+                                                    // Same comment logic as before
+                                                    coroutineScope.launch {
+                                                        try {
+                                                            val response = apiClient.addComment(post.id, commentText)
+                                                            if (response.result == "ok") {
+                                                                // Refresh the post to show the new comment
+                                                                val updatedPost = apiClient.getPost(post.id)
+                                                                if (updatedPost.result == "ok" && updatedPost.response != null) {
+                                                                    // Update the post in the list
+                                                                    detailedPosts = detailedPosts.map { 
+                                                                        if (it.id == post.id) updatedPost.response else it 
+                                                                    }
+                                                                }
+                                                            }
+                                                        } catch (_: Exception) {
+                                                            // Handle error
+                                                        }
+                                                    }
+                                                },
+                                                onDeletePost = if (allowPostDeletion) {
+                                                    {
+                                                        coroutineScope.launch {
+                                                            try {
+                                                                val response = apiClient.deletePost(post.id)
+                                                                if (response.result == "ok") {
+                                                                    // Remove the post from the list
+                                                                    detailedPosts = detailedPosts.filter { it.id != post.id }
+                                                                    
+                                                                    // If there are no more posts, go back to grid view
+                                                                    if (detailedPosts.isEmpty()) {
+                                                                        viewMode = ViewMode.GRID
+                                                                    }
+                                                                    
+                                                                    // Also update the profile data to remove the post
+                                                                    profileData = profileData?.copy(
+                                                                        posts = profileData?.posts?.filter { it.id != post.id } ?: emptyList()
+                                                                    )
+                                                                }
+                                                            } catch (_: Exception) {
+                                                                // Handle error
+                                                            }
+                                                        }
+                                                    }
+                                                } else null,
+                                                onLikeStateChanged = { postId: Int, isLiked: Boolean ->
+                                                    // Same like logic as before
+                                                    coroutineScope.launch {
+                                                        try {
+                                                            // Give the API a moment to process the like/unlike
+                                                            delay(300)
+                                                            val updatedPost = apiClient.getPost(postId)
                                                             if (updatedPost.result == "ok" && updatedPost.response != null) {
                                                                 // Update the post in the list
                                                                 detailedPosts = detailedPosts.map { 
-                                                                    if (it.id == post.id) updatedPost.response else it 
+                                                                    if (it.id == postId) updatedPost.response else it 
                                                                 }
-                                                            }
-                                                        }
-                                                    } catch (_: Exception) {
-                                                        // Handle error
-                                                    }
-                                                }
-                                            },
-                                            onDeletePost = if (allowPostDeletion) {
-                                                {
-                                                    coroutineScope.launch {
-                                                        try {
-                                                            val response = apiClient.deletePost(post.id)
-                                                            if (response.result == "ok") {
-                                                                // Remove the post from the list
-                                                                detailedPosts = detailedPosts.filter { it.id != post.id }
-
-                                                                // If there are no more posts, go back to grid view
-                                                                if (detailedPosts.isEmpty()) {
-                                                                    viewMode = ViewMode.GRID
-                                                                }
-
-                                                                // Also update the profile data to remove the post
-                                                                profileData = profileData?.copy(
-                                                                    posts = profileData?.posts?.filter { it.id != post.id } ?: emptyList()
-                                                                )
                                                             }
                                                         } catch (_: Exception) {
                                                             // Handle error
                                                         }
                                                     }
                                                 }
-                                            } else null, // Set to null when not allowed to delete
-                                            onLikeStateChanged = { postId: Int, isLiked: Boolean ->
-                                                // Refresh the post data when like state changes
-                                                coroutineScope.launch {
-                                                    try {
-                                                        // Give the API a moment to process the like/unlike
-                                                        delay(300)
-                                                        val updatedPost = apiClient.getPost(postId)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            // Original phone layout - fullscreen TikTok-style view
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        // Back button to return to grid view
+                        Box(
+                            modifier = Modifier
+                                        .padding(top = spacing.statusBarPadding, start = spacing.medium)
+                                        .size(spacing.huge) // Increased size for better tap target
+                                        .shadow(4.dp, CircleShape) // Add shadow for better visibility
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.7f))
+                                        .clickable { 
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            viewMode = ViewMode.GRID 
+                                        }
+                                        .align(Alignment.TopStart)
+                                        // Add semantic description for accessibility
+                                        .semantics {
+                                            contentDescription = "Back to photo grid"
+                                        },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                                        contentDescription = null, // null because we set it on the parent
+                                tint = Color.White,
+                                        modifier = Modifier.size(28.dp) // Slightly larger icon
+                            )
+                        }
+
+                        if (isLoadingDetailedPosts) {
+                            // Show loading indicator while fetching detailed posts
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                        CircularProgressIndicator(
+                                            color = MaterialTheme.colors.primary,
+                                            strokeWidth = 3.dp,
+                                            modifier = Modifier.size(60.dp)
+                                        )
+                            }
+                        } else if (detailedPosts.isEmpty()) {
+                            // Show message if no posts are available
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "No posts to display",
+                                            color = MaterialTheme.colors.onBackground,
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Medium
+                                )
+                            }
+                        } else {
+                            // Vertical pager for TikTok-like scrolling
+                            val pagerState = rememberPagerState(
+                                initialPage = selectedPostIndex,
+                                pageCount = { detailedPosts.size }
+                            )
+
+                            VerticalPager(
+                                state = pagerState,
+                                modifier = Modifier.fillMaxSize()
+                            ) { page ->
+                                val post = detailedPosts[page]
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Color.Black)
+                                ) {
+                                    PostDetailView(
+                                        beforeImageUrl = post.photo1,
+                                        afterImageUrl = post.photo2 ?: post.photo1,
+                                        workoutDuration = formatDuration(post.timer),
+                                        postedAt = formatTimestamp(post.createdAt),
+                                        activityType = ActivityType.valueOf(post.emoji ?: "RUNNING"),
+                                        userName = post.username,
+                                        likes = post.likes,
+                                        comments = post.comments,
+                                        isLikedByMe = post.isLikedByMe,
+                                        onClose = { viewMode = ViewMode.GRID }, // Add close button to exit TikTok view
+                                        postId = post.id,
+                                        apiClient = apiClient,
+                                        onAddComment = { commentText: String ->
+                                            coroutineScope.launch {
+                                                try {
+                                                    val response = apiClient.addComment(post.id, commentText)
+                                                    if (response.result == "ok") {
+                                                        // Refresh the post to show the new comment
+                                                        val updatedPost = apiClient.getPost(post.id)
                                                         if (updatedPost.result == "ok" && updatedPost.response != null) {
                                                             // Update the post in the list
                                                             detailedPosts = detailedPosts.map { 
-                                                                if (it.id == postId) updatedPost.response else it 
+                                                                if (it.id == post.id) updatedPost.response else it 
                                                             }
                                                         }
-                                                    } catch (_: Exception) {
-                                                        // Handle error
                                                     }
+                                                } catch (_: Exception) {
+                                                    // Handle error
                                                 }
                                             }
-                                        )
+                                        },
+                                                onDeletePost = if (allowPostDeletion) {
+                                                    {
+                                            coroutineScope.launch {
+                                                try {
+                                                    val response = apiClient.deletePost(post.id)
+                                                    if (response.result == "ok") {
+                                                        // Remove the post from the list
+                                                        detailedPosts = detailedPosts.filter { it.id != post.id }
+
+                                                        // If there are no more posts, go back to grid view
+                                                        if (detailedPosts.isEmpty()) {
+                                                            viewMode = ViewMode.GRID
+                                                        }
+
+                                                        // Also update the profile data to remove the post
+                                                        profileData = profileData?.copy(
+                                                            posts = profileData?.posts?.filter { it.id != post.id } ?: emptyList()
+                                                        )
+                                                    }
+                                                } catch (_: Exception) {
+                                                    // Handle error
+                                                }
+                                            }
+                                                    }
+                                                } else null, // Set to null when not allowed to delete
+                                        onLikeStateChanged = { postId: Int, isLiked: Boolean ->
+                                            // Refresh the post data when like state changes
+                                            coroutineScope.launch {
+                                                try {
+                                                    // Give the API a moment to process the like/unlike
+                                                    delay(300)
+                                                    val updatedPost = apiClient.getPost(postId)
+                                                    if (updatedPost.result == "ok" && updatedPost.response != null) {
+                                                        // Update the post in the list
+                                                        detailedPosts = detailedPosts.map { 
+                                                            if (it.id == postId) updatedPost.response else it 
+                                                        }
+                                                    }
+                                                } catch (_: Exception) {
+                                                    // Handle error
+                                                }
+                                            }
+                                        }
+                                    )
+                                        }
                                     }
                                 }
                             }
@@ -473,48 +658,65 @@ open class ProfileScreen(
     private fun ProfileHeader(profile: ProfileResponse) {
         // Get standardized spacing values
         val spacing = LocalSpacing.current
+        val adaptiveSpacing = LocalAdaptiveSpacing.current
+        val windowSize = LocalWindowSize.current
+        
         val isSystemDark = isSystemInDarkTheme()
         val haptic = LocalHapticFeedback.current
         
         // Add extra padding at the top if this is a friend's profile (not the current user's profile)
-        val topPadding = if (username != null) spacing.friendProfileTopPadding else spacing.medium
+        // For larger screens, reduce top padding for better space utilization
+        val topPadding = if (username != null) {
+            when (windowSize.widthSizeClass) {
+                WindowSizeClass.COMPACT -> adaptiveSpacing.friendProfileTopPadding
+                WindowSizeClass.MEDIUM -> adaptiveSpacing.friendProfileTopPadding * 0.8f
+                WindowSizeClass.EXPANDED -> adaptiveSpacing.friendProfileTopPadding * 0.6f
+            }
+        } else adaptiveSpacing.medium
         
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    start = spacing.medium, 
-                    end = spacing.medium, 
+                    start = adaptiveSpacing.medium, 
+                    end = adaptiveSpacing.medium, 
                     top = topPadding, 
-                    bottom = spacing.medium
+                    bottom = adaptiveSpacing.medium
                 )
                 // Add semantic description for accessibility
                 .semantics {
                     contentDescription = "Profile information for ${profile.username}"
                 }
         ) {
+            // For tablet layout, we can make better use of horizontal space
+            val avatarSize = when (windowSize.widthSizeClass) {
+                WindowSizeClass.COMPACT -> 90.dp
+                WindowSizeClass.MEDIUM -> 110.dp
+                WindowSizeClass.EXPANDED -> 120.dp
+            }
+            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Profile avatar with improved visuals
-                Box(
-                    modifier = Modifier
-                        .size(90.dp)
+            Box(
+                modifier = Modifier
+                        .size(avatarSize)
                         .shadow(4.dp, CircleShape)
-                        .clip(CircleShape)
+                    .clip(CircleShape)
                         .background(MaterialTheme.colors.surface)
                         // Add semantic description for accessibility
                         .semantics {
                             contentDescription = "Profile picture for ${profile.username}"
                         },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (profile.avatar != null) {
+                contentAlignment = Alignment.Center
+            ) {
+                if (profile.avatar != null) {
                         SubcomposeAsyncImage(
-                            model = profile.avatar,
-                            contentDescription = "Profile Avatar",
-                            contentScale = ContentScale.Crop,
+                        model = profile.avatar,
+                        contentDescription = "Profile Avatar",
+                        contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize(),
                             loading = {
                                 CircularProgressIndicator(
@@ -530,36 +732,40 @@ open class ProfileScreen(
                                     tint = MaterialTheme.colors.primary
                                 )
                             }
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Profile Avatar",
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Profile Avatar",
                             modifier = Modifier.size(45.dp),
                             tint = MaterialTheme.colors.primary
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.width(20.dp))
+                Spacer(modifier = Modifier.width(adaptiveSpacing.medium + adaptiveSpacing.small))
 
                 // Profile info with improved layout
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(
-                        text = profile.username,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp,
+                Text(
+                    text = profile.username,
+                    fontWeight = FontWeight.Bold,
+                        fontSize = when (windowSize.widthSizeClass) {
+                            WindowSizeClass.COMPACT -> 22.sp
+                            WindowSizeClass.MEDIUM -> 24.sp
+                            WindowSizeClass.EXPANDED -> 26.sp
+                        },
                         color = MaterialTheme.colors.onBackground
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(adaptiveSpacing.small))
 
                     // Profile stats with nicer display
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        horizontalArrangement = Arrangement.spacedBy(adaptiveSpacing.medium)
                     ) {
                         // Posts count
                         Column(
@@ -569,13 +775,19 @@ open class ProfileScreen(
                             Text(
                                 text = "${profile.posts.size}",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp
+                                fontSize = when (windowSize.widthSizeClass) {
+                                    WindowSizeClass.COMPACT -> 18.sp
+                                    else -> 20.sp
+                                }
                             )
-                            Text(
+                Text(
                                 text = "Posts",
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
-                            )
+                                fontSize = when (windowSize.widthSizeClass) {
+                                    WindowSizeClass.COMPACT -> 14.sp
+                                    else -> 16.sp
+                                },
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
+                )
                         }
                         
                         // Friends count
@@ -586,13 +798,38 @@ open class ProfileScreen(
                             Text(
                                 text = "${profile.friendsCount}",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp
+                                fontSize = when (windowSize.widthSizeClass) {
+                                    WindowSizeClass.COMPACT -> 18.sp
+                                    else -> 20.sp
+                                }
                             )
                             Text(
                                 text = "Friends",
-                                fontSize = 14.sp,
+                                fontSize = when (windowSize.widthSizeClass) {
+                                    WindowSizeClass.COMPACT -> 14.sp
+                                    else -> 16.sp
+                                },
                                 color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
                             )
+                        }
+                        
+                        // For tablet layouts, add a third stat to better use space
+                        if (windowSize.widthSizeClass != WindowSizeClass.COMPACT) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = formatProfileAge(profile),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp
+                                )
+                Text(
+                                    text = "Activity",
+                                    fontSize = 16.sp,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
+                )
+                            }
                         }
                     }
                 }
@@ -601,14 +838,17 @@ open class ProfileScreen(
                 if (username == null) {
                     Box(
                         modifier = Modifier
-                            .shadow(4.dp, RoundedCornerShape(spacing.extraSmall))
-                            .clip(RoundedCornerShape(spacing.extraSmall))
+                            .shadow(4.dp, RoundedCornerShape(adaptiveSpacing.extraSmall))
+                            .clip(RoundedCornerShape(adaptiveSpacing.extraSmall))
                             .background(MaterialTheme.colors.primary)
                             .clickable { 
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 ThemePreferences.toggleTheme(isSystemDark)
                             }
-                            .padding(horizontal = spacing.small, vertical = spacing.extraSmall)
+                            .padding(
+                                horizontal = adaptiveSpacing.small, 
+                                vertical = adaptiveSpacing.extraSmall
+                            )
                             .semantics {
                                 contentDescription = "Toggle dark/light theme"
                             },
@@ -618,13 +858,16 @@ open class ProfileScreen(
                             text = if (isSystemDark) "Light Mode" else "Dark Mode",
                             color = MaterialTheme.colors.onPrimary,
                             fontWeight = FontWeight.Medium,
-                            fontSize = 12.sp
+                            fontSize = when (windowSize.widthSizeClass) {
+                                WindowSizeClass.COMPACT -> 12.sp
+                                else -> 14.sp
+                            }
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(adaptiveSpacing.medium))
 
             // Divider with better visibility
             Box(
@@ -635,6 +878,25 @@ open class ProfileScreen(
             )
         }
     }
+    
+    /**
+     * Calculate profile age based on creation date
+     * For tablet layout, we want to show this as an additional stat
+     */
+    private fun formatProfileAge(profile: ProfileResponse): String {
+        // Assuming profile.createdAt or similar field exists
+        // If it doesn't, return a default value or calculate from posts
+        val oldestPostTime = profile.posts.minOfOrNull { it.createdAt } ?: System.currentTimeMillis()
+        val ageInDays = (System.currentTimeMillis() - oldestPostTime) / (1000 * 60 * 60 * 24)
+        
+        return when {
+            ageInDays < 1 -> "New"
+            ageInDays < 7 -> "${ageInDays}d"
+            ageInDays < 30 -> "${ageInDays / 7}w"
+            ageInDays < 365 -> "${ageInDays / 30}m"
+            else -> "${ageInDays / 365}y"
+        }
+    }
 
     /**
      * Displays a single post thumbnail in the profile grid.
@@ -642,9 +904,14 @@ open class ProfileScreen(
      *
      * @param post The post data to display
      * @param onClick Callback for when the thumbnail is clicked
+     * @param isSelected Whether this item is currently selected (for tablet view)
      */
     @Composable
-    private fun PhotoGridItem(post: ProfilePost, onClick: () -> Unit) {
+    private fun PhotoGridItem(
+        post: ProfilePost, 
+        onClick: () -> Unit,
+        isSelected: Boolean = false
+    ) {
         val spacing = LocalSpacing.current
         val haptic = LocalHapticFeedback.current
         
@@ -652,13 +919,14 @@ open class ProfileScreen(
             modifier = Modifier
                 .aspectRatio(1f)
                 .clip(RoundedCornerShape(4.dp))
-                .shadow(1.dp)
+                .shadow(if (isSelected) 4.dp else 1.dp)
                 .clickable {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onClick()
                 }
                 .semantics {
-                    contentDescription = "Photo from ${formatTimestamp(post.createdAt)}"
+                    contentDescription = "Photo from ${formatTimestamp(post.createdAt)}" +
+                                       (if (isSelected) ", selected" else "")
                 }
         ) {
             // Use SubcomposeAsyncImage for better loading/error states
@@ -713,6 +981,34 @@ open class ProfileScreen(
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Medium
                 )
+            }
+            
+            // Show selection indicator if selected
+            if (isSelected) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .border(2.dp, MaterialTheme.colors.primary, RoundedCornerShape(4.dp))
+                )
+                
+                // Selection checkmark in corner
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(spacing.extraSmall)
+                        .size(20.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colors.primary)
+                        .padding(4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(12.dp)
+                    )
+                }
             }
         }
     }

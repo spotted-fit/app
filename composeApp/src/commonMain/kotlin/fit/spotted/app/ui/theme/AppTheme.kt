@@ -14,6 +14,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.unit.dp
 import fit.spotted.app.getPlatform
 
 // Light theme colors - Modern black and white with transparency
@@ -67,9 +69,24 @@ fun AppTheme(
     // Choose the appropriate color palette based on theme
     val colors = if (darkTheme) DarkColorPalette else LightColorPalette
     
-    // Provide spacing values and reduced motion setting to all composables in the hierarchy
+    // Calculate window size class based on current configuration
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp.dp
+    val screenHeightDp = configuration.screenHeightDp.dp
+    
+    val windowSize = WindowSize(
+        widthSizeClass = getWindowWidthClass(screenWidthDp),
+        heightSizeClass = getWindowHeightClass(screenHeightDp)
+    )
+    
+    // Create adaptive spacing based on window size
+    val adaptiveSpacing = AdaptiveSpacing(windowSize)
+    
+    // Provide spacing values, window size, adaptive spacing, and reduced motion setting to all composables
     CompositionLocalProvider(
         LocalSpacing provides Spacing(),
+        LocalWindowSize provides windowSize,
+        LocalAdaptiveSpacing provides adaptiveSpacing,
         LocalReducedMotion provides reducedMotion
     ) {
         // Use AnimatedVisibility to animate changes between themes
@@ -92,4 +109,28 @@ fun AppTheme(
 @Composable
 fun isReducedMotionEnabled(): Boolean {
     return LocalReducedMotion.current
+}
+
+/**
+ * Helper function to get current window size class
+ */
+@Composable
+fun currentWindowSize(): WindowSize {
+    return LocalWindowSize.current
+}
+
+/**
+ * Helper extension function to check if the window is in compact width mode
+ */
+@Composable
+fun WindowSize.isCompactWidth(): Boolean {
+    return this.widthSizeClass == WindowSizeClass.COMPACT
+}
+
+/**
+ * Helper extension function to check if the window is in expanded width mode
+ */
+@Composable
+fun WindowSize.isExpandedWidth(): Boolean {
+    return this.widthSizeClass == WindowSizeClass.EXPANDED
 }
