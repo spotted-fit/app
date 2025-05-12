@@ -6,19 +6,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,16 +20,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.camera.getCamera
-import fit.spotted.app.ui.camera.CameraControls
-import fit.spotted.app.ui.camera.CameraPreview
-import fit.spotted.app.ui.camera.CameraViewModel
-import fit.spotted.app.ui.camera.EmojiPicker
-import fit.spotted.app.ui.camera.PostAnimation
-import fit.spotted.app.ui.camera.TimerDisplay
+import fit.spotted.app.ui.camera.*
 import fit.spotted.app.ui.components.PostDetailView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.rememberCoroutineScope
 
 /**
  * Screen that allows users to take photos of their fitness activities.
@@ -62,8 +48,8 @@ class CameraScreen(
         }
 
         // Get the camera
-        val camera = remember(isVisible) { 
-            if (isVisible) getCamera() else null 
+        val camera = remember(isVisible) {
+            if (isVisible) getCamera() else null
         }
 
         // Update timer when app becomes visible again
@@ -108,16 +94,17 @@ class CameraScreen(
                     viewModel.updateTimer()
                 }
             }
-            
+
             onDispose {
                 camera?.release()
             }
         }
 
         // Main container that fills the entire screen
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .clip(RoundedCornerShape(0.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(0.dp))
         ) {
             // Post success animation overlay
             PostAnimation(
@@ -129,7 +116,7 @@ class CameraScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(3/4f)
+                    .aspectRatio(3 / 4f)
                     .align(Alignment.Center)
                     .clip(RoundedCornerShape(30.dp)),
                 contentAlignment = Alignment.Center
@@ -151,7 +138,6 @@ class CameraScreen(
                             initialShowAfterImage = viewModel.currentPhotoIndex == 1,
                             showBeforeAfterToggle = true,
                             onClose = { viewModel.resetToStart() },
-                            showLikesAndComments = false,
                             onActivityTypeClick = { viewModel.showEmojiPicker = true },
                             actionButtons = {
                                 // Add a post button

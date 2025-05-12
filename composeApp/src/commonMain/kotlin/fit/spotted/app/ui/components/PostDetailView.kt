@@ -1,13 +1,11 @@
 package fit.spotted.app.ui.components
 
-import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
@@ -22,29 +20,21 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import coil3.compose.SubcomposeAsyncImage
 import fit.spotted.app.api.ApiClient
 import fit.spotted.app.api.models.CommentData
 import fit.spotted.app.emoji.ActivityType
 import fit.spotted.app.ui.camera.TimerDisplay
-import fit.spotted.app.ui.theme.*
+import fit.spotted.app.ui.theme.LocalAdaptiveSpacing
+import fit.spotted.app.ui.theme.LocalReducedMotion
+import fit.spotted.app.ui.theme.LocalWindowSize
+import fit.spotted.app.ui.theme.WindowSizeClass
 import kotlinx.coroutines.launch
 import org.kodein.emoji.compose.WithPlatformEmoji
-
-/**
- * Linear interpolation for Float values - our own implementation
- */
-private fun lerp(start: Float, stop: Float, fraction: Float): Float {
-    return start + (stop - start) * fraction.coerceIn(0f, 1f)
-}
 
 /**
  * A reusable component that displays a post or photo detail view.
@@ -96,87 +86,85 @@ fun PostDetailView(
 ) {
     // State for tracking which image to show (before or after)
     var showAfterImage by remember { mutableStateOf(initialShowAfterImage) }
-    
+
     // State for like button, comments, and delete confirmation
     var isLiked by remember { mutableStateOf(isLikedByMe) }
     var showComments by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
-    
-    // Use animation for smooth transitions between before/after images
+
+    // Animation for smooth transitions between before/after images
     val imageTransition = animateFloatAsState(
         targetValue = if (showAfterImage) 1f else 0f,
         animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
     )
-    
+
     // Get adaptive spacing and window size
     val adaptiveSpacing = LocalAdaptiveSpacing.current
     val windowSize = LocalWindowSize.current
     val isReducedMotion = LocalReducedMotion.current
-    
+
     // Adjust animation duration based on reduced motion preference
-    val animationDuration = if (isReducedMotion) 200 else 500
-    
-    // Adjust button sizes for different screen sizes
+    if (isReducedMotion) 200 else 500
+
+    // Adjust dimensions for different screen sizes
     val buttonSize = when (windowSize.widthSizeClass) {
         WindowSizeClass.COMPACT -> 56.dp
         WindowSizeClass.MEDIUM -> 64.dp
         WindowSizeClass.EXPANDED -> 72.dp
     }
-    
-    // Adjust icon sizes for different screen sizes
+
     val iconSize = when (windowSize.widthSizeClass) {
         WindowSizeClass.COMPACT -> 28.dp
         WindowSizeClass.MEDIUM -> 32.dp
         WindowSizeClass.EXPANDED -> 36.dp
     }
-    
-    // Adjust text sizes for different screen sizes
+
     val titleTextSize = when (windowSize.widthSizeClass) {
         WindowSizeClass.COMPACT -> 16.sp
         WindowSizeClass.MEDIUM -> 18.sp
         WindowSizeClass.EXPANDED -> 20.sp
     }
-    
+
     val captionTextSize = when (windowSize.widthSizeClass) {
         WindowSizeClass.COMPACT -> 14.sp
         WindowSizeClass.MEDIUM -> 16.sp
         WindowSizeClass.EXPANDED -> 18.sp
     }
-    
+
     Box(
         modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        // Main content area with photo
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black),
             contentAlignment = Alignment.Center
         ) {
-        // Main content area with photo
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                .background(Color.Black),
-                contentAlignment = Alignment.Center
-            ) {
             // Display the photo
             val currentUrl = if (imageTransition.value < 0.5f) beforeImageUrl else afterImageUrl
-            
+
             // For tablet layouts, adjust content scale to fit better
             val contentScaleMode = if (windowSize.widthSizeClass == WindowSizeClass.EXPANDED) {
                 ContentScale.Fit
             } else {
                 ContentScale.Crop
             }
-            
-                AsyncImage(
-                    model = currentUrl,
-                    contentDescription = "Post Image",
+
+            AsyncImage(
+                model = currentUrl,
+                contentDescription = "Post Image",
                 contentScale = contentScaleMode,
-                    modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize()
             )
-            
+
             // Show before/after indicator
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(
-                        top = adaptiveSpacing.statusBarPadding, 
+                        top = adaptiveSpacing.statusBarPadding,
                         end = adaptiveSpacing.medium
                     )
                     .clip(CircleShape)
@@ -194,8 +182,8 @@ fun PostDetailView(
                 )
             }
         }
-        
-        // All action buttons in one vertical column
+
+        // Action buttons column
         Column(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
@@ -204,7 +192,7 @@ fun PostDetailView(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(adaptiveSpacing.medium)
         ) {
-            // Before/After toggle - consistent transparency
+            // Before/After toggle
             if (showBeforeAfterToggle) {
                 Box(
                     modifier = Modifier
@@ -223,8 +211,8 @@ fun PostDetailView(
                     )
                 }
             }
-            
-            // Like button - fixed transparency
+
+            // Like button with animation
             val coroutineScope = rememberCoroutineScope()
             var wasLikeClicked by remember { mutableStateOf(false) }
             val likeScale by animateFloatAsState(
@@ -242,12 +230,11 @@ fun PostDetailView(
                     stiffness = Spring.StiffnessMedium
                 )
             )
-            
+
             Box(
                 modifier = Modifier
                     .size(buttonSize)
                     .graphicsLayer {
-                        // Apply animation to the entire button container
                         scaleX = likeScale
                         scaleY = likeScale
                         rotationZ = likeRotation
@@ -255,15 +242,13 @@ fun PostDetailView(
                     .shadow(4.dp, CircleShape)
                     .clip(CircleShape)
                     .background(Color.Black.copy(alpha = 0.7f))
-                    .clickable { 
+                    .clickable {
                         isLiked = !isLiked
-                        // Trigger animation
                         wasLikeClicked = true
-                        
-                        // Notify parent component about like state change
+
                         postId?.let { id ->
                             onLikeStateChanged?.invoke(id, isLiked)
-                            
+
                             apiClient?.let { client ->
                                 coroutineScope.launch {
                                     try {
@@ -286,13 +271,11 @@ fun PostDetailView(
                     imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = "Like",
                     tint = if (isLiked) Color.Red else Color.White,
-                    modifier = Modifier
-                        .size(iconSize)
-                        // Remove animation from icon, now applied to container
+                    modifier = Modifier.size(iconSize)
                 )
             }
-            
-            // Like count in separate box below
+
+            // Like count indicator
             Box(
                 modifier = Modifier
                     .clip(CircleShape)
@@ -301,9 +284,9 @@ fun PostDetailView(
                 contentAlignment = Alignment.Center
             ) {
                 val displayCount = if (isLiked && !isLikedByMe) likes + 1
-                    else if (!isLiked && isLikedByMe) likes - 1
-                    else likes
-                    
+                else if (!isLiked && isLikedByMe) likes - 1
+                else likes
+
                 Text(
                     text = "$displayCount",
                     color = if (isLiked) Color.Red else Color.White,
@@ -311,8 +294,8 @@ fun PostDetailView(
                     fontWeight = FontWeight.Medium
                 )
             }
-            
-            // Comment button - using custom implementation for consistent transparency
+
+            // Comment button
             Box(
                 modifier = Modifier
                     .size(buttonSize)
@@ -326,13 +309,11 @@ fun PostDetailView(
                     imageVector = Icons.Default.Email,
                     contentDescription = "Comment",
                     tint = Color.White,
-                    modifier = Modifier
-                        .size(iconSize)
-                        .clip(CircleShape)
+                    modifier = Modifier.size(iconSize)
                 )
             }
-            
-            // Comment count below
+
+            // Comment count indicator
             Box(
                 modifier = Modifier
                     .clip(CircleShape)
@@ -347,8 +328,8 @@ fun PostDetailView(
                     fontWeight = FontWeight.Medium
                 )
             }
-            
-            // Delete button - consistent transparency
+
+            // Delete button
             onDeletePost?.let {
                 Box(
                     modifier = Modifier
@@ -367,7 +348,7 @@ fun PostDetailView(
                 }
             }
 
-            // Close button - consistent transparency
+            // Close button
             if (onClose != null) {
                 Box(
                     modifier = Modifier
@@ -390,14 +371,12 @@ fun PostDetailView(
             // Additional action buttons
             actionButtons()
         }
-        
-        // Position the timer at exactly the same height as the comments button
-        // To do this, we place it directly aligned with the offset of the action column plus
-        // the height of the toggle and like buttons plus spacing
-        val commentsButtonIndex = if (showBeforeAfterToggle) 2 else 1 // Index of comments button in column
-        val offsetToCommentsButton = buttonSize * commentsButtonIndex + 
-                                    (adaptiveSpacing.medium.value * (commentsButtonIndex)).dp
-        
+
+        // Position the timer aligned with the comments button
+        val commentsButtonIndex = if (showBeforeAfterToggle) 2 else 1
+        val offsetToCommentsButton = buttonSize * commentsButtonIndex +
+                (adaptiveSpacing.medium.value * (commentsButtonIndex)).dp
+
         TimerDisplay(
             timerText = workoutDuration,
             showPostAnimation = false,
@@ -408,7 +387,7 @@ fun PostDetailView(
                 )
                 .padding(start = 4.dp)
         )
-        
+
         // User info overlay at the bottom
         Box(
             modifier = Modifier
@@ -420,13 +399,13 @@ fun PostDetailView(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Profile icon - adjust size
+                // Profile avatar
                 val avatarSize = when (windowSize.widthSizeClass) {
                     WindowSizeClass.COMPACT -> 40.dp
                     WindowSizeClass.MEDIUM -> 48.dp
                     WindowSizeClass.EXPANDED -> 56.dp
                 }
-                
+
                 Box(
                     modifier = Modifier
                         .size(avatarSize)
@@ -444,7 +423,7 @@ fun PostDetailView(
 
                 Spacer(modifier = Modifier.width(adaptiveSpacing.medium))
 
-                // User info - adjust text sizes
+                // User info
                 Column {
                     Text(
                         text = userName,
@@ -477,7 +456,8 @@ fun PostDetailView(
                             }
                         }
                         Spacer(modifier = Modifier.width(adaptiveSpacing.small))
-                        // Small dot separator
+
+                        // Dot separator
                         Box(
                             modifier = Modifier
                                 .size(4.dp)
@@ -494,7 +474,7 @@ fun PostDetailView(
                 }
             }
         }
-        
+
         // Comments overlay
         if (showComments) {
             Box(
@@ -582,7 +562,6 @@ fun PostDetailView(
                     // Add comment input field
                     if (onAddComment != null) {
                         Spacer(modifier = Modifier.height(16.dp))
-
                         var commentText by remember { mutableStateOf("") }
 
                         Row(
@@ -635,7 +614,7 @@ fun PostDetailView(
                 }
             }
         }
-        
+
         // Delete confirmation dialog
         if (showDeleteConfirmation) {
             AlertDialog(
@@ -666,131 +645,6 @@ fun PostDetailView(
 }
 
 /**
- * A helper function to create a modern action button with an icon and a count.
- * Supports animation for a more dynamic feel.
- */
-@Composable
-fun ActionButton(
-    icon: ImageVector,
-    contentDescription: String,
-    count: Int,
-    tint: Color = Color.White,
-    backgroundColor: Color = MaterialTheme.colors.surface.copy(alpha = 0.9f),
-    countBackgroundColor: Color = MaterialTheme.colors.surface.copy(alpha = 0.7f),
-    countTextColor: Color = MaterialTheme.colors.onSurface,
-    onClick: () -> Unit,
-    animated: Boolean = false,
-    buttonSize: Dp = 56.dp,
-    iconSize: Dp = 28.dp,
-    modifier: Modifier = Modifier
-) {
-    // Animation for scale effect when clicked
-    var wasClicked by remember { mutableStateOf(false) }
-    
-    // Using a more dynamic animation curve for the scale
-    val scale by animateFloatAsState(
-        targetValue = if (wasClicked) 1.4f else 1f,
-        animationSpec = if (animated) {
-            spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMediumLow
-        )
-    } else {
-            spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessLow
-            )
-        }
-    )
-    
-    // Add rotation animation for like button
-    val rotation by animateFloatAsState(
-        targetValue = if (wasClicked && icon == Icons.Default.Favorite) 20f else 0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        )
-    )
-    
-    // Animate count changes with a bounce effect
-    val animatedCount by animateIntAsState(
-        targetValue = count,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        )
-    )
-    
-    // Animate the background color when clicked
-    val bgColor by animateColorAsState(
-        targetValue = if (wasClicked) backgroundColor.copy(alpha = 0.8f) else backgroundColor,
-        animationSpec = tween(durationMillis = 300)
-    )
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-    ) {
-        Box(
-            modifier = Modifier
-                .size(buttonSize)
-                .shadow(4.dp, CircleShape)
-                .clip(CircleShape)
-                .background(bgColor)
-                .clickable { 
-                    onClick()
-                    // Trigger animation
-                    wasClicked = true
-                    // Reset after animation
-                    kotlinx.coroutines.GlobalScope.launch {
-                        kotlinx.coroutines.delay(300)
-                        wasClicked = false
-                    }
-                }
-                .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                    rotationZ = rotation
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = contentDescription,
-                tint = tint,
-                modifier = Modifier
-                    .size(iconSize)
-                    .clip(CircleShape)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        // Animated count with nicer styling and pop effect when changing
-        Box(
-            modifier = Modifier
-                .clip(CircleShape)
-                .background(countBackgroundColor)
-                .padding(horizontal = 8.dp, vertical = 2.dp)
-                .graphicsLayer {
-                    // Add a subtle pop animation when count changes
-                    val popScale = if (wasClicked) 1.2f else 1f
-                    scaleX = popScale
-                    scaleY = popScale
-                },
-            contentAlignment = Alignment.Center
-        ) {
-        Text(
-                text = "$animatedCount",
-                color = countTextColor,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium
-        )
-        }
-    }
-}
-
-/**
  * An overload of PostDetailView that accepts ImageBitmap images instead of URLs.
  * This is used for previewing images before posting.
  */
@@ -806,88 +660,58 @@ fun PostDetailView(
     activityType: ActivityType,
     userName: String,
 
-    // Optional parameters with default values
-    showLikesAndComments: Boolean = false,
-
-    // Optional parameters with default values
+    // Optional parameters
     showBeforeAfterToggle: Boolean = true,
     initialShowAfterImage: Boolean = false,
-
-    // Likes and comments
     likes: Int = 0,
     comments: List<CommentData> = emptyList(),
     isLikedByMe: Boolean = false,
-
-    // Action buttons (for backward compatibility)
     actionButtons: @Composable ColumnScope.() -> Unit = {},
-
-    // Optional close action
     onClose: (() -> Unit)? = null,
-
-    // Optional callback for activity type click
     onActivityTypeClick: (() -> Unit)? = null,
-
-    // Callback for adding a comment
     onAddComment: ((text: String) -> Unit)? = null,
-
-    // Callback for deleting a post
     onDeletePost: (() -> Unit)? = null,
-
-    // Post ID for comment functionality
     postId: Int? = null,
-
-    // API client for like functionality
     apiClient: ApiClient? = null,
-
-    // Callback for when a post is liked/unliked
     onLikeStateChanged: ((postId: Int, isLiked: Boolean) -> Unit)? = null
 ) {
-    // State for tracking which image to show (before or after)
+    // State management
     var showAfterImage by remember { mutableStateOf(initialShowAfterImage) }
-
-    // State for like button, comments, and delete confirmation
     var isLiked by remember { mutableStateOf(isLikedByMe) }
     var showComments by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
-
-    // Add coroutineScope for this implementation
     val coroutineScope = rememberCoroutineScope()
 
-    // Use animation for smooth transitions between before/after images
-    val imageTransition = animateFloatAsState(
+    // Animations
+    animateFloatAsState(
         targetValue = if (showAfterImage) 1f else 0f,
         animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
     )
-    
-    // Get adaptive spacing and window size
+
+    // Adaptive sizing
     val adaptiveSpacing = LocalAdaptiveSpacing.current
     val windowSize = LocalWindowSize.current
     val isReducedMotion = LocalReducedMotion.current
-    
-    // Adjust animation duration based on reduced motion preference
-    val animationDuration = if (isReducedMotion) 200 else 500
-    
-    // Adjust button sizes for different screen sizes
+    if (isReducedMotion) 200 else 500
+
     val buttonSize = when (windowSize.widthSizeClass) {
         WindowSizeClass.COMPACT -> 56.dp
         WindowSizeClass.MEDIUM -> 64.dp
         WindowSizeClass.EXPANDED -> 72.dp
     }
-    
-    // Adjust icon sizes for different screen sizes
+
     val iconSize = when (windowSize.widthSizeClass) {
         WindowSizeClass.COMPACT -> 28.dp
         WindowSizeClass.MEDIUM -> 32.dp
         WindowSizeClass.EXPANDED -> 36.dp
     }
-    
-    // Adjust text sizes for different screen sizes
+
     val titleTextSize = when (windowSize.widthSizeClass) {
         WindowSizeClass.COMPACT -> 16.sp
         WindowSizeClass.MEDIUM -> 18.sp
         WindowSizeClass.EXPANDED -> 20.sp
     }
-    
+
     val captionTextSize = when (windowSize.widthSizeClass) {
         WindowSizeClass.COMPACT -> 14.sp
         WindowSizeClass.MEDIUM -> 16.sp
@@ -898,17 +722,15 @@ fun PostDetailView(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        // Main content area with photo
+        // Main image display
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black),
             contentAlignment = Alignment.Center
         ) {
-            // Display the current image based on showAfterImage state
             val currentPhoto = if (showAfterImage) afterWorkoutPhoto else beforeWorkoutPhoto
 
-            // Use standard Image composable to display the ImageBitmap
             currentPhoto?.let { bitmap ->
                 Image(
                     bitmap = bitmap,
@@ -917,13 +739,13 @@ fun PostDetailView(
                     contentScale = ContentScale.Fit
                 )
             }
-            
-            // Show before/after indicator
+
+            // Before/After indicator
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(
-                        top = adaptiveSpacing.statusBarPadding, 
+                        top = adaptiveSpacing.statusBarPadding,
                         end = adaptiveSpacing.medium
                     )
                     .clip(CircleShape)
@@ -941,8 +763,8 @@ fun PostDetailView(
                 )
             }
         }
-        
-        // All action buttons in one vertical column
+
+        // Action buttons column
         Column(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
@@ -951,7 +773,7 @@ fun PostDetailView(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(adaptiveSpacing.medium)
         ) {
-            // Before/After toggle - consistent transparency
+            // Before/After toggle
             if (showBeforeAfterToggle) {
                 Box(
                     modifier = Modifier
@@ -970,8 +792,8 @@ fun PostDetailView(
                     )
                 }
             }
-            
-            // Like button in second implementation
+
+            // Like button with animation
             var wasLikeClickedBitmap by remember { mutableStateOf(false) }
             val likeScaleBitmap by animateFloatAsState(
                 targetValue = if (wasLikeClickedBitmap) 1.4f else 1f,
@@ -988,12 +810,11 @@ fun PostDetailView(
                     stiffness = Spring.StiffnessMedium
                 )
             )
-            
+
             Box(
                 modifier = Modifier
                     .size(buttonSize)
                     .graphicsLayer {
-                        // Apply animation to the entire button container
                         scaleX = likeScaleBitmap
                         scaleY = likeScaleBitmap
                         rotationZ = likeRotationBitmap
@@ -1001,12 +822,10 @@ fun PostDetailView(
                     .shadow(4.dp, CircleShape)
                     .clip(CircleShape)
                     .background(Color.Black.copy(alpha = 0.7f))
-                    .clickable { 
+                    .clickable {
                         isLiked = !isLiked
-                        // Trigger animation
                         wasLikeClickedBitmap = true
-                        
-                        // Notify parent component about like state change
+
                         postId?.let { id ->
                             onLikeStateChanged?.invoke(id, isLiked)
 
@@ -1032,13 +851,11 @@ fun PostDetailView(
                     imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = "Like",
                     tint = if (isLiked) Color.Red else Color.White,
-                    modifier = Modifier
-                        .size(iconSize)
-                        // Remove animation from icon, now applied to container
+                    modifier = Modifier.size(iconSize)
                 )
             }
-            
-            // Like count in separate box below
+
+            // Like count indicator
             Box(
                 modifier = Modifier
                     .clip(CircleShape)
@@ -1047,9 +864,9 @@ fun PostDetailView(
                 contentAlignment = Alignment.Center
             ) {
                 val displayCount = if (isLiked && !isLikedByMe) likes + 1
-                    else if (!isLiked && isLikedByMe) likes - 1
-                    else likes
-                    
+                else if (!isLiked && isLikedByMe) likes - 1
+                else likes
+
                 Text(
                     text = "$displayCount",
                     color = if (isLiked) Color.Red else Color.White,
@@ -1057,8 +874,8 @@ fun PostDetailView(
                     fontWeight = FontWeight.Medium
                 )
             }
-            
-            // Comment button - using custom implementation for consistent transparency
+
+            // Comment button
             Box(
                 modifier = Modifier
                     .size(buttonSize)
@@ -1072,13 +889,11 @@ fun PostDetailView(
                     imageVector = Icons.Default.Email,
                     contentDescription = "Comment",
                     tint = Color.White,
-                    modifier = Modifier
-                        .size(iconSize)
-                        .clip(CircleShape)
+                    modifier = Modifier.size(iconSize)
                 )
             }
-            
-            // Comment count below
+
+            // Comment count indicator
             Box(
                 modifier = Modifier
                     .clip(CircleShape)
@@ -1093,8 +908,8 @@ fun PostDetailView(
                     fontWeight = FontWeight.Medium
                 )
             }
-            
-            // Delete button - consistent transparency
+
+            // Delete button
             onDeletePost?.let {
                 Box(
                     modifier = Modifier
@@ -1113,7 +928,7 @@ fun PostDetailView(
                 }
             }
 
-            // Close button - consistent transparency
+            // Close button
             if (onClose != null) {
                 Box(
                     modifier = Modifier
@@ -1136,14 +951,12 @@ fun PostDetailView(
             // Additional action buttons
             actionButtons()
         }
-        
-        // Position the timer at exactly the same height as the comments button
-        // To do this, we place it directly aligned with the offset of the action column plus
-        // the height of the toggle and like buttons plus spacing
-        val commentsButtonIndex = if (showBeforeAfterToggle) 2 else 1 // Index of comments button in column
-        val offsetToCommentsButton = buttonSize * commentsButtonIndex + 
-                                    (adaptiveSpacing.medium.value * (commentsButtonIndex)).dp
-        
+
+        // Position the timer aligned with the comments button
+        val commentsButtonIndex = if (showBeforeAfterToggle) 2 else 1
+        val offsetToCommentsButton = buttonSize * commentsButtonIndex +
+                (adaptiveSpacing.medium.value * (commentsButtonIndex)).dp
+
         TimerDisplay(
             timerText = workoutDuration,
             showPostAnimation = false,
@@ -1154,93 +967,94 @@ fun PostDetailView(
                 )
                 .padding(start = 4.dp)
         )
-        
+
         // User info overlay at the bottom
         Box(
-                modifier = Modifier
-                    .fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .align(Alignment.BottomStart)
-                    .background(Color.Black.copy(alpha = 0.7f))
+                .background(Color.Black.copy(alpha = 0.7f))
                 .padding(adaptiveSpacing.medium)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                // Profile icon - adjust size
+                // Profile avatar
                 val avatarSize = when (windowSize.widthSizeClass) {
                     WindowSizeClass.COMPACT -> 40.dp
                     WindowSizeClass.MEDIUM -> 48.dp
                     WindowSizeClass.EXPANDED -> 56.dp
                 }
-                
-                    Box(
-                        modifier = Modifier
+
+                Box(
+                    modifier = Modifier
                         .size(avatarSize)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colors.surface),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Profile Picture",
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colors.surface),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Profile Picture",
                         modifier = Modifier.size(avatarSize / 1.6f),
-                            tint = MaterialTheme.colors.onSurface
-                        )
-                    }
+                        tint = MaterialTheme.colors.onSurface
+                    )
+                }
 
                 Spacer(modifier = Modifier.width(adaptiveSpacing.medium))
 
-                // User info - adjust text sizes
-                    Column {
-                        Text(
-                            text = userName,
-                            fontWeight = FontWeight.Bold,
+                // User info
+                Column {
+                    Text(
+                        text = userName,
+                        fontWeight = FontWeight.Bold,
                         fontSize = titleTextSize,
-                            color = Color.White
-                        )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
+                        color = Color.White
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(top = adaptiveSpacing.small)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clickable(onClick = { onActivityTypeClick?.invoke() })
+                                .padding(vertical = 2.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .clickable(onClick = { onActivityTypeClick?.invoke() })
-                                    .padding(vertical = 2.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                WithPlatformEmoji(
-                                    activityType.emoji
-                                ) { emojiString, inlineContent ->
-                                    Text(
-                                        text = emojiString,
-                                        inlineContent = inlineContent,
+                            WithPlatformEmoji(
+                                activityType.emoji
+                            ) { emojiString, inlineContent ->
+                                Text(
+                                    text = emojiString,
+                                    inlineContent = inlineContent,
                                     fontSize = when (windowSize.widthSizeClass) {
                                         WindowSizeClass.COMPACT -> 24.sp
                                         else -> 28.sp
                                     },
-                                        color = Color.White
-                                    )
-                                }
+                                    color = Color.White
+                                )
                             }
+                        }
                         Spacer(modifier = Modifier.width(adaptiveSpacing.small))
-                        // Small dot separator
-                            Box(
-                                modifier = Modifier
-                                    .size(4.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.5f))
-                            )
+
+                        // Dot separator
+                        Box(
+                            modifier = Modifier
+                                .size(4.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.5f))
+                        )
                         Spacer(modifier = Modifier.width(adaptiveSpacing.small))
-                            Text(
-                                text = postedAt,
+                        Text(
+                            text = postedAt,
                             fontSize = captionTextSize,
-                                color = Color.White.copy(alpha = 0.8f)
-                            )
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
                     }
                 }
             }
         }
-        
+
         // Comments overlay
         if (showComments) {
             Box(
@@ -1328,7 +1142,6 @@ fun PostDetailView(
                     // Add comment input field
                     if (onAddComment != null) {
                         Spacer(modifier = Modifier.height(16.dp))
-
                         var commentText by remember { mutableStateOf("") }
 
                         Row(

@@ -10,7 +10,7 @@ import org.kodein.emoji.travel_places.transport_ground.Bicycle
 
 /**
  * Represents different types of physical activities that can be tracked in the app.
- * 
+ *
  * @property emoji The Unicode emoji character representing the activity
  * @property emojiWasm The Emoji object for WASM platform compatibility
  */

@@ -2,7 +2,6 @@ package fit.spotted.app.camera
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
 
 /**
  * Interface for platform-specific camera functionality.
@@ -11,7 +10,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 interface CameraKPlatform {
     /**
      * Creates and configures a camera preview composable.
-     * 
+     *
      * @param modifier Modifier to be applied to the camera preview
      * @param cameraFacing The current camera facing direction
      * @param onControllerReady Callback when the camera controller is ready
@@ -30,7 +29,7 @@ interface CameraKPlatform {
 
     /**
      * Captures an image from the camera.
-     * 
+     *
      * @return Result containing the captured image (bitmap and byteArray) or an error
      */
     suspend fun captureImage(): Result<CapturedImage>

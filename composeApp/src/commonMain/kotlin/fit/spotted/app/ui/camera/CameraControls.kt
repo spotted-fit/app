@@ -3,12 +3,7 @@ package fit.spotted.app.ui.camera
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
@@ -132,8 +127,8 @@ fun CameraControls(
                     .clip(CircleShape)
                     .background(if (photoData != null) MaterialTheme.colors.primary else Color.Gray)
                     .border(
-                        width = 1.dp, 
-                        color = Color.White.copy(alpha = 0.7f), 
+                        width = 1.dp,
+                        color = Color.White.copy(alpha = 0.7f),
                         shape = CircleShape
                     )
                     .clickable(enabled = photoData != null, onClick = onAccept),

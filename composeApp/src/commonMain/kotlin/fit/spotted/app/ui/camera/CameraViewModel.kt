@@ -102,7 +102,7 @@ class CameraViewModel(private val apiClient: ApiClient) {
 
                 // Get final timer value
                 updateTimer()
-                
+
                 // Stop the timer
                 isTimerRunning = false
                 workoutStartTime = null
@@ -131,7 +131,8 @@ class CameraViewModel(private val apiClient: ApiClient) {
     fun postWorkout() {
         // Check if we have both photos and their byte arrays
         if (beforeWorkoutPhoto == null || afterWorkoutPhoto == null ||
-            beforeWorkoutPhotoBytes == null || afterWorkoutPhotoBytes == null) {
+            beforeWorkoutPhotoBytes == null || afterWorkoutPhotoBytes == null
+        ) {
             return
         }
 
