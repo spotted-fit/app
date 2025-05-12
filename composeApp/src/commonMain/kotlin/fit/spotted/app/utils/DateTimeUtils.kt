@@ -1,15 +1,18 @@
 package fit.spotted.app.utils
 
-import kotlinx.datetime.*
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 /**
  * Utility class for date and time operations.
  */
 object DateTimeUtils {
-    
+
     /**
      * Formats a timestamp in Instagram-style relative time format.
-     * 
+     *
      * @param timestamp The timestamp in milliseconds
      * @return Formatted string in Instagram style (e.g., "just now", "5m ago", "2h ago", "3d ago", "2w ago", or "Jan 15")
      */
@@ -17,13 +20,13 @@ object DateTimeUtils {
         val now = Clock.System.now()
         val instant = Instant.fromEpochMilliseconds(timestamp)
         val duration = now - instant
-        
+
         // Convert to seconds, minutes, hours, days
         val seconds = duration.inWholeSeconds
         val minutes = duration.inWholeMinutes
         val hours = duration.inWholeHours
         val days = duration.inWholeDays
-        
+
         return when {
             seconds < 60 -> "just now"
             minutes < 60 -> "${minutes}m ago"

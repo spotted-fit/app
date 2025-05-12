@@ -57,7 +57,7 @@ fun MainNavigation() {
 
 /**
  * Main screen with bottom navigation
- * 
+ *
  * @param onLogout Callback to be invoked when the user logs out
  */
 @Composable
@@ -71,7 +71,7 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
 
     // Track whether a picture has been taken
     var hasTakenPicture by remember { mutableStateOf(false) }
-    
+
     // State for friend profile navigation
     var currentFriendProfile by remember { mutableStateOf<String?>(null) }
     var showingFriendProfile by remember { mutableStateOf(false) }
@@ -145,15 +145,15 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                 // Feed tab
                 BottomNavigationItem(
                     selected = currentTab == 0,
-                    onClick = { 
+                    onClick = {
                         handleTabChange(0)
                     },
-                    icon = { 
+                    icon = {
                         Icon(
-                            Icons.Default.Home, 
+                            Icons.Default.Home,
                             contentDescription = "Feed",
                             modifier = Modifier.size(26.dp)
-                        ) 
+                        )
                     },
                     selectedContentColor = MaterialTheme.colors.onSurface,
                     unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
@@ -163,15 +163,15 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                 // Activity/Camera tab
                 BottomNavigationItem(
                     selected = currentTab == 1,
-                    onClick = { 
+                    onClick = {
                         handleTabChange(1)
                     },
-                    icon = { 
+                    icon = {
                         Icon(
-                            Icons.Default.Add, 
+                            Icons.Default.Add,
                             contentDescription = "Activity",
                             modifier = Modifier.size(26.dp)
-                        ) 
+                        )
                     },
                     selectedContentColor = MaterialTheme.colors.onSurface,
                     unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
@@ -181,15 +181,15 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                 // Friends tab
                 BottomNavigationItem(
                     selected = currentTab == 2,
-                    onClick = { 
+                    onClick = {
                         handleTabChange(2)
                     },
-                    icon = { 
+                    icon = {
                         Icon(
-                            Icons.Default.Person, 
+                            Icons.Default.Person,
                             contentDescription = "Friends",
                             modifier = Modifier.size(26.dp)
-                        ) 
+                        )
                     },
                     selectedContentColor = MaterialTheme.colors.onSurface,
                     unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
@@ -199,15 +199,15 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                 // Profile tab
                 BottomNavigationItem(
                     selected = currentTab == 3,
-                    onClick = { 
+                    onClick = {
                         handleTabChange(3)
                     },
-                    icon = { 
+                    icon = {
                         Icon(
-                            Icons.Default.AccountCircle, 
+                            Icons.Default.AccountCircle,
                             contentDescription = "Profile",
                             modifier = Modifier.size(26.dp)
-                        ) 
+                        )
                     },
                     selectedContentColor = MaterialTheme.colors.onSurface,
                     unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
@@ -219,11 +219,11 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
             if (currentTab == 3) {
                 // Modern top app bar with transparency
                 TopAppBar(
-                    title = { 
+                    title = {
                         Text(
-                            "Profile", 
+                            "Profile",
                             color = MaterialTheme.colors.onSurface
-                        ) 
+                        )
                     },
                     backgroundColor = MaterialTheme.colors.surface.copy(alpha = 0.9f),
                     elevation = 0.dp,
@@ -262,6 +262,7 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                         hasTakenPicture = isAfterWorkoutMode
                     }
                 ).Content()
+
                 2 -> {
                     if (showingFriendProfile && currentFriendProfile != null) {
                         // Show friend profile if a friend is selected
@@ -283,6 +284,7 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                         friendsScreen.Content()
                     }
                 }
+
                 3 -> ProfileScreen().Content()
                 else -> FeedScreen().Content()
             }

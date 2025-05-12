@@ -6,13 +6,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
 import com.kashif.cameraK.controller.CameraController
-import com.kashif.cameraK.enums.CameraLens
-import com.kashif.cameraK.enums.Directory
-import com.kashif.cameraK.enums.FlashMode
-import com.kashif.cameraK.enums.ImageFormat
-import com.kashif.cameraK.enums.TorchMode
+import com.kashif.cameraK.enums.*
 import com.kashif.cameraK.result.ImageCaptureResult
 import com.kashif.cameraK.ui.CameraPreview
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -71,6 +66,7 @@ class IOSCameraKPlatform : CameraKPlatform {
                 val bitmap = result.byteArray.decodeToImageBitmap()
                 Result.success(CapturedImage(bitmap, result.byteArray))
             }
+
             is ImageCaptureResult.Error -> {
                 Result.failure(result.exception)
             }

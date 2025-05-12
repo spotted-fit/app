@@ -2,7 +2,6 @@ package fit.spotted.app.camera
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
 
 /**
  * Enum representing camera lens facing direction.
@@ -40,14 +39,14 @@ interface Camera {
 
     /**
      * Switches between front and back cameras.
-     * 
+     *
      * @return The new camera facing direction after switching
      */
     fun switchCamera(): CameraFacing
 
     /**
      * Gets the current camera facing direction.
-     * 
+     *
      * @return The current camera facing direction
      */
     fun getCurrentCameraFacing(): CameraFacing

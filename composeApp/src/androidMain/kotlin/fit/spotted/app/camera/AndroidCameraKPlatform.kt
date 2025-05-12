@@ -12,11 +12,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.kashif.cameraK.controller.CameraController
-import com.kashif.cameraK.enums.CameraLens
-import com.kashif.cameraK.enums.Directory
-import com.kashif.cameraK.enums.FlashMode
-import com.kashif.cameraK.enums.ImageFormat
-import com.kashif.cameraK.enums.TorchMode
+import com.kashif.cameraK.enums.*
 import com.kashif.cameraK.result.ImageCaptureResult
 import com.kashif.cameraK.ui.CameraPreview
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -32,7 +28,7 @@ class AndroidCameraKPlatform : CameraKPlatform {
 
     /**
      * Flips an ImageBitmap horizontally.
-     * 
+     *
      * @param bitmap The ImageBitmap to flip
      * @return A new ImageBitmap that is flipped horizontally
      */
@@ -97,7 +93,7 @@ class AndroidCameraKPlatform : CameraKPlatform {
 
     /**
      * Compresses an image byte array to reduce its size.
-     * 
+     *
      * @param imageByteArray The original image byte array
      * @param quality The compression quality (0-100)
      * @return The compressed image byte array
@@ -140,6 +136,7 @@ class AndroidCameraKPlatform : CameraKPlatform {
 
                 Result.success(CapturedImage(bitmap, finalByteArray))
             }
+
             is ImageCaptureResult.Error -> {
                 Result.failure(result.exception)
             }

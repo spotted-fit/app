@@ -8,15 +8,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.unit.dp
-import fit.spotted.app.getPlatform
 
 // Light theme colors - Modern black and white with transparency
 private val LightColorPalette = lightColors(
@@ -57,7 +50,7 @@ fun AppTheme(
     // Get theme preferences
     val themeMode by ThemePreferences.themeMode.collectAsState()
     val reducedMotion by ThemePreferences.reducedMotion.collectAsState()
-    
+
     // Determine if dark theme should be used
     val systemIsDark = isSystemInDarkTheme()
     val darkTheme = when (themeMode) {
@@ -65,23 +58,20 @@ fun AppTheme(
         ThemeMode.DARK -> true
         ThemeMode.LIGHT -> false
     }
-    
+
     // Choose the appropriate color palette based on theme
     val colors = if (darkTheme) DarkColorPalette else LightColorPalette
-    
-    // Calculate window size class based on current configuration
-    val configuration = LocalConfiguration.current
-    val screenWidthDp = configuration.screenWidthDp.dp
-    val screenHeightDp = configuration.screenHeightDp.dp
-    
+
+    // Default to COMPACT for most devices
+    // These can be overridden by platform-specific code as needed
     val windowSize = WindowSize(
-        widthSizeClass = getWindowWidthClass(screenWidthDp),
-        heightSizeClass = getWindowHeightClass(screenHeightDp)
+        widthSizeClass = WindowSizeClass.COMPACT,
+        heightSizeClass = WindowSizeClass.COMPACT
     )
-    
+
     // Create adaptive spacing based on window size
     val adaptiveSpacing = AdaptiveSpacing(windowSize)
-    
+
     // Provide spacing values, window size, adaptive spacing, and reduced motion setting to all composables
     CompositionLocalProvider(
         LocalSpacing provides Spacing(),

@@ -25,7 +25,14 @@ interface ApiClient {
     fun logOut()
 
     // Posts
-    suspend fun createPost(photo1: ByteArray, photo2: ByteArray, emoji: String? = null, text: String? = null, timer: Int): OkResponse
+    suspend fun createPost(
+        photo1: ByteArray,
+        photo2: ByteArray,
+        emoji: String? = null,
+        text: String? = null,
+        timer: Int
+    ): OkResponse
+
     suspend fun getPost(id: Int): GetPostResponse
     suspend fun deletePost(id: Int): OkResponse
     suspend fun likePost(id: Int): OkResponse
@@ -128,7 +135,7 @@ internal class ApiClientImpl : ApiClient {
 
     /**
      * Creates a new post with before and after workout photos.
-     * 
+     *
      * @param photo1 The before workout photo as a byte array
      * @param photo2 The after workout photo as a byte array
      * @param emoji Optional emoji representing the workout type
@@ -169,7 +176,7 @@ internal class ApiClientImpl : ApiClient {
 
     /**
      * Gets a post by its ID.
-     * 
+     *
      * @param id The ID of the post to retrieve
      * @return The post details
      */
@@ -181,7 +188,7 @@ internal class ApiClientImpl : ApiClient {
 
     /**
      * Likes a post.
-     * 
+     *
      * @param id The ID of the post to like
      * @return OkResponse if successful
      */
@@ -193,7 +200,7 @@ internal class ApiClientImpl : ApiClient {
 
     /**
      * Unlikes a post.
-     * 
+     *
      * @param id The ID of the post to unlike
      * @return OkResponse if successful
      */
@@ -205,7 +212,7 @@ internal class ApiClientImpl : ApiClient {
 
     /**
      * Deletes a post.
-     * 
+     *
      * @param id The ID of the post to delete
      * @return OkResponse if successful
      */
@@ -217,7 +224,7 @@ internal class ApiClientImpl : ApiClient {
 
     /**
      * Adds a comment to a post.
-     * 
+     *
      * @param postId The ID of the post to comment on
      * @param text The comment text
      * @return OkResponse if successful
@@ -231,7 +238,7 @@ internal class ApiClientImpl : ApiClient {
 
     /**
      * Gets all comments for a post.
-     * 
+     *
      * @param postId The ID of the post to get comments for
      * @return List of comments
      */
@@ -243,7 +250,7 @@ internal class ApiClientImpl : ApiClient {
 
     /**
      * Gets a user's profile by their ID.
-     * 
+     *
      * @param username The username of the user
      * @return The user's profile
      */
@@ -266,7 +273,7 @@ internal class ApiClientImpl : ApiClient {
 
     /**
      * Searches for users by query string.
-     * 
+     *
      * @param query The search query
      * @return List of matching users
      */
@@ -279,7 +286,7 @@ internal class ApiClientImpl : ApiClient {
 
     /**
      * Sends a friend request to another user.
-     * 
+     *
      * @param toId The ID of the user to send the request to
      * @return OkResponse if successful
      */
@@ -292,7 +299,7 @@ internal class ApiClientImpl : ApiClient {
 
     /**
      * Responds to a friend request.
-     * 
+     *
      * @param requestId The ID of the friend request
      * @param accepted Whether the request was accepted
      * @return Result of the response
@@ -306,7 +313,7 @@ internal class ApiClientImpl : ApiClient {
 
     /**
      * Gets all pending friend requests for the current user.
-     * 
+     *
      * @return List of friend requests
      */
     override suspend fun getFriendRequests(): FriendRequests {
@@ -317,7 +324,7 @@ internal class ApiClientImpl : ApiClient {
 
     /**
      * Gets all friends of the current user.
-     * 
+     *
      * @return List of friends
      */
     override suspend fun getFriends(): FriendsList {

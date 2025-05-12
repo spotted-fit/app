@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 /**
  * A custom Pull-to-Refresh layout that provides an intuitive and visually pleasing
  * refresh experience for content.
- * 
+ *
  * @param isRefreshing Whether the content is currently refreshing.
  * @param onRefresh Callback to be invoked when the user pulls to refresh.
  * @param content The content to display.
@@ -38,11 +38,11 @@ fun PullToRefreshLayout(
 ) {
     val refreshDistance = with(LocalDensity.current) { 80.dp.toPx() }
     val refreshTriggerDistance = refreshDistance * 0.75f
-    
+
     var refreshing by remember { mutableStateOf(false) }
     var pullDistance by remember { mutableStateOf(0f) }
     val pullProgress = (pullDistance / refreshDistance).coerceIn(0f, 1f)
-    
+
     // Animated spinner rotation
     val spinnerAngle by rememberInfiniteTransition().animateFloat(
         initialValue = 0f,
@@ -52,20 +52,20 @@ fun PullToRefreshLayout(
             repeatMode = RepeatMode.Restart
         )
     )
-    
+
     val coroutineScope = rememberCoroutineScope()
-    
+
     // Set isRefreshing based on the parent's isRefreshing state
     LaunchedEffect(isRefreshing) {
         refreshing = isRefreshing
     }
-    
+
     // When pull is released and distance was greater than the trigger, start refreshing
     fun onRelease() {
         if (pullDistance > refreshTriggerDistance && !refreshing) {
             refreshing = true
             onRefresh()
-            
+
             // Reset pull distance with animation
             coroutineScope.launch {
                 val startDistance = pullDistance
@@ -93,7 +93,7 @@ fun PullToRefreshLayout(
             }
         }
     }
-    
+
     // Nested scroll connection to detect pull gesture
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
@@ -107,7 +107,7 @@ fun PullToRefreshLayout(
                 }
                 return Offset.Zero
             }
-            
+
             override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
                 // Only allow pulling down when at the top of the list
                 if (!refreshing && available.y > 0) {
@@ -116,14 +116,14 @@ fun PullToRefreshLayout(
                 }
                 return Offset.Zero
             }
-            
+
             override suspend fun onPreFling(available: Velocity): Velocity {
                 onRelease()
                 return Velocity.Zero
             }
         }
     }
-    
+
     // Update refreshing state when external isRefreshing changes
     LaunchedEffect(isRefreshing) {
         if (!isRefreshing && refreshing) {
@@ -132,7 +132,7 @@ fun PullToRefreshLayout(
             refreshing = false
         }
     }
-    
+
     // Layout with nested scroll connection
     Box(
         modifier = modifier
@@ -141,7 +141,7 @@ fun PullToRefreshLayout(
     ) {
         // Main content
         content()
-        
+
         // Pull indicator
         Box(
             modifier = Modifier
@@ -164,7 +164,7 @@ fun PullToRefreshLayout(
                         modifier = Modifier.size(40.dp)
                     )
                 }
-                
+
                 if (pullDistance > refreshTriggerDistance && !refreshing) {
                     Text(
                         text = "Release to refresh",

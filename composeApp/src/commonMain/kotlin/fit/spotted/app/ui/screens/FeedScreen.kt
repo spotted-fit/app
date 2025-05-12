@@ -129,12 +129,12 @@ class FeedScreen : Screen {
                                     val updatedPost = apiClient.getPost(post.id)
                                     if (updatedPost.result == "ok" && updatedPost.response != null) {
                                         // Update the post in the list
-                                        posts = posts.map { 
-                                            if (it.id == post.id) updatedPost.response else it 
+                                        posts = posts.map {
+                                            if (it.id == post.id) updatedPost.response else it
                                         }
                                     }
                                 }
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
                                 // Handle error
                             }
                         }
@@ -148,11 +148,11 @@ class FeedScreen : Screen {
                                 val updatedPost = apiClient.getPost(postId)
                                 if (updatedPost.result == "ok" && updatedPost.response != null) {
                                     // Update the post in the list
-                                    posts = posts.map { 
-                                        if (it.id == postId) updatedPost.response else it 
+                                    posts = posts.map {
+                                        if (it.id == postId) updatedPost.response else it
                                     }
                                 }
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
                                 // Handle error
                             }
                         }
@@ -184,7 +184,9 @@ class FeedScreen : Screen {
         val seconds = durationSeconds % 60
 
         return if (hours > 0) {
-            "${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
+            "${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${
+                seconds.toString().padStart(2, '0')
+            }"
         } else {
             "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
         }

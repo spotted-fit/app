@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Screen that allows users to log in or create a new account.
- * 
+ *
  * @param onLogin Callback to be invoked when the user successfully logs in, passing the username
  */
 class LoginScreen(
@@ -38,7 +38,7 @@ class LoginScreen(
 
         // Coroutine scope for API calls
         val coroutineScope = rememberCoroutineScope()
-        if(apiClient.isLoggedIn()) {
+        if (apiClient.isLoggedIn()) {
             onLogin()
             return
         }
@@ -197,7 +197,7 @@ class LoginScreen(
 
             // Login button
             Button(
-                onClick = { 
+                onClick = {
                     onLoginSubmit(password, username)
                 },
                 modifier = Modifier
@@ -297,7 +297,7 @@ class LoginScreen(
 
             // Sign up button
             Button(
-                onClick = { 
+                onClick = {
                     // Validate passwords match
                     if (password == confirmPassword) {
                         onSignupSubmit(email, password, username)
@@ -306,8 +306,8 @@ class LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                enabled = !isLoading && password == confirmPassword && 
-                          email.isNotBlank() && password.isNotBlank() && username.isNotBlank()
+                enabled = !isLoading && password == confirmPassword &&
+                        email.isNotBlank() && password.isNotBlank() && username.isNotBlank()
             ) {
                 Text("Create Account")
             }

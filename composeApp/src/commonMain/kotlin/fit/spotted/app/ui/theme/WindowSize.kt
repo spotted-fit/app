@@ -1,8 +1,6 @@
 package fit.spotted.app.ui.theme
 
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -45,6 +43,6 @@ data class WindowSize(
 /**
  * CompositionLocal to provide window size to composables.
  */
-val LocalWindowSize = compositionLocalOf { 
-    WindowSize(WindowSizeClass.COMPACT, WindowSizeClass.COMPACT) 
+val LocalWindowSize = compositionLocalOf {
+    WindowSize(WindowSizeClass.COMPACT, WindowSizeClass.COMPACT)
 } 

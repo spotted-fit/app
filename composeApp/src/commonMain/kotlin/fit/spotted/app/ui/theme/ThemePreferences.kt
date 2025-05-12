@@ -1,8 +1,5 @@
 package fit.spotted.app.ui.theme
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,11 +20,11 @@ object ThemePreferences {
     // Default to system theme
     private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
     val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
-    
+
     // Whether animations should be reduced
     private val _reducedMotion = MutableStateFlow(false)
     val reducedMotion: StateFlow<Boolean> = _reducedMotion.asStateFlow()
-    
+
     /**
      * Set the theme mode
      * @param mode The desired theme mode
@@ -35,7 +32,7 @@ object ThemePreferences {
     fun setThemeMode(mode: ThemeMode) {
         _themeMode.value = mode
     }
-    
+
     /**
      * Toggle between light and dark modes
      * If currently using system theme, will switch to either light or dark based on current system setting
@@ -48,7 +45,7 @@ object ThemePreferences {
             ThemeMode.DARK -> ThemeMode.LIGHT
         }
     }
-    
+
     /**
      * Set reduced motion preference
      * @param enabled Whether reduced motion should be enabled
@@ -56,7 +53,7 @@ object ThemePreferences {
     fun setReducedMotion(enabled: Boolean) {
         _reducedMotion.value = enabled
     }
-    
+
     /**
      * Toggle reduced motion setting
      */

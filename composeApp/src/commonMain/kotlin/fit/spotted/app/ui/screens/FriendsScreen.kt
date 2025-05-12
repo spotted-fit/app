@@ -3,7 +3,6 @@ package fit.spotted.app.ui.screens
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -75,10 +74,10 @@ class FriendsScreen : Screen {
                 isLoading = true
                 showLoadingIndicator = true
                 errorMessage = null
-                
+
                 // Small delay for animation smoothness
                 delay(200)
-                
+
                 val friendsResponse = apiClient.getFriends()
                 if (friendsResponse.result == "ok") {
                     friends = friendsResponse.response?.friends?.map { friendData ->
@@ -91,7 +90,7 @@ class FriendsScreen : Screen {
                     } ?: emptyList()
                 }
                 isLoading = false
-                
+
                 // Add a small delay before hiding the loading indicator for smoother UI transition
                 delay(300)
                 showLoadingIndicator = false
@@ -108,10 +107,10 @@ class FriendsScreen : Screen {
                 isLoading = true
                 showLoadingIndicator = true
                 errorMessage = null
-                
+
                 // Small delay for animation smoothness
                 delay(200)
-                
+
                 val requestsResponse = apiClient.getFriendRequests()
                 if (requestsResponse.result == "ok") {
                     friendRequests = requestsResponse.response?.requests?.map { requestPreview ->
@@ -125,7 +124,7 @@ class FriendsScreen : Screen {
                     } ?: emptyList()
                 }
                 isLoading = false
-                
+
                 // Add a small delay before hiding the loading indicator for smoother UI transition
                 delay(300)
                 showLoadingIndicator = false
@@ -161,7 +160,7 @@ class FriendsScreen : Screen {
                         // Show loading indicator with a small delay
                         showLoadingIndicator = true
                         delay(300)
-                        
+
                         val response = apiClient.searchUsers(searchQuery)
                         if (response.result == "ok") {
                             searchResults = response.response?.map { userData ->
@@ -173,7 +172,7 @@ class FriendsScreen : Screen {
                                 )
                             } ?: emptyList()
                         }
-                        
+
                         // Hide loading indicator after search completes
                         showLoadingIndicator = false
                     } catch (e: Exception) {
@@ -188,10 +187,10 @@ class FriendsScreen : Screen {
         // Main UI
         AnimatedVisibility(
             visible = isScreenReady,
-            enter = fadeIn(animationSpec = tween(durationMillis = 500)) + 
+            enter = fadeIn(animationSpec = tween(durationMillis = 500)) +
                     expandVertically(animationSpec = tween(durationMillis = 500)),
-            exit = fadeOut(animationSpec = tween(durationMillis = 300)) + 
-                   shrinkVertically(animationSpec = tween(durationMillis = 300))
+            exit = fadeOut(animationSpec = tween(durationMillis = 300)) +
+                    shrinkVertically(animationSpec = tween(durationMillis = 300))
         ) {
             Column(
                 modifier = Modifier
@@ -208,11 +207,11 @@ class FriendsScreen : Screen {
                         .padding(bottom = 16.dp)
                         .animateContentSize()
                 )
-                
+
                 // Search bar with improved styling
                 OutlinedTextField(
                     value = searchQuery,
-                    onValueChange = { 
+                    onValueChange = {
                         searchQuery = it
                         isSearching = it.isNotEmpty()
                     },
@@ -260,34 +259,34 @@ class FriendsScreen : Screen {
                 ) {
                     Tab(
                         selected = currentTab == 0,
-                        onClick = { 
+                        onClick = {
                             if (currentTab != 0) {
                                 currentTab = 0
                                 searchQuery = "" // Clear search when switching tabs
                                 isSearching = false
                             }
                         },
-                        text = { 
+                        text = {
                             Text(
                                 "Friends",
                                 fontWeight = if (currentTab == 0) FontWeight.Bold else FontWeight.Normal
-                            ) 
+                            )
                         }
                     )
                     Tab(
                         selected = currentTab == 1,
-                        onClick = { 
+                        onClick = {
                             if (currentTab != 1) {
                                 currentTab = 1
                                 searchQuery = "" // Clear search when switching tabs
                                 isSearching = false
                             }
                         },
-                        text = { 
+                        text = {
                             Text(
                                 "Requests",
                                 fontWeight = if (currentTab == 1) FontWeight.Bold else FontWeight.Normal
-                            ) 
+                            )
                         }
                     )
                 }
@@ -317,11 +316,11 @@ class FriendsScreen : Screen {
                                     repeatMode = RepeatMode.Reverse
                                 )
                             )
-                            
+
                             CircularProgressIndicator(
                                 modifier = Modifier
                                     .size(60.dp)
-                                    .graphicsLayer { 
+                                    .graphicsLayer {
                                         scaleX = scale
                                         scaleY = scale
                                     },
@@ -357,9 +356,9 @@ class FriendsScreen : Screen {
                                     color = MaterialTheme.colors.error,
                                     textAlign = TextAlign.Center
                                 )
-                                
+
                                 Spacer(modifier = Modifier.height(16.dp))
-                                
+
                                 Button(
                                     onClick = {
                                         coroutineScope.launch {
@@ -515,7 +514,7 @@ class FriendsScreen : Screen {
                             } else {
                                 // Accept button
                                 Button(
-                                    onClick = { 
+                                    onClick = {
                                         isLoading = true
                                         errorMessage = null
                                         coroutineScope.launch {
@@ -545,7 +544,7 @@ class FriendsScreen : Screen {
 
                                 // Reject button
                                 OutlinedButton(
-                                    onClick = { 
+                                    onClick = {
                                         isLoading = true
                                         errorMessage = null
                                         coroutineScope.launch {
@@ -601,12 +600,12 @@ class FriendsScreen : Screen {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
-                .graphicsLayer { 
-                    scaleX = scale 
-                    scaleY = scale 
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
                 }
                 .shadow(
-                    elevation = if (friend.isFriend) 4.dp else 2.dp, 
+                    elevation = if (friend.isFriend) 4.dp else 2.dp,
                     shape = RoundedCornerShape(12.dp)
                 )
                 .clip(RoundedCornerShape(12.dp))
@@ -623,10 +622,10 @@ class FriendsScreen : Screen {
                     }
                 },
             elevation = 0.dp,
-            backgroundColor = if (friend.isFriend) 
-                                 MaterialTheme.colors.surface 
-                              else 
-                                 MaterialTheme.colors.surface.copy(alpha = 0.7f)
+            backgroundColor = if (friend.isFriend)
+                MaterialTheme.colors.surface
+            else
+                MaterialTheme.colors.surface.copy(alpha = 0.7f)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(

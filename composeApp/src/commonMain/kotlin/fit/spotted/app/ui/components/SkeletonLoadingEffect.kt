@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
@@ -66,14 +65,14 @@ fun ShimmerBrush(showShimmer: Boolean = true, targetValue: Float = 1000f): Brush
 fun ProfileSkeletonLoading() {
     val spacing = LocalSpacing.current
     val shimmerBrush = ShimmerBrush()
-    
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                start = spacing.medium, 
-                end = spacing.medium, 
-                top = spacing.medium, 
+                start = spacing.medium,
+                end = spacing.medium,
+                top = spacing.medium,
                 bottom = spacing.medium
             )
     ) {
@@ -132,7 +131,7 @@ fun ProfileSkeletonLoading() {
                                 .background(shimmerBrush)
                         )
                     }
-                    
+
                     // Friends count skeleton
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -173,7 +172,7 @@ fun ProfileSkeletonLoading() {
                 val isNewest = index < 3
                 // Create a faster shimmer for newest items
                 val itemShimmerBrush = if (isNewest) ShimmerBrush(targetValue = 800f) else shimmerBrush
-                
+
                 Box(
                     modifier = Modifier
                         .aspectRatio(1f)
