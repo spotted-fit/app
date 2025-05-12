@@ -1,5 +1,12 @@
 package fit.spotted.app.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -7,14 +14,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 /**
  * Screen that displays the profile of a friend.
@@ -33,28 +51,67 @@ class FriendProfileScreen(
 
     @Composable
     override fun Content() {
+        // Track whether the screen is fully loaded for animations
+        var isReady by remember { mutableStateOf(false) }
+        
+        // Trigger animation after composition
+        LaunchedEffect(Unit) {
+            isReady = true
+        }
+        
         // Use the existing profile screen to display the friend's profile
         Box {
-            // Display the friend's profile using ProfileScreen without deletion capability
-            ReadOnlyProfileScreen(username = username).Content()
-            
-            // Add a back button on top, with adjusted position to avoid notification tray
-            Box(
-                modifier = Modifier
-                    .padding(top = 48.dp, start = 16.dp) // Increased top padding to avoid notification tray
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.7f))
-                    .clickable { onNavigateBack() }
-                    .align(Alignment.TopStart),
-                contentAlignment = Alignment.Center
+            // Animated entry for the profile content
+            AnimatedVisibility(
+                visible = isReady,
+                enter = fadeIn(
+                    animationSpec = tween(
+                        durationMillis = 400,
+                        easing = FastOutSlowInEasing
+                    )
+                ) + slideInHorizontally(
+                    animationSpec = tween(
+                        durationMillis = 400,
+                        easing = FastOutSlowInEasing
+                    ),
+                    initialOffsetX = { it / 4 }
+                ),
+                exit = fadeOut() + slideOutHorizontally()
             ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
+                // Display the friend's profile using ProfileScreen without deletion capability
+                ReadOnlyProfileScreen(username = username).Content()
+            }
+            
+            // Add a back button on top with animated entry
+            AnimatedVisibility(
+                visible = isReady,
+                enter = fadeIn(
+                    animationSpec = tween(
+                        durationMillis = 500,
+                        delayMillis = 300
+                    )
+                ),
+                modifier = Modifier.align(Alignment.TopStart)
+            ) {
+                // Back button with improved design - using fixed padding for safety
+                Box(
+                    modifier = Modifier
+                        .padding(top = 60.dp, start = 16.dp)
+                        .size(48.dp) // Larger touch target
+                        .shadow(8.dp, CircleShape) // Better shadow for depth
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colors.surface.copy(alpha = 0.9f))
+                        .clickable { onNavigateBack() },
+                    contentAlignment = Alignment.Center // Ensure content is centered
+                ) {
+                    // Just the icon, properly centered
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colors.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
         }
     }

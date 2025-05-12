@@ -1,10 +1,17 @@
 package fit.spotted.app.ui.screens
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Person
@@ -12,10 +19,17 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fit.spotted.app.api.ApiProvider
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -40,6 +54,17 @@ class FriendsScreen : Screen {
         var searchResults by remember { mutableStateOf<List<Friend>?>(null) }
         var isLoading by remember { mutableStateOf(true) }
         var errorMessage by remember { mutableStateOf<String?>(null) }
+        var showLoadingIndicator by remember { mutableStateOf(true) }
+
+        // Animation states
+        val tabTransition = updateTransition(targetState = currentTab, label = "Tab Transition")
+        val contentAlpha by tabTransition.animateFloat(
+            transitionSpec = { tween(durationMillis = 300) },
+            label = "Content Alpha"
+        ) { 1f }
+
+        // Track which screen is fully ready
+        var isScreenReady by remember { mutableStateOf(false) }
 
         // Coroutine scope for API calls
         val coroutineScope = rememberCoroutineScope()
@@ -48,7 +73,12 @@ class FriendsScreen : Screen {
         suspend fun fetchFriends() {
             try {
                 isLoading = true
+                showLoadingIndicator = true
                 errorMessage = null
+                
+                // Small delay for animation smoothness
+                delay(200)
+                
                 val friendsResponse = apiClient.getFriends()
                 if (friendsResponse.result == "ok") {
                     friends = friendsResponse.response?.friends?.map { friendData ->
@@ -61,9 +91,14 @@ class FriendsScreen : Screen {
                     } ?: emptyList()
                 }
                 isLoading = false
+                
+                // Add a small delay before hiding the loading indicator for smoother UI transition
+                delay(300)
+                showLoadingIndicator = false
             } catch (e: Exception) {
                 errorMessage = e.message ?: "An error occurred"
                 isLoading = false
+                showLoadingIndicator = false
             }
         }
 
@@ -71,7 +106,12 @@ class FriendsScreen : Screen {
         suspend fun fetchFriendRequests() {
             try {
                 isLoading = true
+                showLoadingIndicator = true
                 errorMessage = null
+                
+                // Small delay for animation smoothness
+                delay(200)
+                
                 val requestsResponse = apiClient.getFriendRequests()
                 if (requestsResponse.result == "ok") {
                     friendRequests = requestsResponse.response?.requests?.map { requestPreview ->
@@ -85,9 +125,14 @@ class FriendsScreen : Screen {
                     } ?: emptyList()
                 }
                 isLoading = false
+                
+                // Add a small delay before hiding the loading indicator for smoother UI transition
+                delay(300)
+                showLoadingIndicator = false
             } catch (e: Exception) {
                 errorMessage = e.message ?: "An error occurred"
                 isLoading = false
+                showLoadingIndicator = false
             }
         }
 
@@ -102,11 +147,21 @@ class FriendsScreen : Screen {
             }
         }
 
+        // Mark screen as ready after initial load
+        LaunchedEffect(Unit) {
+            delay(500)
+            isScreenReady = true
+        }
+
         // Handle search
         LaunchedEffect(searchQuery) {
             if (searchQuery.isNotEmpty()) {
                 coroutineScope.launch {
                     try {
+                        // Show loading indicator with a small delay
+                        showLoadingIndicator = true
+                        delay(300)
+                        
                         val response = apiClient.searchUsers(searchQuery)
                         if (response.result == "ok") {
                             searchResults = response.response?.map { userData ->
@@ -118,82 +173,224 @@ class FriendsScreen : Screen {
                                 )
                             } ?: emptyList()
                         }
+                        
+                        // Hide loading indicator after search completes
+                        showLoadingIndicator = false
                     } catch (e: Exception) {
                         // Just log the error, don't show it to the user for search
                         println("Search error: ${e.message}")
+                        showLoadingIndicator = false
                     }
                 }
             }
         }
 
-        Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp)
+        // Main UI
+        AnimatedVisibility(
+            visible = isScreenReady,
+            enter = fadeIn(animationSpec = tween(durationMillis = 500)) + 
+                    expandVertically(animationSpec = tween(durationMillis = 500)),
+            exit = fadeOut(animationSpec = tween(durationMillis = 300)) + 
+                   shrinkVertically(animationSpec = tween(durationMillis = 300))
         ) {
-            // Search bar
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { 
-                    searchQuery = it
-                    isSearching = it.isNotEmpty()
-                },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                label = { Text("Search for friends") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search"
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                // Animated title
+                Text(
+                    text = if (isSearching) "Search Results" else if (currentTab == 0) "Your Friends" else "Friend Requests",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colors.onBackground,
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .animateContentSize()
+                )
+                
+                // Search bar with improved styling
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { 
+                        searchQuery = it
+                        isSearching = it.isNotEmpty()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                        .shadow(4.dp, RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colors.surface),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = MaterialTheme.colors.primary,
+                        unfocusedBorderColor = MaterialTheme.colors.onSurface.copy(alpha = 0.1f),
+                        backgroundColor = MaterialTheme.colors.surface
+                    ),
+                    label = { Text("Search for friends") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = MaterialTheme.colors.primary
+                        )
+                    },
+                    singleLine = true
+                )
+
+                // Tabs with improved styling
+                TabRow(
+                    selectedTabIndex = currentTab,
+                    backgroundColor = MaterialTheme.colors.surface,
+                    contentColor = MaterialTheme.colors.primary,
+                    divider = {
+                        Divider(
+                            color = MaterialTheme.colors.onSurface.copy(alpha = 0.1f),
+                            thickness = 2.dp
+                        )
+                    },
+                    indicator = { tabPositions ->
+                        TabRowDefaults.Indicator(
+                            modifier = Modifier.tabIndicatorOffset(tabPositions[currentTab]),
+                            height = 3.dp,
+                            color = MaterialTheme.colors.primary
+                        )
+                    }
+                ) {
+                    Tab(
+                        selected = currentTab == 0,
+                        onClick = { 
+                            if (currentTab != 0) {
+                                currentTab = 0
+                                searchQuery = "" // Clear search when switching tabs
+                                isSearching = false
+                            }
+                        },
+                        text = { 
+                            Text(
+                                "Friends",
+                                fontWeight = if (currentTab == 0) FontWeight.Bold else FontWeight.Normal
+                            ) 
+                        }
+                    )
+                    Tab(
+                        selected = currentTab == 1,
+                        onClick = { 
+                            if (currentTab != 1) {
+                                currentTab = 1
+                                searchQuery = "" // Clear search when switching tabs
+                                isSearching = false
+                            }
+                        },
+                        text = { 
+                            Text(
+                                "Requests",
+                                fontWeight = if (currentTab == 1) FontWeight.Bold else FontWeight.Normal
+                            ) 
+                        }
                     )
                 }
-            )
 
-            // Tabs
-            TabRow(selectedTabIndex = currentTab) {
-                Tab(
-                    selected = currentTab == 0,
-                    onClick = { currentTab = 0 },
-                    text = { Text("Friends") }
-                )
-                Tab(
-                    selected = currentTab == 1,
-                    onClick = { currentTab = 1 },
-                    text = { Text("Requests") }
-                )
-            }
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Show loading indicator
-            if (isLoading) {
+                // Animated content container
                 Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .graphicsLayer { alpha = contentAlpha }
                 ) {
-                    CircularProgressIndicator()
-                }
-                return@Column
-            }
+                    // Loading indicator
+                    if (showLoadingIndicator) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            // Pulsating animation for loading indicator
+                            val infiniteTransition = rememberInfiniteTransition()
+                            val scale by infiniteTransition.animateFloat(
+                                initialValue = 0.8f,
+                                targetValue = 1.2f,
+                                animationSpec = infiniteRepeatable(
+                                    animation = tween(800, easing = FastOutSlowInEasing),
+                                    repeatMode = RepeatMode.Reverse
+                                )
+                            )
+                            
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .graphicsLayer { 
+                                        scaleX = scale
+                                        scaleY = scale
+                                    },
+                                color = MaterialTheme.colors.primary,
+                                strokeWidth = 3.dp
+                            )
+                        }
+                    }
 
-            // Show error message
-            errorMessage?.let {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = it,
-                        color = MaterialTheme.colors.error,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-                return@Column
-            }
+                    // Error message
+                    if (errorMessage != null && !showLoadingIndicator) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .shadow(4.dp, RoundedCornerShape(8.dp))
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colors.error.copy(alpha = 0.1f))
+                                    .padding(24.dp)
+                            ) {
+                                Text(
+                                    text = "Error",
+                                    color = MaterialTheme.colors.error,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                )
+                                Text(
+                                    text = errorMessage ?: "",
+                                    color = MaterialTheme.colors.error,
+                                    textAlign = TextAlign.Center
+                                )
+                                
+                                Spacer(modifier = Modifier.height(16.dp))
+                                
+                                Button(
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            when (currentTab) {
+                                                0 -> fetchFriends()
+                                                1 -> fetchFriendRequests()
+                                            }
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        backgroundColor = MaterialTheme.colors.error
+                                    )
+                                ) {
+                                    Text("Try Again", color = Color.White)
+                                }
+                            }
+                        }
+                    }
 
-            when {
-                isSearching -> SearchResultsList(searchQuery, searchResults ?: emptyList())
-                currentTab == 0 -> FriendsList(friends ?: emptyList())
-                currentTab == 1 -> FriendRequestsList(
-                    initialRequests = friendRequests ?: emptyList(),
-                )
+                    // Content when not loading or error
+                    if (!showLoadingIndicator && errorMessage == null) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            // Content based on current state
+                            when {
+                                isSearching -> SearchResultsList(searchQuery, searchResults ?: emptyList())
+                                currentTab == 0 -> FriendsList(friends ?: emptyList())
+                                currentTab == 1 -> FriendRequestsList(initialRequests = friendRequests ?: emptyList())
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -390,90 +587,181 @@ class FriendsScreen : Screen {
         var errorMessage by remember { mutableStateOf<String?>(null) }
         val coroutineScope = rememberCoroutineScope()
 
-        Row(
+        // Click animation
+        var isPressed by remember { mutableStateOf(false) }
+        val scale by animateFloatAsState(
+            targetValue = if (isPressed) 0.97f else 1f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            )
+        )
+
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
+                .graphicsLayer { 
+                    scaleX = scale 
+                    scaleY = scale 
+                }
+                .shadow(
+                    elevation = if (friend.isFriend) 4.dp else 2.dp, 
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .clip(RoundedCornerShape(12.dp))
                 .clickable(enabled = friend.isFriend) {
                     // Navigate to friend profile when clicked
                     if (friend.isFriend) {
-                        onNavigateToFriendProfile?.invoke(friend.name)
+                        isPressed = true
+                        coroutineScope.launch {
+                            delay(100) // Short delay for animation
+                            onNavigateToFriendProfile?.invoke(friend.name)
+                            delay(200) // Short delay to reset animation
+                            isPressed = false
+                        }
                     }
                 },
-            verticalAlignment = Alignment.CenterVertically
+            elevation = 0.dp,
+            backgroundColor = if (friend.isFriend) 
+                                 MaterialTheme.colors.surface 
+                              else 
+                                 MaterialTheme.colors.surface.copy(alpha = 0.7f)
         ) {
-            // Profile pic
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .padding(end = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Profile Picture",
-                    tint = if (friend.isFriend) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
-                )
-            }
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Profile pic with improved styling
+                    Box(
+                        modifier = Modifier
+                            .size(50.dp)
+                            .shadow(3.dp, CircleShape)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colors.primary.copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Profile",
+                            tint = MaterialTheme.colors.primary,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
 
-            // Friend info
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = friend.name,
-                    fontWeight = FontWeight.Bold,
-                    color = if (friend.isFriend) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface
-                )
-                Text(
-                    text = if (friend.isFriend) "Tap to view profile" else 
-                          if (showAddButton) "Add as friend" else "User",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
-                )
-                
-                // Show error message if any
-                errorMessage?.let {
-                    Text(
-                        text = it,
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colors.error
-                    )
-                }
-            }
+                    Spacer(modifier = Modifier.width(16.dp))
 
-            // Add button for requests and search results
-            if (showAddButton) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Button(
-                        onClick = { 
-                            isLoading = true
-                            errorMessage = null
-                            coroutineScope.launch {
-                                try {
-                                    // Send friend request
-                                    val response = apiClient.sendFriendRequest(friend.id.toInt())
-                                    if (response.result != "ok") {
-                                        errorMessage = response.message ?: "Failed to send request"
-                                    }
-                                } catch (e: Exception) {
-                                    errorMessage = e.message ?: "An error occurred"
-                                } finally {
-                                    isLoading = false
+                    // Name and info
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = friend.name,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (friend.isFriend) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(MaterialTheme.colors.primary.copy(alpha = 0.1f))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "Friend",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colors.primary
+                                    )
+                                }
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(MaterialTheme.colors.secondary.copy(alpha = 0.1f))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = if (showAddButton) "Suggested" else "Request",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colors.secondary
+                                    )
                                 }
                             }
                         }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Add Friend"
-                        )
                     }
+
+                    // Add button for search results
+                    if (showAddButton) {
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
+                                    try {
+                                        isLoading = true
+                                        // Convert friend.id to Int for the API call
+                                        val response = apiClient.sendFriendRequest(friend.id.toInt())
+                                        isLoading = false
+                                        if (response.result != "ok") {
+                                            errorMessage = response.message ?: "Failed to send friend request"
+                                        }
+                                    } catch (e: Exception) {
+                                        errorMessage = e.message ?: "An error occurred"
+                                        isLoading = false
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .padding(0.dp),
+                            contentPadding = PaddingValues(0.dp),
+                            shape = CircleShape,
+                            enabled = !isLoading && errorMessage == null,
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = MaterialTheme.colors.primary,
+                                disabledBackgroundColor = MaterialTheme.colors.primary.copy(alpha = 0.3f)
+                            )
+                        ) {
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Color.White
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "Add Friend",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Show error message if present
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage ?: "",
+                        color = MaterialTheme.colors.error,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colors.error.copy(alpha = 0.1f))
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
                 }
             }
         }
