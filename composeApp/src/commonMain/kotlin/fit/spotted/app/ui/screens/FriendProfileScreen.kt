@@ -33,6 +33,11 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import fit.spotted.app.ui.theme.LocalSpacing
 
 /**
  * Screen that displays the profile of a friend.
@@ -51,6 +56,12 @@ class FriendProfileScreen(
 
     @Composable
     override fun Content() {
+        // Get standardized spacing values
+        val spacing = LocalSpacing.current
+        
+        // Haptic feedback for interactions
+        val haptic = LocalHapticFeedback.current
+        
         // Track whether the screen is fully loaded for animations
         var isReady by remember { mutableStateOf(false) }
         
@@ -96,18 +107,26 @@ class FriendProfileScreen(
                 // Back button with improved design - using fixed padding for safety
                 Box(
                     modifier = Modifier
-                        .padding(top = 60.dp, start = 16.dp)
-                        .size(48.dp) // Larger touch target
+                        .padding(top = spacing.statusBarPadding, start = spacing.medium)
+                        .size(spacing.huge) // Larger touch target
                         .shadow(8.dp, CircleShape) // Better shadow for depth
                         .clip(CircleShape)
                         .background(MaterialTheme.colors.surface.copy(alpha = 0.9f))
-                        .clickable { onNavigateBack() },
+                        .clickable { 
+                            // Add haptic feedback for better user experience
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onNavigateBack() 
+                        }
+                        // Add semantic description for accessibility
+                        .semantics {
+                            contentDescription = "Back to friends list"
+                        },
                     contentAlignment = Alignment.Center // Ensure content is centered
                 ) {
                     // Just the icon, properly centered
                     Icon(
                         imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                        contentDescription = "Back",
+                        contentDescription = null, // null because we set it on the parent
                         tint = MaterialTheme.colors.primary,
                         modifier = Modifier.size(28.dp)
                     )
