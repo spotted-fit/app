@@ -9,6 +9,8 @@ import fit.spotted.app.emoji.ActivityType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 
 /**
  * ViewModel for the camera screen that manages the workout photo capture process,
@@ -38,6 +40,7 @@ class CameraViewModel(private val apiClient: ApiClient) {
     // Timer
     var seconds by mutableStateOf(0)
     var isTimerRunning by mutableStateOf(false)
+    private var workoutStartTime: Instant? = null
 
     // Animation
     var showPostAnimation by mutableStateOf(false)
@@ -47,9 +50,21 @@ class CameraViewModel(private val apiClient: ApiClient) {
     var isPublishing by mutableStateOf(false)
 
     /**
+     * Updates the timer based on current time and workout start time
+     */
+    fun updateTimer() {
+        workoutStartTime?.let { startTime ->
+            val currentTime = Clock.System.now()
+            val elapsedSeconds = (currentTime - startTime).inWholeSeconds.toInt()
+            seconds = elapsedSeconds
+        }
+    }
+
+    /**
      * Formats the timer as MM:SS.
      */
     fun formatTimer(): String {
+        updateTimer() // Update timer before formatting
         val minutes = (seconds / 60).toString().padStart(2, '0')
         val remainingSeconds = (seconds % 60).toString().padStart(2, '0')
         return "$minutes:$remainingSeconds"
@@ -77,6 +92,7 @@ class CameraViewModel(private val apiClient: ApiClient) {
                 // Start the timer
                 seconds = 0
                 isTimerRunning = true
+                workoutStartTime = Clock.System.now()
             } else {
                 // Store the after workout photo
                 afterWorkoutPhoto = photo
@@ -84,8 +100,12 @@ class CameraViewModel(private val apiClient: ApiClient) {
                     afterWorkoutPhotoBytes = bytes.copyOf()
                 }
 
+                // Get final timer value
+                updateTimer()
+                
                 // Stop the timer
                 isTimerRunning = false
+                workoutStartTime = null
 
                 // Show preview
                 showPreview = true
@@ -167,6 +187,7 @@ class CameraViewModel(private val apiClient: ApiClient) {
         showPreview = false
         seconds = 0
         isTimerRunning = false
+        workoutStartTime = null
         selectedActivity = activityTypes.first()
         showPostAnimation = false
         postAnimationFinished = false
