@@ -1,11 +1,18 @@
 package fit.spotted.app.ui.theme
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import fit.spotted.app.getPlatform
 
@@ -35,42 +42,54 @@ private val DarkColorPalette = darkColors(
     onSurface = Color.White
 )
 
+// Composition local for reduced motion setting
+val LocalReducedMotion = staticCompositionLocalOf { false }
+
 /**
  * App theme that wraps MaterialTheme with our custom colors and spacing
  */
 @Composable
 fun AppTheme(
-    darkTheme: Boolean = getDefaultDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colors = if (darkTheme) {
-        DarkColorPalette
-    } else {
-        LightColorPalette
+    // Get theme preferences
+    val themeMode by ThemePreferences.themeMode.collectAsState()
+    val reducedMotion by ThemePreferences.reducedMotion.collectAsState()
+    
+    // Determine if dark theme should be used
+    val systemIsDark = isSystemInDarkTheme()
+    val darkTheme = when (themeMode) {
+        ThemeMode.SYSTEM -> systemIsDark
+        ThemeMode.DARK -> true
+        ThemeMode.LIGHT -> false
     }
-
-    // Provide spacing values to all composables in the hierarchy
+    
+    // Choose the appropriate color palette based on theme
+    val colors = if (darkTheme) DarkColorPalette else LightColorPalette
+    
+    // Provide spacing values and reduced motion setting to all composables in the hierarchy
     CompositionLocalProvider(
-        LocalSpacing provides Spacing()
+        LocalSpacing provides Spacing(),
+        LocalReducedMotion provides reducedMotion
     ) {
-        MaterialTheme(
-            colors = colors,
-            content = content
-        )
+        // Use AnimatedVisibility to animate changes between themes
+        AnimatedVisibility(
+            visible = true,
+            enter = fadeIn(animationSpec = tween(durationMillis = 300)),
+            exit = fadeOut(animationSpec = tween(durationMillis = 300))
+        ) {
+            MaterialTheme(
+                colors = colors,
+                content = content
+            )
+        }
     }
 }
 
 /**
- * Get the default dark theme setting based on the platform
- * For web, we always use light theme as default
- * For other platforms, we use the system setting
+ * Helper function to check if reduced motion is enabled
  */
 @Composable
-private fun getDefaultDarkTheme(): Boolean {
-    val platform = getPlatform()
-    return if (platform.name.startsWith("Web")) {
-        false // Default to light theme for web
-    } else {
-        isSystemInDarkTheme() // Use system setting for other platforms
-    }
+fun isReducedMotionEnabled(): Boolean {
+    return LocalReducedMotion.current
 }

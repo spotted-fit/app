@@ -547,12 +547,14 @@ fun ActionButton(
 ) {
     // Animation for scale effect when clicked
     var wasClicked by remember { mutableStateOf(false) }
+    
+    // Using a more dynamic animation curve for the scale
     val scale by animateFloatAsState(
-        targetValue = if (wasClicked) 1.2f else 1f,
+        targetValue = if (wasClicked) 1.4f else 1f,
         animationSpec = if (animated) {
-            tween(
-                durationMillis = 300,
-                easing = FastOutSlowInEasing
+            spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMediumLow
             )
         } else {
             spring(
@@ -562,10 +564,28 @@ fun ActionButton(
         }
     )
     
-    // Animate count changes
+    // Add rotation animation for like button
+    val rotation by animateFloatAsState(
+        targetValue = if (wasClicked && icon == Icons.Default.Favorite) 20f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        )
+    )
+    
+    // Animate count changes with a bounce effect
     val animatedCount by animateIntAsState(
         targetValue = count,
-        animationSpec = tween(durationMillis = 500)
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        )
+    )
+    
+    // Animate the background color when clicked
+    val bgColor by animateColorAsState(
+        targetValue = if (wasClicked) backgroundColor.copy(alpha = 0.8f) else backgroundColor,
+        animationSpec = tween(durationMillis = 300)
     )
 
     Column(
@@ -576,7 +596,7 @@ fun ActionButton(
                 .size(56.dp) // Larger touch target
                 .shadow(4.dp, CircleShape) // Add shadow for depth
                 .clip(CircleShape)
-                .background(backgroundColor)
+                .background(bgColor)
                 .clickable { 
                     onClick()
                     // Trigger animation
@@ -590,6 +610,7 @@ fun ActionButton(
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
+                    rotationZ = rotation
                 },
             contentAlignment = Alignment.Center
         ) {
@@ -603,13 +624,19 @@ fun ActionButton(
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        // Animated count with nicer styling
+        // Animated count with nicer styling and pop effect when changing
         Box(
             modifier = Modifier
                 .shadow(2.dp, CircleShape)
                 .clip(CircleShape)
                 .background(countBackgroundColor)
-                .padding(horizontal = 8.dp, vertical = 2.dp),
+                .padding(horizontal = 8.dp, vertical = 2.dp)
+                .graphicsLayer {
+                    // Add a subtle pop animation when count changes
+                    val popScale = if (wasClicked) 1.2f else 1f
+                    scaleX = popScale
+                    scaleY = popScale
+                },
             contentAlignment = Alignment.Center
         ) {
             Text(

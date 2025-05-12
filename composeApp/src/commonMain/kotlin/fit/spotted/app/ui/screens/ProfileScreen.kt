@@ -2,10 +2,12 @@ package fit.spotted.app.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -43,11 +45,13 @@ import fit.spotted.app.api.models.ProfilePost
 import fit.spotted.app.api.models.ProfileResponse
 import fit.spotted.app.emoji.ActivityType
 import fit.spotted.app.ui.components.PostDetailView
+import fit.spotted.app.ui.components.ProfileSkeletonLoading
+import fit.spotted.app.ui.components.PullToRefreshLayout
 import fit.spotted.app.ui.theme.LocalSpacing
+import fit.spotted.app.ui.theme.ThemePreferences
 import fit.spotted.app.utils.DateTimeUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import fit.spotted.app.ui.components.ProfileSkeletonLoading
 
 /**
  * Screen that displays a user's profile, including their avatar, stats, and posts.
@@ -244,28 +248,53 @@ open class ProfileScreen(
             profileData?.let { profile ->
                 when (viewMode) {
                     ViewMode.GRID -> {
-                        Column(
+                        // Add pull-to-refresh functionality
+                        PullToRefreshLayout(
+                            isRefreshing = isLoading,
+                            onRefresh = { loadProfileData() },
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            // Profile header
-                            ProfileHeader(profile)
-
-                            // Photos grid
-                            LazyVerticalGrid(
-                                columns = GridCells.Fixed(3),
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(4.dp),
-                                horizontalArrangement = Arrangement.spacedBy(2.dp),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            Column(
+                                modifier = Modifier.fillMaxSize()
                             ) {
-                                items(profile.posts.reversed()) { post ->
-                                    PhotoGridItem(
-                                        post = post,
-                                        onClick = {
-                                            // Load detailed posts and switch to TikTok view
-                                            loadDetailedPosts(post.id)
+                                // Profile header
+                                ProfileHeader(profile)
+
+                                // Photos grid
+                                LazyVerticalGrid(
+                                    columns = GridCells.Fixed(3),
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = PaddingValues(4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    items(profile.posts.reversed()) { post ->
+                                        // Create a staggered animation for each grid item
+                                        val staggerDelay = remember { (post.id % 9) * 50L }
+                                        var isVisible by remember { mutableStateOf(false) }
+                                        
+                                        LaunchedEffect(post.id) {
+                                            delay(staggerDelay)
+                                            isVisible = true
                                         }
-                                    )
+                                        
+                                        AnimatedVisibility(
+                                            visible = isVisible,
+                                            enter = fadeIn(tween(500)) + 
+                                                    expandIn(
+                                                        animationSpec = tween(500),
+                                                        expandFrom = Alignment.Center
+                                                    )
+                                        ) {
+                                            PhotoGridItem(
+                                                post = post,
+                                                onClick = {
+                                                    // Load detailed posts and switch to TikTok view
+                                                    loadDetailedPosts(post.id)
+                                                }
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -444,6 +473,8 @@ open class ProfileScreen(
     private fun ProfileHeader(profile: ProfileResponse) {
         // Get standardized spacing values
         val spacing = LocalSpacing.current
+        val isSystemDark = isSystemInDarkTheme()
+        val haptic = LocalHapticFeedback.current
         
         // Add extra padding at the top if this is a friend's profile (not the current user's profile)
         val topPadding = if (username != null) spacing.friendProfileTopPadding else spacing.medium
@@ -563,6 +594,32 @@ open class ProfileScreen(
                                 color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
                             )
                         }
+                    }
+                }
+                
+                // Theme toggle button (only on own profile)
+                if (username == null) {
+                    Box(
+                        modifier = Modifier
+                            .shadow(4.dp, RoundedCornerShape(spacing.extraSmall))
+                            .clip(RoundedCornerShape(spacing.extraSmall))
+                            .background(MaterialTheme.colors.primary)
+                            .clickable { 
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                ThemePreferences.toggleTheme(isSystemDark)
+                            }
+                            .padding(horizontal = spacing.small, vertical = spacing.extraSmall)
+                            .semantics {
+                                contentDescription = "Toggle dark/light theme"
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (isSystemDark) "Light Mode" else "Dark Mode",
+                            color = MaterialTheme.colors.onPrimary,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 12.sp
+                        )
                     }
                 }
             }
