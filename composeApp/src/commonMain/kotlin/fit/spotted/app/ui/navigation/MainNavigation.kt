@@ -71,6 +71,10 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
 
     // Track whether a picture has been taken
     var hasTakenPicture by remember { mutableStateOf(false) }
+    
+    // State for friend profile navigation
+    var currentFriendProfile by remember { mutableStateOf<String?>(null) }
+    var showingFriendProfile by remember { mutableStateOf(false) }
 
     // Create a pager state with 4 pages (for the 4 tabs)
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { 4 })
@@ -84,6 +88,11 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
         } else {
             // Otherwise, just change the tab
             currentTab = newTab
+            // Reset friend profile when changing tabs
+            if (newTab != 2) {
+                showingFriendProfile = false
+                currentFriendProfile = null
+            }
         }
     }
 
@@ -253,7 +262,27 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                         hasTakenPicture = isAfterWorkoutMode
                     }
                 ).Content()
-                2 -> FriendsScreen().Content()
+                2 -> {
+                    if (showingFriendProfile && currentFriendProfile != null) {
+                        // Show friend profile if a friend is selected
+                        FriendProfileScreen(
+                            username = currentFriendProfile!!,
+                            onNavigateBack = {
+                                showingFriendProfile = false
+                                currentFriendProfile = null
+                            }
+                        ).Content()
+                    } else {
+                        // Show friends list
+                        val friendsScreen = FriendsScreen()
+                        // Set the navigation callback
+                        friendsScreen.onNavigateToFriendProfile = { username ->
+                            currentFriendProfile = username
+                            showingFriendProfile = true
+                        }
+                        friendsScreen.Content()
+                    }
+                }
                 3 -> ProfileScreen().Content()
                 else -> FeedScreen().Content()
             }
