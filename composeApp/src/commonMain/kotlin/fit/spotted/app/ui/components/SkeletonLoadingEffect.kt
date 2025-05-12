@@ -160,7 +160,7 @@ fun ProfileSkeletonLoading() {
 
         Spacer(modifier = Modifier.height(spacing.large))
 
-        // Photo grid skeleton
+        // Photo grid skeleton - ordered to match the new layout with newest photos first
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             modifier = Modifier.fillMaxWidth().height(300.dp),
@@ -168,13 +168,30 @@ fun ProfileSkeletonLoading() {
             horizontalArrangement = Arrangement.spacedBy(2.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            items(9) {
+            items(9) { index ->
+                // First 3 items (newest) have a subtle highlight
+                val isNewest = index < 3
+                // Create a faster shimmer for newest items
+                val itemShimmerBrush = if (isNewest) ShimmerBrush(targetValue = 800f) else shimmerBrush
+                
                 Box(
                     modifier = Modifier
                         .aspectRatio(1f)
                         .clip(RoundedCornerShape(4.dp))
-                        .background(shimmerBrush)
-                )
+                        .background(itemShimmerBrush)
+                ) {
+                    // Add a small indicator for newest photos
+                    if (isNewest) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .size(8.dp)
+                                .padding(2.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colors.primary.copy(alpha = 0.4f))
+                        )
+                    }
+                }
             }
         }
     }
