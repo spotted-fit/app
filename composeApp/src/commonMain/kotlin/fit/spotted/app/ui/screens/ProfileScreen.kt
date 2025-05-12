@@ -27,7 +27,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,9 +43,11 @@ import fit.spotted.app.api.models.ProfilePost
 import fit.spotted.app.api.models.ProfileResponse
 import fit.spotted.app.emoji.ActivityType
 import fit.spotted.app.ui.components.PostDetailView
+import fit.spotted.app.ui.theme.LocalSpacing
 import fit.spotted.app.utils.DateTimeUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import fit.spotted.app.ui.components.ProfileSkeletonLoading
 
 /**
  * Screen that displays a user's profile, including their avatar, stats, and posts.
@@ -74,6 +80,9 @@ open class ProfileScreen(
 
     @Composable
     override fun Content() {
+        // Get standardized spacing values
+        val spacing = LocalSpacing.current
+        
         // State for profile data
         var isLoading by remember { mutableStateOf(true) }
         var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -92,8 +101,11 @@ open class ProfileScreen(
         // Coroutine scope for API calls
         val coroutineScope = rememberCoroutineScope()
 
-        // Fetch profile data when the screen is first displayed
-        LaunchedEffect(username) {
+        // Function to load profile data
+        fun loadProfileData() {
+            isLoading = true
+            errorMessage = null
+            
             coroutineScope.launch {
                 try {
                     val response = apiClient.getUserProfile(
@@ -112,6 +124,11 @@ open class ProfileScreen(
                     isLoading = false
                 }
             }
+        }
+
+        // Initial data load
+        LaunchedEffect(username) {
+            loadProfileData()
         }
 
         // Function to load detailed post data for TikTok view
@@ -154,23 +171,24 @@ open class ProfileScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(
-                    color = MaterialTheme.colors.primary,
-                    strokeWidth = 3.dp,
-                    modifier = Modifier.size(60.dp)
-                )
+                ProfileSkeletonLoading()
             }
             return
         }
 
-        // Show error message
+        // Show error message with retry button
         errorMessage?.let {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .padding(spacing.medium)
+                        .semantics {
+                            contentDescription = "Error loading profile: $it"
+                        }
                 ) {
                     Text(
                         text = "Error",
@@ -182,8 +200,33 @@ open class ProfileScreen(
                     Text(
                         text = it,
                         color = MaterialTheme.colors.error,
-                        modifier = Modifier.padding(horizontal = 24.dp)
+                        modifier = Modifier.padding(horizontal = spacing.large)
                     )
+                    
+                    Spacer(modifier = Modifier.height(spacing.medium))
+                    
+                    // Retry button
+                    val haptic = LocalHapticFeedback.current
+                    Box(
+                        modifier = Modifier
+                            .shadow(4.dp, RoundedCornerShape(spacing.extraSmall))
+                            .clip(RoundedCornerShape(spacing.extraSmall))
+                            .background(MaterialTheme.colors.primary)
+                            .clickable { 
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                loadProfileData() 
+                            }
+                            .padding(horizontal = spacing.medium, vertical = spacing.small)
+                            .semantics {
+                                contentDescription = "Retry loading profile"
+                            }
+                    ) {
+                        Text(
+                            text = "Retry",
+                            color = MaterialTheme.colors.onPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
             return
@@ -226,23 +269,36 @@ open class ProfileScreen(
                     }
 
                     ViewMode.TIKTOK -> {
+                        // Get standardized spacing values
+                        val spacing = LocalSpacing.current
+                        
+                        // Haptic feedback for interactions
+                        val haptic = LocalHapticFeedback.current
+                        
                         // TikTok-like full-screen post view
                         Box(modifier = Modifier.fillMaxSize()) {
                             // Back button to return to grid view
                             Box(
                                 modifier = Modifier
-                                    .padding(top = 60.dp, start = 16.dp)
-                                    .size(48.dp) // Increased size for better tap target
+                                    .padding(top = spacing.statusBarPadding, start = spacing.medium)
+                                    .size(spacing.huge) // Increased size for better tap target
                                     .shadow(4.dp, CircleShape) // Add shadow for better visibility
                                     .clip(CircleShape)
                                     .background(Color.Black.copy(alpha = 0.7f))
-                                    .clickable { viewMode = ViewMode.GRID }
-                                    .align(Alignment.TopStart),
+                                    .clickable { 
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        viewMode = ViewMode.GRID 
+                                    }
+                                    .align(Alignment.TopStart)
+                                    // Add semantic description for accessibility
+                                    .semantics {
+                                        contentDescription = "Back to photo grid"
+                                    },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                                    contentDescription = "Back to Grid",
+                                    contentDescription = null, // null because we set it on the parent
                                     tint = Color.White,
                                     modifier = Modifier.size(28.dp) // Slightly larger icon
                                 )
@@ -383,13 +439,25 @@ open class ProfileScreen(
      */
     @Composable
     private fun ProfileHeader(profile: ProfileResponse) {
+        // Get standardized spacing values
+        val spacing = LocalSpacing.current
+        
         // Add extra padding at the top if this is a friend's profile (not the current user's profile)
-        val topPadding = if (username != null) 150.dp else 16.dp
+        val topPadding = if (username != null) spacing.friendProfileTopPadding else spacing.medium
         
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, top = topPadding, bottom = 16.dp)
+                .padding(
+                    start = spacing.medium, 
+                    end = spacing.medium, 
+                    top = topPadding, 
+                    bottom = spacing.medium
+                )
+                // Add semantic description for accessibility
+                .semantics {
+                    contentDescription = "Profile information for ${profile.username}"
+                }
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -401,7 +469,11 @@ open class ProfileScreen(
                         .size(90.dp)
                         .shadow(4.dp, CircleShape)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colors.surface),
+                        .background(MaterialTheme.colors.surface)
+                        // Add semantic description for accessibility
+                        .semantics {
+                            contentDescription = "Profile picture for ${profile.username}"
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     if (profile.avatar != null) {
@@ -506,23 +578,33 @@ open class ProfileScreen(
 
     /**
      * Displays a single post thumbnail in the profile grid.
+     * Implements lazy loading and proper caching for better performance.
      *
      * @param post The post data to display
      * @param onClick Callback for when the thumbnail is clicked
      */
     @Composable
     private fun PhotoGridItem(post: ProfilePost, onClick: () -> Unit) {
+        val spacing = LocalSpacing.current
+        val haptic = LocalHapticFeedback.current
+        
         Box(
             modifier = Modifier
                 .aspectRatio(1f)
                 .clip(RoundedCornerShape(4.dp))
                 .shadow(1.dp)
-                .clickable(onClick = onClick)
+                .clickable {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onClick()
+                }
+                .semantics {
+                    contentDescription = "Photo from ${formatTimestamp(post.createdAt)}"
+                }
         ) {
             // Use SubcomposeAsyncImage for better loading/error states
             SubcomposeAsyncImage(
                 model = post.photo1,
-                contentDescription = "Post Photo",
+                contentDescription = null, // Already set on parent
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
                 loading = {
@@ -534,7 +616,8 @@ open class ProfileScreen(
                     ) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colors.primary
                         )
                     }
                 },
@@ -554,6 +637,23 @@ open class ProfileScreen(
                     }
                 }
             )
+            
+            // Show a date/time indicator in the corner
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(spacing.extraSmall)
+                    .clip(RoundedCornerShape(spacing.extraSmall))
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = formatTimestamp(post.createdAt),
+                    color = Color.White,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
     }
 

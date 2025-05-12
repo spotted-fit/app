@@ -5,6 +5,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import fit.spotted.app.getPlatform
 
@@ -35,7 +36,7 @@ private val DarkColorPalette = darkColors(
 )
 
 /**
- * App theme that wraps MaterialTheme with our custom colors
+ * App theme that wraps MaterialTheme with our custom colors and spacing
  */
 @Composable
 fun AppTheme(
@@ -48,10 +49,15 @@ fun AppTheme(
         LightColorPalette
     }
 
-    MaterialTheme(
-        colors = colors,
-        content = content
-    )
+    // Provide spacing values to all composables in the hierarchy
+    CompositionLocalProvider(
+        LocalSpacing provides Spacing()
+    ) {
+        MaterialTheme(
+            colors = colors,
+            content = content
+        )
+    }
 }
 
 /**
