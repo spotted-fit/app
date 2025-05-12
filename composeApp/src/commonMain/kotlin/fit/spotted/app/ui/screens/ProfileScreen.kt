@@ -40,8 +40,13 @@ import kotlinx.coroutines.launch
  * Screen that displays a user's profile, including their avatar, stats, and posts.
  * 
  * @property username Optional username of the user to display. If null, displays the current user's profile.
+ * @property allowPostDeletion Whether to allow post deletion. Defaults to true for own profile, 
+ *                            can be overridden by subclasses for friend profiles.
  */
-class ProfileScreen(private val username: String? = null) : Screen {
+open class ProfileScreen(
+    private val username: String? = null,
+    protected open val allowPostDeletion: Boolean = true
+) : Screen {
 
     private val apiClient = ApiProvider.getApiClient()
 
@@ -198,7 +203,7 @@ class ProfileScreen(private val username: String? = null) : Screen {
                         // Back button to return to grid view
                         Box(
                             modifier = Modifier
-                                .padding(16.dp)
+                                .padding(top = 48.dp, start = 16.dp) // Increased padding to avoid notification bar
                                 .size(40.dp)
                                 .clip(CircleShape)
                                 .background(Color.Black.copy(alpha = 0.7f))
@@ -282,29 +287,31 @@ class ProfileScreen(private val username: String? = null) : Screen {
                                                 }
                                             }
                                         },
-                                        onDeletePost = {
-                                            coroutineScope.launch {
-                                                try {
-                                                    val response = apiClient.deletePost(post.id)
-                                                    if (response.result == "ok") {
-                                                        // Remove the post from the list
-                                                        detailedPosts = detailedPosts.filter { it.id != post.id }
+                                        onDeletePost = if (allowPostDeletion) {
+                                            {
+                                                coroutineScope.launch {
+                                                    try {
+                                                        val response = apiClient.deletePost(post.id)
+                                                        if (response.result == "ok") {
+                                                            // Remove the post from the list
+                                                            detailedPosts = detailedPosts.filter { it.id != post.id }
 
-                                                        // If there are no more posts, go back to grid view
-                                                        if (detailedPosts.isEmpty()) {
-                                                            viewMode = ViewMode.GRID
+                                                            // If there are no more posts, go back to grid view
+                                                            if (detailedPosts.isEmpty()) {
+                                                                viewMode = ViewMode.GRID
+                                                            }
+
+                                                            // Also update the profile data to remove the post
+                                                            profileData = profileData?.copy(
+                                                                posts = profileData?.posts?.filter { it.id != post.id } ?: emptyList()
+                                                            )
                                                         }
-
-                                                        // Also update the profile data to remove the post
-                                                        profileData = profileData?.copy(
-                                                            posts = profileData?.posts?.filter { it.id != post.id } ?: emptyList()
-                                                        )
+                                                    } catch (_: Exception) {
+                                                        // Handle error
                                                     }
-                                                } catch (_: Exception) {
-                                                    // Handle error
                                                 }
                                             }
-                                        },
+                                        } else null, // Set to null when not allowed to delete
                                         onLikeStateChanged = { postId: Int, isLiked: Boolean ->
                                             // Refresh the post data when like state changes
                                             coroutineScope.launch {

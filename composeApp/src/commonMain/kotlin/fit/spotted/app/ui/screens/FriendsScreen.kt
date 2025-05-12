@@ -1,5 +1,6 @@
 package fit.spotted.app.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,6 +24,9 @@ import kotlinx.coroutines.launch
 class FriendsScreen : Screen {
     // API client
     private val apiClient = ApiProvider.getApiClient()
+
+    // Callback for navigating to a friend's profile
+    var onNavigateToFriendProfile: ((String) -> Unit)? = null
 
     @Composable
     override fun Content() {
@@ -382,37 +386,52 @@ class FriendsScreen : Screen {
 
     @Composable
     private fun FriendItem(friend: Friend, showAddButton: Boolean) {
-        // State for button loading
         var isLoading by remember { mutableStateOf(false) }
         var errorMessage by remember { mutableStateOf<String?>(null) }
-
-        // Coroutine scope for API calls
         val coroutineScope = rememberCoroutineScope()
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
+                .padding(vertical = 8.dp)
+                .clickable(enabled = friend.isFriend) {
+                    // Navigate to friend profile when clicked
+                    if (friend.isFriend) {
+                        onNavigateToFriendProfile?.invoke(friend.name)
+                    }
+                },
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Profile icon
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = "Profile Picture",
-                modifier = Modifier.size(40.dp)
-            )
+            // Profile pic
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .padding(end = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Profile Picture",
+                    tint = if (friend.isFriend) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                )
+            }
 
             // Friend info
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 8.dp)
+                modifier = Modifier.weight(1f)
             ) {
                 Text(
                     text = friend.name,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = if (friend.isFriend) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface
                 )
-
+                Text(
+                    text = if (friend.isFriend) "Tap to view profile" else 
+                          if (showAddButton) "Add as friend" else "User",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
+                )
+                
                 // Show error message if any
                 errorMessage?.let {
                     Text(
