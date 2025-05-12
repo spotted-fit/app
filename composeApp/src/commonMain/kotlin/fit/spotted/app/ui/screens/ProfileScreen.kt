@@ -1,5 +1,9 @@
 package fit.spotted.app.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -9,6 +13,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
@@ -20,12 +25,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
 import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.api.models.PostDetailedData
 import fit.spotted.app.api.models.ProfilePost
@@ -147,7 +154,11 @@ open class ProfileScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(
+                    color = MaterialTheme.colors.primary,
+                    strokeWidth = 3.dp,
+                    modifier = Modifier.size(60.dp)
+                )
             }
             return
         }
@@ -158,179 +169,204 @@ open class ProfileScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = it,
-                    color = MaterialTheme.colors.error,
-                    modifier = Modifier.padding(16.dp)
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Error",
+                        color = MaterialTheme.colors.error,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colors.error,
+                        modifier = Modifier.padding(horizontal = 24.dp)
+                    )
+                }
             }
             return
         }
 
-        profileData?.let { profile ->
-            when (viewMode) {
-                ViewMode.GRID -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        // Profile header
-                        ProfileHeader(profile)
-
-
-                        // Photos grid
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(3),
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(4.dp)
+        // Main content with view mode transitions
+        AnimatedVisibility(
+            visible = profileData != null,
+            enter = fadeIn(animationSpec = tween(durationMillis = 300)),
+            exit = fadeOut(animationSpec = tween(durationMillis = 300))
+        ) {
+            profileData?.let { profile ->
+                when (viewMode) {
+                    ViewMode.GRID -> {
+                        Column(
+                            modifier = Modifier.fillMaxSize()
                         ) {
-                            items(profile.posts) { post ->
-                                PhotoGridItem(
-                                    post = post,
-                                    onClick = {
-                                        // Load detailed posts and switch to TikTok view
-                                        loadDetailedPosts(post.id)
-                                    }
-                                )
+                            // Profile header
+                            ProfileHeader(profile)
+
+                            // Photos grid
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(3),
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                items(profile.posts) { post ->
+                                    PhotoGridItem(
+                                        post = post,
+                                        onClick = {
+                                            // Load detailed posts and switch to TikTok view
+                                            loadDetailedPosts(post.id)
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
 
-                }
-
-                ViewMode.TIKTOK -> {
-                    // TikTok-like full-screen post view
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        // Back button to return to grid view
-                        Box(
-                            modifier = Modifier
-                                .padding(top = 48.dp, start = 16.dp) // Increased padding to avoid notification bar
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(Color.Black.copy(alpha = 0.7f))
-                                .clickable { viewMode = ViewMode.GRID }
-                                .align(Alignment.TopStart),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                                contentDescription = "Back to Grid",
-                                tint = Color.White,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-
-                        if (isLoadingDetailedPosts) {
-                            // Show loading indicator while fetching detailed posts
+                    ViewMode.TIKTOK -> {
+                        // TikTok-like full-screen post view
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            // Back button to return to grid view
                             Box(
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier
+                                    .padding(top = 60.dp, start = 16.dp)
+                                    .size(48.dp) // Increased size for better tap target
+                                    .shadow(4.dp, CircleShape) // Add shadow for better visibility
+                                    .clip(CircleShape)
+                                    .background(Color.Black.copy(alpha = 0.7f))
+                                    .clickable { viewMode = ViewMode.GRID }
+                                    .align(Alignment.TopStart),
                                 contentAlignment = Alignment.Center
                             ) {
-                                CircularProgressIndicator()
-                            }
-                        } else if (detailedPosts.isEmpty()) {
-                            // Show message if no posts are available
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "No posts to display",
-                                    color = MaterialTheme.colors.onBackground
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                                    contentDescription = "Back to Grid",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(28.dp) // Slightly larger icon
                                 )
                             }
-                        } else {
-                            // Vertical pager for TikTok-like scrolling
-                            val pagerState = rememberPagerState(
-                                initialPage = selectedPostIndex,
-                                pageCount = { detailedPosts.size }
-                            )
 
-                            VerticalPager(
-                                state = pagerState,
-                                modifier = Modifier.fillMaxSize()
-                            ) { page ->
-                                val post = detailedPosts[page]
+                            if (isLoadingDetailedPosts) {
+                                // Show loading indicator while fetching detailed posts
                                 Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(Color.Black)
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    PostDetailView(
-                                        beforeImageUrl = post.photo1,
-                                        afterImageUrl = post.photo2 ?: post.photo1,
-                                        workoutDuration = formatDuration(post.timer),
-                                        postedAt = formatTimestamp(post.createdAt),
-                                        activityType = ActivityType.valueOf(post.emoji ?: "RUNNING"),
-                                        userName = post.username,
-                                        likes = post.likes,
-                                        comments = post.comments,
-                                        isLikedByMe = post.isLikedByMe,
-                                        onClose = { viewMode = ViewMode.GRID }, // Add close button to exit TikTok view
-                                        postId = post.id,
-                                        apiClient = apiClient,
-                                        onAddComment = { commentText: String ->
-                                            coroutineScope.launch {
-                                                try {
-                                                    val response = apiClient.addComment(post.id, commentText)
-                                                    if (response.result == "ok") {
-                                                        // Refresh the post to show the new comment
-                                                        val updatedPost = apiClient.getPost(post.id)
+                                    CircularProgressIndicator(
+                                        color = MaterialTheme.colors.primary,
+                                        strokeWidth = 3.dp,
+                                        modifier = Modifier.size(60.dp)
+                                    )
+                                }
+                            } else if (detailedPosts.isEmpty()) {
+                                // Show message if no posts are available
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "No posts to display",
+                                        color = MaterialTheme.colors.onBackground,
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            } else {
+                                // Vertical pager for TikTok-like scrolling
+                                val pagerState = rememberPagerState(
+                                    initialPage = selectedPostIndex,
+                                    pageCount = { detailedPosts.size }
+                                )
+
+                                VerticalPager(
+                                    state = pagerState,
+                                    modifier = Modifier.fillMaxSize()
+                                ) { page ->
+                                    val post = detailedPosts[page]
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(Color.Black)
+                                    ) {
+                                        PostDetailView(
+                                            beforeImageUrl = post.photo1,
+                                            afterImageUrl = post.photo2 ?: post.photo1,
+                                            workoutDuration = formatDuration(post.timer),
+                                            postedAt = formatTimestamp(post.createdAt),
+                                            activityType = ActivityType.valueOf(post.emoji ?: "RUNNING"),
+                                            userName = post.username,
+                                            likes = post.likes,
+                                            comments = post.comments,
+                                            isLikedByMe = post.isLikedByMe,
+                                            onClose = { viewMode = ViewMode.GRID }, // Add close button to exit TikTok view
+                                            postId = post.id,
+                                            apiClient = apiClient,
+                                            onAddComment = { commentText: String ->
+                                                coroutineScope.launch {
+                                                    try {
+                                                        val response = apiClient.addComment(post.id, commentText)
+                                                        if (response.result == "ok") {
+                                                            // Refresh the post to show the new comment
+                                                            val updatedPost = apiClient.getPost(post.id)
+                                                            if (updatedPost.result == "ok" && updatedPost.response != null) {
+                                                                // Update the post in the list
+                                                                detailedPosts = detailedPosts.map { 
+                                                                    if (it.id == post.id) updatedPost.response else it 
+                                                                }
+                                                            }
+                                                        }
+                                                    } catch (_: Exception) {
+                                                        // Handle error
+                                                    }
+                                                }
+                                            },
+                                            onDeletePost = if (allowPostDeletion) {
+                                                {
+                                                    coroutineScope.launch {
+                                                        try {
+                                                            val response = apiClient.deletePost(post.id)
+                                                            if (response.result == "ok") {
+                                                                // Remove the post from the list
+                                                                detailedPosts = detailedPosts.filter { it.id != post.id }
+
+                                                                // If there are no more posts, go back to grid view
+                                                                if (detailedPosts.isEmpty()) {
+                                                                    viewMode = ViewMode.GRID
+                                                                }
+
+                                                                // Also update the profile data to remove the post
+                                                                profileData = profileData?.copy(
+                                                                    posts = profileData?.posts?.filter { it.id != post.id } ?: emptyList()
+                                                                )
+                                                            }
+                                                        } catch (_: Exception) {
+                                                            // Handle error
+                                                        }
+                                                    }
+                                                }
+                                            } else null, // Set to null when not allowed to delete
+                                            onLikeStateChanged = { postId: Int, isLiked: Boolean ->
+                                                // Refresh the post data when like state changes
+                                                coroutineScope.launch {
+                                                    try {
+                                                        // Give the API a moment to process the like/unlike
+                                                        delay(300)
+                                                        val updatedPost = apiClient.getPost(postId)
                                                         if (updatedPost.result == "ok" && updatedPost.response != null) {
                                                             // Update the post in the list
                                                             detailedPosts = detailedPosts.map { 
-                                                                if (it.id == post.id) updatedPost.response else it 
+                                                                if (it.id == postId) updatedPost.response else it 
                                                             }
-                                                        }
-                                                    }
-                                                } catch (_: Exception) {
-                                                    // Handle error
-                                                }
-                                            }
-                                        },
-                                        onDeletePost = if (allowPostDeletion) {
-                                            {
-                                                coroutineScope.launch {
-                                                    try {
-                                                        val response = apiClient.deletePost(post.id)
-                                                        if (response.result == "ok") {
-                                                            // Remove the post from the list
-                                                            detailedPosts = detailedPosts.filter { it.id != post.id }
-
-                                                            // If there are no more posts, go back to grid view
-                                                            if (detailedPosts.isEmpty()) {
-                                                                viewMode = ViewMode.GRID
-                                                            }
-
-                                                            // Also update the profile data to remove the post
-                                                            profileData = profileData?.copy(
-                                                                posts = profileData?.posts?.filter { it.id != post.id } ?: emptyList()
-                                                            )
                                                         }
                                                     } catch (_: Exception) {
                                                         // Handle error
                                                     }
                                                 }
                                             }
-                                        } else null, // Set to null when not allowed to delete
-                                        onLikeStateChanged = { postId: Int, isLiked: Boolean ->
-                                            // Refresh the post data when like state changes
-                                            coroutineScope.launch {
-                                                try {
-                                                    // Give the API a moment to process the like/unlike
-                                                    delay(300)
-                                                    val updatedPost = apiClient.getPost(postId)
-                                                    if (updatedPost.result == "ok" && updatedPost.response != null) {
-                                                        // Update the post in the list
-                                                        detailedPosts = detailedPosts.map { 
-                                                            if (it.id == postId) updatedPost.response else it 
-                                                        }
-                                                    }
-                                                } catch (_: Exception) {
-                                                    // Handle error
-                                                }
-                                            }
-                                        }
-                                    )
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -347,66 +383,125 @@ open class ProfileScreen(
      */
     @Composable
     private fun ProfileHeader(profile: ProfileResponse) {
-        Row(
+        // Add extra padding at the top if this is a friend's profile (not the current user's profile)
+        val topPadding = if (username != null) 150.dp else 16.dp
+        
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(start = 16.dp, end = 16.dp, top = topPadding, bottom = 16.dp)
         ) {
-            // Profile avatar
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colors.surface),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (profile.avatar != null) {
-                    AsyncImage(
-                        model = profile.avatar,
-                        contentDescription = "Profile Avatar",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+                // Profile avatar with improved visuals
+                Box(
+                    modifier = Modifier
+                        .size(90.dp)
+                        .shadow(4.dp, CircleShape)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colors.surface),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (profile.avatar != null) {
+                        SubcomposeAsyncImage(
+                            model = profile.avatar,
+                            contentDescription = "Profile Avatar",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                            loading = {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(30.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            },
+                            error = {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Profile Avatar",
+                                    modifier = Modifier.size(45.dp),
+                                    tint = MaterialTheme.colors.primary
+                                )
+                            }
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Profile Avatar",
+                            modifier = Modifier.size(45.dp),
+                            tint = MaterialTheme.colors.primary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(20.dp))
+
+                // Profile info with improved layout
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = profile.username,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 22.sp,
+                        color = MaterialTheme.colors.onBackground
                     )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "Profile Avatar",
-                        modifier = Modifier.size(40.dp),
-                        tint = MaterialTheme.colors.onSurface
-                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Profile stats with nicer display
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Posts count
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "${profile.posts.size}",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            )
+                            Text(
+                                text = "Posts",
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
+                            )
+                        }
+                        
+                        // Friends count
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "${profile.friendsCount}",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            )
+                            Text(
+                                text = "Friends",
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // Profile info
-            Column {
-                Text(
-                    text = profile.username,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = "${profile.posts.size} posts",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = "${profile.friendsCount} friends",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
-                )
-            }
+            // Divider with better visibility
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(MaterialTheme.colors.onSurface.copy(alpha = 0.1f))
+            )
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
     }
 
     /**
@@ -420,18 +515,47 @@ open class ProfileScreen(
         Box(
             modifier = Modifier
                 .aspectRatio(1f)
-                .padding(2.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .shadow(1.dp)
                 .clickable(onClick = onClick)
         ) {
-            AsyncImage(
+            // Use SubcomposeAsyncImage for better loading/error states
+            SubcomposeAsyncImage(
                 model = post.photo1,
                 contentDescription = "Post Photo",
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                loading = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colors.surface.copy(alpha = 0.5f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
+                },
+                error = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colors.error.copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "!",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colors.error
+                        )
+                    }
+                }
             )
         }
     }
-
 
     /**
      * Formats a timestamp into a human-readable string in Instagram style.
@@ -460,5 +584,4 @@ open class ProfileScreen(
             "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
         }
     }
-
 }
