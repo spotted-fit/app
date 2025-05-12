@@ -36,6 +36,8 @@ import fit.spotted.app.ui.camera.PostAnimation
 import fit.spotted.app.ui.camera.TimerDisplay
 import fit.spotted.app.ui.components.PostDetailView
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 /**
  * Screen that allows users to take photos of their fitness activities.
@@ -49,6 +51,7 @@ class CameraScreen(
     override fun Content() {
         // Get the singleton API client
         val apiClient = remember { ApiProvider.getApiClient() }
+        val coroutineScope = rememberCoroutineScope()
 
         // Create the view model
         val viewModel = remember { CameraViewModel(apiClient) }
@@ -63,12 +66,19 @@ class CameraScreen(
             if (isVisible) getCamera() else null 
         }
 
-        // Update timer every second when running
+        // Update timer when app becomes visible again
+        LaunchedEffect(isVisible) {
+            if (isVisible && viewModel.isTimerRunning) {
+                viewModel.updateTimer()
+            }
+        }
+
+        // Update timer every second when running (for UI refresh only)
         LaunchedEffect(viewModel.isTimerRunning) {
             if (viewModel.isTimerRunning) {
                 while (true) {
                     delay(1000)
-                    viewModel.seconds++
+                    viewModel.updateTimer() // Just update the UI, actual timing is based on timestamps
                 }
             }
         }
@@ -92,6 +102,13 @@ class CameraScreen(
 
         // Clean up camera resources when the screen is disposed or becomes invisible
         DisposableEffect(isVisible) {
+            // When screen becomes visible, immediately update the timer
+            if (isVisible && viewModel.isTimerRunning) {
+                coroutineScope.launch {
+                    viewModel.updateTimer()
+                }
+            }
+            
             onDispose {
                 camera?.release()
             }
