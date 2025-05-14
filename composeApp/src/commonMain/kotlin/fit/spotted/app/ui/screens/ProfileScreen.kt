@@ -39,13 +39,14 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import coil3.compose.SubcomposeAsyncImage
 import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.api.models.PostDetailedData
 import fit.spotted.app.api.models.ProfilePost
 import fit.spotted.app.api.models.ProfileResponse
 import fit.spotted.app.emoji.ActivityType
-import fit.spotted.app.ui.components.PostDetailView
+import fit.spotted.app.ui.components.post.PostDetailView
 import fit.spotted.app.ui.components.ProfileSkeletonLoading
 import fit.spotted.app.ui.components.PullToRefreshLayout
 import fit.spotted.app.ui.theme.*
@@ -422,7 +423,6 @@ open class ProfileScreen(
                                                 isLikedByMe = post.isLikedByMe,
                                                 postId = post.id,
                                                 apiClient = apiClient,
-                                                onClose = { viewMode = ViewMode.GRID },
                                                 // Same post functionality as standard view
                                                 onAddComment = { commentText: String ->
                                                     // Same comment logic as before
@@ -495,7 +495,6 @@ open class ProfileScreen(
                                 }
                             }
                         } else {
-                            // Original phone layout - fullscreen TikTok-style view
                             Box(modifier = Modifier.fillMaxSize()) {
                                 // Back button to return to grid view
                                 Box(
@@ -513,14 +512,16 @@ open class ProfileScreen(
                                         // Add semantic description for accessibility
                                         .semantics {
                                             contentDescription = "Back to photo grid"
-                                        },
+                                        }
+                                        // Add zIndex to ensure it's drawn on top of other elements
+                                        .zIndex(10f),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                                        contentDescription = null, // null because we set it on the parent
+                                        contentDescription = null,
                                         tint = Color.White,
-                                        modifier = Modifier.size(28.dp) // Slightly larger icon
+                                        modifier = Modifier.size(28.dp)
                                     )
                                 }
 
@@ -576,9 +577,6 @@ open class ProfileScreen(
                                                 likes = post.likes,
                                                 comments = post.comments,
                                                 isLikedByMe = post.isLikedByMe,
-                                                onClose = {
-                                                    viewMode = ViewMode.GRID
-                                                }, // Add close button to exit TikTok view
                                                 postId = post.id,
                                                 apiClient = apiClient,
                                                 onAddComment = { commentText: String ->

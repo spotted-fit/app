@@ -70,6 +70,8 @@ kotlin {
             implementation(libs.ktor.client.js)
         }
         commonMain.dependencies {
+            implementation(libs.decompose)
+
             // multiplatform-settings
             implementation(libs.multiplatform.settings.no.arg)
 

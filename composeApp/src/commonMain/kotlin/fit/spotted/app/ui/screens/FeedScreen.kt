@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.api.models.PostDetailedData
 import fit.spotted.app.emoji.ActivityType
-import fit.spotted.app.ui.components.PostDetailView
+import fit.spotted.app.ui.components.post.PostDetailView
 import fit.spotted.app.utils.DateTimeUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -28,16 +28,13 @@ import kotlinx.coroutines.launch
 class FeedScreen : Screen {
     @Composable
     override fun Content() {
-        // State for posts, loading, and error handling
         var isLoading by remember { mutableStateOf(true) }
         var errorMessage by remember { mutableStateOf<String?>(null) }
         val apiClient by remember { mutableStateOf(ApiProvider.getApiClient()) }
         var posts by remember { mutableStateOf(emptyList<PostDetailedData>()) }
 
-        // Coroutine scope for API calls
         val coroutineScope = rememberCoroutineScope()
 
-        // Fetch posts when the screen is first displayed
         LaunchedEffect(Unit) {
             coroutineScope.launch {
                 try {
@@ -63,7 +60,6 @@ class FeedScreen : Screen {
             return
         }
 
-        // Show error message
         errorMessage?.let {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -78,7 +74,6 @@ class FeedScreen : Screen {
             return
         }
 
-        // Show empty state if no posts
         if (posts.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -92,7 +87,6 @@ class FeedScreen : Screen {
             return
         }
 
-        // TikTok-like vertical pager for posts
         val pagerState = rememberPagerState(
             initialPage = 0,
             pageCount = { posts.size }

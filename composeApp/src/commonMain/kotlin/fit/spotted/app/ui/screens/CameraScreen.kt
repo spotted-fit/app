@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.sp
 import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.camera.getCamera
 import fit.spotted.app.ui.camera.*
-import fit.spotted.app.ui.components.PostDetailView
+import fit.spotted.app.ui.components.post.PostDetailView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -132,15 +132,14 @@ class CameraScreen(
                             beforeWorkoutPhoto = viewModel.beforeWorkoutPhoto,
                             afterWorkoutPhoto = viewModel.afterWorkoutPhoto,
                             workoutDuration = viewModel.formatTimer(),
-                            postedAt = "Just now", // This is a preview, so "Just now" makes sense
+                            postedAt = "Just now",
                             activityType = viewModel.selectedActivity,
-                            userName = "You", // Using "You" as the default username for preview
+                            userName = "You",
                             initialShowAfterImage = viewModel.currentPhotoIndex == 1,
                             showBeforeAfterToggle = true,
-                            onClose = { viewModel.resetToStart() },
                             onActivityTypeClick = { viewModel.showEmojiPicker = true },
+                            isFromCamera = true,
                             actionButtons = {
-                                // Add a post button
                                 Box(
                                     modifier = Modifier
                                         .size(48.dp)

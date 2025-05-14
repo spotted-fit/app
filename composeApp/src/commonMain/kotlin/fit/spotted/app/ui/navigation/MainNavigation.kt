@@ -24,26 +24,22 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun MainNavigation() {
-    // Check if user is logged in
     var isLoggedIn by remember { mutableStateOf(false) }
 
-    // Coroutine scope for API calls
-    val coroutineScope = rememberCoroutineScope()
-    // API client
     val apiClient = ApiProvider.getApiClient()
+    val coroutineScope = rememberCoroutineScope()
 
     if (isLoggedIn) {
-        // Show main screen with bottom navigation when logged in
         MainScreenWithBottomNav(
             onLogout = {
-                isLoggedIn = false
-                apiClient.logOut()
+                coroutineScope.launch {
+                    isLoggedIn = false
+                    apiClient.logOut()
+                }
             }
         )
     } else {
-        // Show login screen when not logged in
         Box(modifier = Modifier.fillMaxSize()) {
-            // Pass the login callback to the LoginScreen
             LoginScreen(
                 onLogin = {
                     coroutineScope.launch {
@@ -82,7 +78,6 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
     // Function to handle tab changes with confirmation if needed
     fun handleTabChange(newTab: Int) {
         if (currentTab == 1 && newTab != 1 && hasTakenPicture) {
-            // If we're leaving the camera tab after taking a picture, show confirmation dialog
             showConfirmationDialog = true
             targetTab = newTab
         } else {
@@ -136,7 +131,6 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
 
     Scaffold(
         bottomBar = {
-            // Modern bottom navigation with transparency and sleek design
             BottomNavigation(
                 backgroundColor = MaterialTheme.colors.surface.copy(alpha = 0.9f),
                 elevation = 0.dp,
@@ -157,7 +151,6 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                     },
                     selectedContentColor = MaterialTheme.colors.onSurface,
                     unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
-                    label = null // Remove labels for cleaner look
                 )
 
                 // Activity/Camera tab
@@ -175,7 +168,6 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                     },
                     selectedContentColor = MaterialTheme.colors.onSurface,
                     unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
-                    label = null // Remove labels for cleaner look
                 )
 
                 // Friends tab
@@ -193,7 +185,6 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                     },
                     selectedContentColor = MaterialTheme.colors.onSurface,
                     unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
-                    label = null // Remove labels for cleaner look
                 )
 
                 // Profile tab
@@ -211,13 +202,11 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                     },
                     selectedContentColor = MaterialTheme.colors.onSurface,
                     unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
-                    label = null // Remove labels for cleaner look
                 )
             }
         },
         topBar = {
             if (currentTab == 3) {
-                // Modern top app bar with transparency
                 TopAppBar(
                     title = {
                         Text(
@@ -244,7 +233,6 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
             }
         }
     ) { paddingValues ->
-        // Use HorizontalPager instead of Box for swipe navigation
         HorizontalPager(
             state = pagerState,
             // Disable user scrolling only when on camera tab after taking a picture
@@ -253,7 +241,6 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) { page ->
-            // Render the selected screen's content based on the page
             when (page) {
                 0 -> FeedScreen().Content()
                 1 -> CameraScreen(
