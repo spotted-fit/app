@@ -11,6 +11,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.dialogs.init
 
 class MainActivity : ComponentActivity() {
     // Store permission state
@@ -19,6 +21,8 @@ class MainActivity : ComponentActivity() {
     // Define the permissions you need
     private val requiredPermissions = arrayOf(
         android.Manifest.permission.CAMERA,
+        android.Manifest.permission.READ_EXTERNAL_STORAGE,
+        android.Manifest.permission.READ_MEDIA_IMAGES, // For Android 13+ (API level 33+)
     )
 
     // Permission launcher
@@ -38,6 +42,9 @@ class MainActivity : ComponentActivity() {
         if (!permissionsGranted) {
             requestPermissions()
         }
+
+        // Initialize FileKit
+        FileKit.init(this)
 
         setContent {
             App()

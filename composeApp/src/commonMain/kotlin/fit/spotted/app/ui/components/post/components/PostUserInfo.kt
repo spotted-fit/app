@@ -42,6 +42,7 @@ fun PostUserInfo(
     activityType: ActivityType,
     adaptiveSizes: AdaptiveSizes,
     windowSizeClass: WindowSizeClass,
+    workoutDuration: String,
     state: PostDetailState? = null,
     onActivityTypeClick: (() -> Unit)? = null,
     onProfileClick: (() -> Unit)? = null
@@ -121,6 +122,20 @@ fun PostUserInfo(
                         )
                     }
                 }
+            }
+            
+            // Middle section: Timer display
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = adaptiveSpacing.medium),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = workoutDuration,
+                    color = Color.White,
+                    fontSize = adaptiveSizes.titleTextSize * 0.9f,
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             // Right section: Activity emoji

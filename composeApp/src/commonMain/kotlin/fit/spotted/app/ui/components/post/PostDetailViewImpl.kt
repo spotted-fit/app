@@ -5,18 +5,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import fit.spotted.app.api.ApiClient
 import fit.spotted.app.api.models.CommentData
 import fit.spotted.app.emoji.ActivityType
-import fit.spotted.app.ui.camera.TimerDisplay
 import fit.spotted.app.ui.components.post.components.*
 import fit.spotted.app.ui.components.post.state.PostDetailState
 import fit.spotted.app.ui.components.post.util.rememberAdaptiveSizes
@@ -104,14 +103,6 @@ internal fun PostDetailViewImpl(
             )
         }
 
-        TimerDisplay(
-            timerText = workoutDuration,
-            showPostAnimation = false,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .offset(y = -adaptiveSpacing.huge * 2)
-        )
-
         if (!isFromCamera) {
             Column(
                 modifier = Modifier
@@ -155,6 +146,7 @@ internal fun PostDetailViewImpl(
                 activityType = activityType,
                 adaptiveSizes = adaptiveSizes,
                 windowSizeClass = windowSize.widthSizeClass,
+                workoutDuration = workoutDuration,
                 state = state,
                 onActivityTypeClick = onActivityTypeClick,
                 onProfileClick = onProfileClick

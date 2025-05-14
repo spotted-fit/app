@@ -24,3 +24,11 @@ data class ProfileResponse(
 )
 
 typealias Profile = ApiResponse<ProfileResponse>
+
+// Avatar update response
+@Serializable
+data class AvatarResponse(
+    val avatarUrl: String
+)
+
+typealias UpdateAvatarResponse = ApiResponse<AvatarResponse>

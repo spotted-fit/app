@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinxSerialization)
     alias(libs.plugins.buildkonfig)
+    id("com.google.gms.google-services") version "4.4.2" apply false
 }
 
 kotlin {
@@ -61,10 +62,22 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.camerak)
             implementation(libs.ktor.client.okhttp)
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:33.13.0"))
+
+            // FileKit dependencies for Android
+            implementation("io.github.vinceglb:filekit-core:0.10.0-beta04")
+            implementation("io.github.vinceglb:filekit-dialogs:0.10.0-beta04")
+            implementation("io.github.vinceglb:filekit-dialogs-compose:0.10.0-beta04")
+            implementation("io.github.vinceglb:filekit-coil:0.10.0-beta04")
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
             implementation(libs.camerak)
+
+            // FileKit dependencies for iOS
+            implementation("io.github.vinceglb:filekit-core:0.10.0-beta04")
+            implementation("io.github.vinceglb:filekit-dialogs:0.10.0-beta04")
+            implementation("io.github.vinceglb:filekit-dialogs-compose:0.10.0-beta04")
         }
         wasmJsMain.dependencies {
             implementation(libs.ktor.client.js)
@@ -74,6 +87,11 @@ kotlin {
 
             // multiplatform-settings
             implementation(libs.multiplatform.settings.no.arg)
+
+            // FileKit dependencies
+            implementation("io.github.vinceglb:filekit-core:0.10.0-beta04")
+            implementation("io.github.vinceglb:filekit-dialogs:0.10.0-beta04")
+            implementation("io.github.vinceglb:filekit-dialogs-compose:0.10.0-beta04")
 
             // ktor
             implementation(libs.kotlinx.datetime)
@@ -161,7 +179,12 @@ buildkonfig {
 
     // Default configuration that applies to all targets
     defaultConfigs {
-        buildConfigField(FieldSpec.Type.STRING, "BASE_URL", System.getenv("BASE_URL"), nullable = true)
+        buildConfigField(
+            FieldSpec.Type.STRING,
+            "BASE_URL",
+            System.getenv("BASE_URL"),
+            nullable = true
+        )
     }
 }
 

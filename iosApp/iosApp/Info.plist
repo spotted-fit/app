@@ -48,5 +48,9 @@
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>This app uses the camera to take before and after workout photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access to your photos to let you pick a profile picture.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We need permission to save picked photos.</string>
 </dict>
 </plist>
