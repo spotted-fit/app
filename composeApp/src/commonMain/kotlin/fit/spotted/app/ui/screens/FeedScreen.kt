@@ -26,6 +26,9 @@ import kotlinx.coroutines.launch
  * Screen that displays the feed of photos from friends in a full-screen TikTok-like style.
  */
 class FeedScreen : Screen {
+    // Callback for navigating to a friend's profile
+    var onNavigateToFriendProfile: ((String) -> Unit)? = null
+    
     @Composable
     override fun Content() {
         var isLoading by remember { mutableStateOf(true) }
@@ -150,6 +153,10 @@ class FeedScreen : Screen {
                                 // Handle error
                             }
                         }
+                    },
+                    onProfileClick = {
+                        // Navigate to the friend's profile
+                        onNavigateToFriendProfile?.invoke(post.username)
                     }
                 )
             }

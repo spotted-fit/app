@@ -43,7 +43,8 @@ fun PostUserInfo(
     adaptiveSizes: AdaptiveSizes,
     windowSizeClass: WindowSizeClass,
     state: PostDetailState? = null,
-    onActivityTypeClick: (() -> Unit)? = null
+    onActivityTypeClick: (() -> Unit)? = null,
+    onProfileClick: (() -> Unit)? = null
 ) {
     val adaptiveSpacing = LocalAdaptiveSpacing.current
 
@@ -78,7 +79,9 @@ fun PostUserInfo(
             // Left section: User info
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = { onProfileClick?.invoke() })
             ) {
                 // Profile avatar
                 Surface(

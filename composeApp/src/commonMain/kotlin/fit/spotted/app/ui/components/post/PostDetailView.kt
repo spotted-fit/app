@@ -57,6 +57,9 @@ fun PostDetailView(
 
     // Callback for when a post is liked/unliked
     onLikeStateChanged: ((postId: Int, isLiked: Boolean) -> Unit)? = null,
+    
+    // Callback for when the profile is clicked
+    onProfileClick: (() -> Unit)? = null,
 
     // Flag to indicate if the view is shown from camera
     isFromCamera: Boolean = false
@@ -81,6 +84,7 @@ fun PostDetailView(
         postId = postId,
         apiClient = apiClient,
         onLikeStateChanged = onLikeStateChanged,
+        onProfileClick = onProfileClick,
         isFromCamera = isFromCamera
     )
 }
@@ -114,6 +118,7 @@ fun PostDetailView(
     postId: Int? = null,
     apiClient: ApiClient? = null,
     onLikeStateChanged: ((postId: Int, isLiked: Boolean) -> Unit)? = null,
+    onProfileClick: (() -> Unit)? = null,
 
     // Flag to indicate if the view is shown from camera
     isFromCamera: Boolean = false
@@ -138,6 +143,7 @@ fun PostDetailView(
         postId = postId,
         apiClient = apiClient,
         onLikeStateChanged = onLikeStateChanged,
+        onProfileClick = onProfileClick,
         isFromCamera = isFromCamera
     )
 }

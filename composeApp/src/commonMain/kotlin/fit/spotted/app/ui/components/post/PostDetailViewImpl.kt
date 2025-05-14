@@ -57,6 +57,8 @@ internal fun PostDetailViewImpl(
     apiClient: ApiClient? = null,
 
     onLikeStateChanged: ((postId: Int, isLiked: Boolean) -> Unit)? = null,
+    
+    onProfileClick: (() -> Unit)? = null,
 
     isFromCamera: Boolean = false
 ) {
@@ -154,7 +156,8 @@ internal fun PostDetailViewImpl(
                 adaptiveSizes = adaptiveSizes,
                 windowSizeClass = windowSize.widthSizeClass,
                 state = state,
-                onActivityTypeClick = onActivityTypeClick
+                onActivityTypeClick = onActivityTypeClick,
+                onProfileClick = onProfileClick
             )
         }
 

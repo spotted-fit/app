@@ -90,6 +90,15 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
             }
         }
     }
+    
+    // Shared function to navigate to a friend's profile
+    fun navigateToFriendProfile(username: String, navigateToFriendsTab: Boolean = false) {
+        currentFriendProfile = username
+        showingFriendProfile = true
+        if (navigateToFriendsTab) {
+            handleTabChange(2) // Navigate to the friends tab
+        }
+    }
 
     // Sync the pager state with the currentTab
     LaunchedEffect(currentTab) {
@@ -242,7 +251,14 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                 .padding(paddingValues)
         ) { page ->
             when (page) {
-                0 -> FeedScreen().Content()
+                0 -> {
+                    val feedScreen = FeedScreen()
+                    // Set the navigation callback for the feed screen
+                    feedScreen.onNavigateToFriendProfile = { username ->
+                        navigateToFriendProfile(username, true)
+                    }
+                    feedScreen.Content()
+                }
                 1 -> CameraScreen(
                     isVisible = currentTab == 1,
                     onAfterWorkoutModeChanged = { isAfterWorkoutMode ->
@@ -265,8 +281,7 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                         val friendsScreen = FriendsScreen()
                         // Set the navigation callback
                         friendsScreen.onNavigateToFriendProfile = { username ->
-                            currentFriendProfile = username
-                            showingFriendProfile = true
+                            navigateToFriendProfile(username)
                         }
                         friendsScreen.Content()
                     }
