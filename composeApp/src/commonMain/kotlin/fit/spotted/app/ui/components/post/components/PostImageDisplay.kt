@@ -18,8 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import kotlin.math.abs
 import coil3.compose.AsyncImage
 import fit.spotted.app.ui.components.post.state.PostDetailState
 import fit.spotted.app.ui.components.post.util.AdaptiveSizes
@@ -40,7 +42,7 @@ fun PostImageDisplay(
 ) {
     val adaptiveSpacing = LocalAdaptiveSpacing.current
     val isReducedMotion = LocalReducedMotion.current
-    
+
     // Animation for smooth transitions between before/after images
     val imageTransition by animateFloatAsState(
         targetValue = if (state.showAfterImage) 1f else 0f,
@@ -49,20 +51,49 @@ fun PostImageDisplay(
             easing = FastOutSlowInEasing
         )
     )
-    
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
-        // Display the appropriate content based on the transition value
-        if (imageTransition < 0.5f) {
-            beforeContent()
-        } else {
-            afterContent()
+        // Before image with flip animation
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    // When transitioning to "after", rotate the "before" image from 0 to -90 degrees
+                    // Only visible from 0 to 0.5 of the transition
+                    rotationY = -180f * imageTransition
+                    // Gradually hide as we rotate past 90 degrees
+                    alpha = if (imageTransition < 0.5f) 1f else 0f
+                    cameraDistance = 12f * density
+                }
+        ) {
+            if (imageTransition < 0.5f) {
+                beforeContent()
+            }
         }
-        
+
+        // After image with flip animation
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    // When transitioning to "after", rotate the "after" image from 90 to 0 degrees
+                    // Only visible from 0.5 to 1 of the transition
+                    rotationY = 180f - (180f * imageTransition)
+                    // Gradually show as we rotate past 90 degrees
+                    alpha = if (imageTransition >= 0.5f) 1f else 0f
+                    cameraDistance = 12f * density
+                }
+        ) {
+            if (imageTransition >= 0.5f) {
+                afterContent()
+            }
+        }
+
         // Show before/after indicator
         Box(
             modifier = Modifier
@@ -102,7 +133,7 @@ fun ImageUrlContent(
     } else {
         ContentScale.Crop
     }
-    
+
     AsyncImage(
         model = imageUrl,
         contentDescription = "Post Image",
@@ -125,7 +156,7 @@ fun ImageBitmapContent(
     } else {
         ContentScale.Crop
     }
-    
+
     imageBitmap?.let {
         Image(
             bitmap = it,

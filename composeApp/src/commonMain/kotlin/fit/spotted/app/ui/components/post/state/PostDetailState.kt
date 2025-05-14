@@ -23,21 +23,32 @@ class PostDetailState(
 
     var showDeleteConfirmation by mutableStateOf(false)
         private set
-    
+
     var wasLikeClicked by mutableStateOf(false)
+        private set
+
+    var wasActivityTypeClicked by mutableStateOf(false)
         private set
 
     fun toggleAfterImage() {
         showAfterImage = !showAfterImage
     }
-    
+
     fun toggleLike() {
         isLiked = !isLiked
         wasLikeClicked = true
     }
-    
+
     fun resetLikeAnimation() {
         wasLikeClicked = false
+    }
+
+    fun triggerActivityTypeAnimation() {
+        wasActivityTypeClicked = true
+    }
+
+    fun resetActivityTypeAnimation() {
+        wasActivityTypeClicked = false
     }
 
     fun updateIsLiked(isLiked: Boolean) {
@@ -47,11 +58,11 @@ class PostDetailState(
     fun toggleComments() {
         showComments = !showComments
     }
-    
+
     fun showDeleteConfirmation() {
         showDeleteConfirmation = true
     }
-    
+
     fun hideDeleteConfirmation() {
         showDeleteConfirmation = false
     }

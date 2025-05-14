@@ -1,5 +1,8 @@
 package fit.spotted.app.ui.components.post.components
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,14 +15,17 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fit.spotted.app.emoji.ActivityType
+import fit.spotted.app.ui.components.post.state.PostDetailState
 import fit.spotted.app.ui.components.post.util.AdaptiveSizes
 import fit.spotted.app.ui.theme.LocalAdaptiveSpacing
 import fit.spotted.app.ui.theme.WindowSizeClass
@@ -36,9 +42,28 @@ fun PostUserInfo(
     activityType: ActivityType,
     adaptiveSizes: AdaptiveSizes,
     windowSizeClass: WindowSizeClass,
+    state: PostDetailState? = null,
     onActivityTypeClick: (() -> Unit)? = null
 ) {
     val adaptiveSpacing = LocalAdaptiveSpacing.current
+
+    // Activity type animation
+    val activityTypeScale by animateFloatAsState(
+        targetValue = if (state?.wasActivityTypeClicked == true) 1.4f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        finishedListener = { if (state?.wasActivityTypeClicked == true) state.resetActivityTypeAnimation() }
+    )
+
+    val activityTypeRotation by animateFloatAsState(
+        targetValue = if (state?.wasActivityTypeClicked == true) 20f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        )
+    )
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -98,9 +123,17 @@ fun PostUserInfo(
             // Right section: Activity emoji
             Box(
                 modifier = Modifier
+                    .graphicsLayer {
+                        scaleX = activityTypeScale
+                        scaleY = activityTypeScale
+                        rotationZ = activityTypeRotation
+                    }
                     .clip(CircleShape)
                     .background(Color.White.copy(alpha = 0.15f))
-                    .clickable(onClick = { onActivityTypeClick?.invoke() })
+                    .clickable(onClick = { 
+                        onActivityTypeClick?.invoke()
+                        state?.triggerActivityTypeAnimation()
+                    })
                     .padding(adaptiveSpacing.small),
                 contentAlignment = Alignment.Center
             ) {

@@ -663,7 +663,6 @@ open class ProfileScreen(
     @Composable
     private fun ProfileHeader(profile: ProfileResponse) {
         // Get standardized spacing values
-        val spacing = LocalSpacing.current
         val adaptiveSpacing = LocalAdaptiveSpacing.current
         val windowSize = LocalWindowSize.current
 

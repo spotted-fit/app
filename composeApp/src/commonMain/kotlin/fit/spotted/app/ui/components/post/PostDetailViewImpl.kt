@@ -22,6 +22,7 @@ import fit.spotted.app.ui.components.post.state.PostDetailState
 import fit.spotted.app.ui.components.post.util.rememberAdaptiveSizes
 import fit.spotted.app.ui.theme.LocalAdaptiveSpacing
 import fit.spotted.app.ui.theme.LocalWindowSize
+import org.kodein.emoji.compose.WithPlatformEmoji
 
 /**
  * Implementation of the PostDetailView that is shared between both overloads.
@@ -101,6 +102,14 @@ internal fun PostDetailViewImpl(
             )
         }
 
+        TimerDisplay(
+            timerText = workoutDuration,
+            showPostAnimation = false,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .offset(y = -adaptiveSpacing.huge * 2)
+        )
+
         if (!isFromCamera) {
             Column(
                 modifier = Modifier
@@ -118,20 +127,18 @@ internal fun PostDetailViewImpl(
                             .clickable { state.showDeleteConfirmation() },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
+                        WithPlatformEmoji(
                             text = "🗑️",
-                            color = Color.White,
-                            fontSize = 18.sp
-                        )
+                        ) { emojiString, inlineContent ->
+                            Text(
+                                text = emojiString,
+                                inlineContent = inlineContent,
+                                fontSize = adaptiveSizes.titleTextSize,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
-
-                TimerDisplay(
-                    timerText = workoutDuration,
-                    showPostAnimation = false,
-                    modifier = Modifier
-                        .padding(start = 4.dp)
-                )
             }
         }
 
@@ -146,6 +153,7 @@ internal fun PostDetailViewImpl(
                 activityType = activityType,
                 adaptiveSizes = adaptiveSizes,
                 windowSizeClass = windowSize.widthSizeClass,
+                state = state,
                 onActivityTypeClick = onActivityTypeClick
             )
         }
