@@ -51,7 +51,6 @@ class FriendsScreen : Screen {
         var friends by remember { mutableStateOf<List<Friend>?>(null) }
         var friendRequests by remember { mutableStateOf<List<Friend>?>(null) }
         var searchResults by remember { mutableStateOf<List<Friend>?>(null) }
-        var isLoading by remember { mutableStateOf(true) }
         var errorMessage by remember { mutableStateOf<String?>(null) }
         var showLoadingIndicator by remember { mutableStateOf(true) }
 
@@ -71,11 +70,9 @@ class FriendsScreen : Screen {
         // Function to fetch friends
         suspend fun fetchFriends() {
             try {
-                isLoading = true
                 showLoadingIndicator = true
                 errorMessage = null
 
-                // Small delay for animation smoothness
                 delay(200)
 
                 val friendsResponse = apiClient.getFriends()
@@ -89,26 +86,19 @@ class FriendsScreen : Screen {
                         )
                     } ?: emptyList()
                 }
-                isLoading = false
-
-                // Add a small delay before hiding the loading indicator for smoother UI transition
                 delay(300)
                 showLoadingIndicator = false
             } catch (e: Exception) {
                 errorMessage = e.message ?: "An error occurred"
-                isLoading = false
                 showLoadingIndicator = false
             }
         }
 
-        // Function to fetch friend requests
         suspend fun fetchFriendRequests() {
             try {
-                isLoading = true
                 showLoadingIndicator = true
                 errorMessage = null
 
-                // Small delay for animation smoothness
                 delay(200)
 
                 val requestsResponse = apiClient.getFriendRequests()
@@ -123,14 +113,11 @@ class FriendsScreen : Screen {
                         )
                     } ?: emptyList()
                 }
-                isLoading = false
 
-                // Add a small delay before hiding the loading indicator for smoother UI transition
                 delay(300)
                 showLoadingIndicator = false
             } catch (e: Exception) {
                 errorMessage = e.message ?: "An error occurred"
-                isLoading = false
                 showLoadingIndicator = false
             }
         }
@@ -702,14 +689,12 @@ class FriendsScreen : Screen {
                         }
                     }
 
-                    // Add button for search results
                     if (showAddButton) {
                         Button(
                             onClick = {
                                 coroutineScope.launch {
                                     try {
                                         isLoading = true
-                                        // Convert friend.id to Int for the API call
                                         val response = apiClient.sendFriendRequest(friend.id.toInt())
                                         isLoading = false
                                         if (response.result != "ok") {

@@ -15,19 +15,22 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.mmk.kmpnotifier.notification.NotifierManager
 import fit.spotted.app.api.ApiProvider
+import fit.spotted.app.notifications.BumpNotifierListener
 import fit.spotted.app.ui.screens.*
 import kotlinx.coroutines.launch
 
-/**
- * Main navigation component that handles navigation between screens.
- */
 @Composable
 fun MainNavigation() {
     var isLoggedIn by remember { mutableStateOf(false) }
-
+    val notifierListener = remember { BumpNotifierListener() }
     val apiClient = ApiProvider.getApiClient()
     val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        NotifierManager.addListener(notifierListener)
+    }
 
     if (isLoggedIn) {
         MainScreenWithBottomNav(
@@ -35,6 +38,8 @@ fun MainNavigation() {
                 coroutineScope.launch {
                     isLoggedIn = false
                     apiClient.logOut()
+                    NotifierManager.getPushNotifier().deleteMyToken()
+                    notifierListener.deleteStoredToken()
                 }
             }
         )
@@ -43,6 +48,7 @@ fun MainNavigation() {
             LoginScreen(
                 onLogin = {
                     coroutineScope.launch {
+                        NotifierManager.getPushNotifier().getToken()
                         isLoggedIn = true
                     }
                 }
@@ -51,39 +57,26 @@ fun MainNavigation() {
     }
 }
 
-/**
- * Main screen with bottom navigation
- *
- * @param onLogout Callback to be invoked when the user logs out
- */
 @Composable
 fun MainScreenWithBottomNav(onLogout: () -> Unit) {
-    // Use remember to keep the state across recompositions
     var currentTab by remember { mutableStateOf(0) }
 
-    // State for confirmation dialog
     var showConfirmationDialog by remember { mutableStateOf(false) }
     var targetTab by remember { mutableStateOf(0) }
 
-    // Track whether a picture has been taken
     var hasTakenPicture by remember { mutableStateOf(false) }
 
-    // State for friend profile navigation
     var currentFriendProfile by remember { mutableStateOf<String?>(null) }
     var showingFriendProfile by remember { mutableStateOf(false) }
 
-    // Create a pager state with 4 pages (for the 4 tabs)
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { 4 })
 
-    // Function to handle tab changes with confirmation if needed
     fun handleTabChange(newTab: Int) {
         if (currentTab == 1 && newTab != 1 && hasTakenPicture) {
             showConfirmationDialog = true
             targetTab = newTab
         } else {
-            // Otherwise, just change the tab
             currentTab = newTab
-            // Reset friend profile when changing tabs
             if (newTab != 2) {
                 showingFriendProfile = false
                 currentFriendProfile = null
@@ -100,19 +93,15 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
         }
     }
 
-    // Sync the pager state with the currentTab
     LaunchedEffect(currentTab) {
         pagerState.scrollToPage(currentTab)
     }
 
-    // Update currentTab when the page changes
     LaunchedEffect(pagerState.currentPage) {
         if (pagerState.currentPage != currentTab) {
             handleTabChange(pagerState.currentPage)
         }
     }
-
-    // Confirmation dialog
     if (showConfirmationDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmationDialog = false },

@@ -16,6 +16,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fit.spotted.app.api.ApiProvider
+import fit.spotted.app.notifications.BumpNotifierListener
 import kotlinx.coroutines.launch
 
 /**
@@ -107,7 +108,9 @@ class LoginScreen(
                         isLoading = true
                         coroutineScope.launch {
                             try {
-                                val response = apiClient.login(password, username)
+                                val bumpNotifierListener = BumpNotifierListener()
+                                val firebaseToken = bumpNotifierListener.getStoredToken()
+                                val response = apiClient.login(password, username, firebaseToken)
                                 if (response.result == "ok") {
                                     onLogin()
                                 } else {
@@ -175,7 +178,6 @@ class LoginScreen(
                     .padding(bottom = 16.dp)
             )
 
-            // Password field
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },

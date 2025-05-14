@@ -13,14 +13,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
+import com.mmk.kmpnotifier.notification.NotifierManager
+import com.mmk.kmpnotifier.notification.configuration.NotificationPlatformConfiguration
 
 class MainActivity : ComponentActivity() {
-    // Store permission state
     private var permissionsGranted by mutableStateOf(false)
 
     // Define the permissions you need
     private val requiredPermissions = arrayOf(
         android.Manifest.permission.CAMERA,
+        android.Manifest.permission.POST_NOTIFICATIONS,
         android.Manifest.permission.READ_EXTERNAL_STORAGE,
         android.Manifest.permission.READ_MEDIA_IMAGES, // For Android 13+ (API level 33+)
     )
@@ -35,10 +37,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Check if permissions are already granted
+        NotifierManager.initialize(
+            configuration = NotificationPlatformConfiguration.Android(
+                notificationIconResId = R.drawable.ic_launcher_foreground,
+                showPushNotification = true,
+            )
+        )
+
         permissionsGranted = checkPermissions()
 
-        // If permissions are not granted, request them immediately
         if (!permissionsGranted) {
             requestPermissions()
         }

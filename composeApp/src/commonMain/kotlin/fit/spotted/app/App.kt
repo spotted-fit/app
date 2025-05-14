@@ -9,7 +9,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Preview
 fun App() {
     AppTheme {
-        // Use the main navigation component
         MainNavigation()
     }
 }

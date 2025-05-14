@@ -11,7 +11,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinxSerialization)
     alias(libs.plugins.buildkonfig)
-    id("com.google.gms.google-services") version "4.4.2" apply false
+    alias(libs.plugins.googleServices)
 }
 
 kotlin {
@@ -83,7 +83,7 @@ kotlin {
             implementation(libs.ktor.client.js)
         }
         commonMain.dependencies {
-            implementation(libs.decompose)
+            implementation(libs.kmpnotifier)
 
             // multiplatform-settings
             implementation(libs.multiplatform.settings.no.arg)

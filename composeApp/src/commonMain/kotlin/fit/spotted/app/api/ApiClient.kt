@@ -20,7 +20,7 @@ import kotlinx.serialization.json.Json
 interface ApiClient {
     // Authentication
     suspend fun register(email: String, password: String, username: String): AuthResponse
-    suspend fun login(password: String, username: String): AuthResponse
+    suspend fun login(password: String, username: String, firebaseToken: String? = null): AuthResponse
     fun isLoggedIn(): Boolean
     fun logOut()
 
@@ -53,6 +53,9 @@ interface ApiClient {
     suspend fun respondToFriendRequest(requestId: Int, accepted: Boolean): FriendResponseResult
     suspend fun getFriendRequests(): FriendRequests
     suspend fun getFriends(): FriendsList
+
+    // Notifications
+    suspend fun pokeUser(toUsername: String, title: String, body: String): OkResponse
 
     suspend fun getFeed(): Feed
 }
@@ -123,10 +126,11 @@ internal class ApiClientImpl : ApiClient {
     /**
      * Logs in a user with the provided credentials.
      * Sets the auth token if login is successful.
+     * @param firebaseToken Optional Firebase token for push notifications
      */
-    override suspend fun login(password: String, username: String): AuthResponse {
+    override suspend fun login(password: String, username: String, firebaseToken: String?): AuthResponse {
         val response = client.post("$baseUrl/login") {
-            setBody(LoginRequest(password, username))
+            setBody(LoginRequest(password, username, firebaseToken))
             addAuth()
         }
         val authResponse = response.body<AuthResponse>()
@@ -163,7 +167,7 @@ internal class ApiClientImpl : ApiClient {
                 })
                 emoji?.let { append("emoji", it) }
                 text?.let { append("text", it) }
-                timer?.let { append("timer", it) }
+                append("timer", timer)
             }
         ) {
             method = HttpMethod.Post
@@ -336,6 +340,21 @@ internal class ApiClientImpl : ApiClient {
 
     override suspend fun getFeed(): Feed {
         return client.get("$baseUrl/feed") {
+            addAuth()
+        }.body()
+    }
+
+    /**
+     * Sends a poke notification to another user.
+     *
+     * @param toUsername The username of the user to poke
+     * @param title The title of the notification
+     * @param body The body of the notification
+     * @return OkResponse if successful
+     */
+    override suspend fun pokeUser(toUsername: String, title: String, body: String): OkResponse {
+        return client.post("$baseUrl/friends/poke") {
+            setBody(PokeRequest(toUsername, title, body))
             addAuth()
         }.body()
     }

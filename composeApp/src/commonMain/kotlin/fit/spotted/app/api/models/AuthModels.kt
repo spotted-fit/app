@@ -12,7 +12,8 @@ data class RegisterRequest(
 @Serializable
 data class LoginRequest(
     val password: String,
-    val username: String
+    val username: String,
+    val firebaseToken: String? = null
 )
 
 // Response models
