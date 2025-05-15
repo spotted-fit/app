@@ -8,6 +8,4 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PokeRequest(
     val toUsername: String,
-    val title: String,
-    val body: String
 )

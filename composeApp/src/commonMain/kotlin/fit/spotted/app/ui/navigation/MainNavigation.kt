@@ -1,9 +1,13 @@
 package fit.spotted.app.ui.navigation
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.*
@@ -205,6 +209,8 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
         topBar = {
             if (currentTab == 3) {
                 TopAppBar(
+                    modifier = Modifier
+                        .padding(WindowInsets.statusBars.asPaddingValues()),
                     title = {
                         Text(
                             "Profile",

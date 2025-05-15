@@ -168,8 +168,6 @@ class FriendProfileScreen(
                                     try {
                                         val response = apiClient.pokeUser(
                                             toUsername = username,
-                                            title = "Poke from a friend!",
-                                            body = "You've been spotted by $username! Go show them what activity you're up to today!"
                                         )
 
                                         if (response.result == "ok") {

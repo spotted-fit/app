@@ -54,7 +54,7 @@ interface ApiClient {
     suspend fun getFriends(): FriendsList
 
     // Notifications
-    suspend fun pokeUser(toUsername: String, title: String, body: String): OkResponse
+    suspend fun pokeUser(toUsername: String): OkResponse
 
     suspend fun getFeed(): Feed
 }
@@ -347,13 +347,11 @@ internal class ApiClientImpl : ApiClient {
      * Sends a poke notification to another user.
      *
      * @param toUsername The username of the user to poke
-     * @param title The title of the notification
-     * @param body The body of the notification
      * @return OkResponse if successful
      */
-    override suspend fun pokeUser(toUsername: String, title: String, body: String): OkResponse {
+    override suspend fun pokeUser(toUsername: String): OkResponse {
         return client.post("$baseUrl/friends/poke") {
-            setBody(PokeRequest(toUsername, title, body))
+            setBody(PokeRequest(toUsername))
             addAuth()
         }.body()
     }
