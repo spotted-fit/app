@@ -29,6 +29,7 @@ import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.api.models.CreateChallengeRequest
 import fit.spotted.app.api.models.UserInfo
 import fit.spotted.app.ui.datepicker.PlatformDatePicker
+import fit.spotted.app.ui.theme.LocalAdaptiveSpacing
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -160,7 +161,8 @@ class CreateChallengeScreen {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                         }
                     },
-                    backgroundColor = MaterialTheme.colors.surface
+                    backgroundColor = MaterialTheme.colors.surface,
+                    modifier = Modifier.padding(top = LocalAdaptiveSpacing.current.statusBarPadding)
                 )
             }
         ) { paddingValues ->

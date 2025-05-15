@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.api.models.Challenge
 import fit.spotted.app.ui.components.PullToRefreshLayout
+import fit.spotted.app.ui.theme.LocalAdaptiveSpacing
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -80,6 +81,7 @@ class ChallengesScreen {
                 TopAppBar(
                     title = { Text("Challenges") },
                     backgroundColor = MaterialTheme.colors.surface,
+                    modifier = Modifier.padding(top = LocalAdaptiveSpacing.current.statusBarPadding),
                     actions = {
                         // Badge to show if there are invites
                         if (hasInvites) {

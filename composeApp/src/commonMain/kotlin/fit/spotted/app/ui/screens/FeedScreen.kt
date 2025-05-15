@@ -19,6 +19,7 @@ import fit.spotted.app.api.models.PostDetailedData
 import fit.spotted.app.emoji.ActivityType
 import fit.spotted.app.ui.components.post.PostDetailView
 import fit.spotted.app.utils.DateTimeUtils
+import fit.spotted.app.ui.theme.LocalAdaptiveSpacing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
