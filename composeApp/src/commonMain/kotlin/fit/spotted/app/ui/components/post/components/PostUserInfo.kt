@@ -128,12 +128,19 @@ fun PostUserInfo(
                                 .background(Color.White.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
-                            Text(
-                                text = "⏱️ $workoutDuration",
-                                fontSize = adaptiveSizes.captionTextSize,
-                                color = Color.White,
-                                fontWeight = FontWeight.Medium
-                            )
+                            WithPlatformEmoji(
+                                text = "⏱️ $workoutDuration"
+                            ) {
+                                emojiString, inlineContent ->
+                                Text(
+                                    text = emojiString,
+                                    inlineContent = inlineContent,
+                                    fontSize = adaptiveSizes.captionTextSize,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+
                         }
                     }
                 }
