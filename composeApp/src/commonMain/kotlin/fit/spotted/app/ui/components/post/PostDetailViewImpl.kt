@@ -1,9 +1,11 @@
 package fit.spotted.app.ui.components.post
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -80,6 +82,34 @@ internal fun PostDetailViewImpl(
             afterContent = afterContent,
             adaptiveSizes = adaptiveSizes,
         )
+
+        // Small preview of the opposite state in the top-left corner - vertical rectangle with no label
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(
+                    top = adaptiveSpacing.statusBarPadding + 16.dp,
+                    start = 16.dp
+                )
+                .size(width = 60.dp, height = 90.dp)
+                .shadow(4.dp, RoundedCornerShape(6.dp))
+                .clip(RoundedCornerShape(6.dp))
+                .border(1.5.dp, Color.White, RoundedCornerShape(6.dp))
+                .clickable { state.toggleAfterImage() },
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                // Show the opposite content
+                if (state.showAfterImage) {
+                    beforeContent()
+                } else {
+                    afterContent()
+                }
+            }
+        }
 
         Column(
             modifier = Modifier

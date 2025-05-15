@@ -75,26 +75,8 @@ fun PostActionButtons(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(adaptiveSpacing.medium)
     ) {
-        // Before/After toggle button
-        if (showBeforeAfterToggle) {
-            Box(
-                modifier = Modifier
-                    .size(adaptiveSizes.buttonSize)
-                    .shadow(4.dp, CircleShape)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.7f))
-                    .clickable { state.toggleAfterImage() },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "FLIP",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 10.sp
-                )
-            }
-        }
-
+        // FLIP button removed, but keeping the parameter for backward compatibility
+        
         // Only show likes and comments if showLikesAndComments is true
         if (showLikesAndComments) {
             // Like button with animation
