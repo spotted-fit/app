@@ -6,14 +6,15 @@ import kotlinx.serialization.Serializable
 data class RegisterRequest(
     val email: String,
     val password: String,
-    val username: String
+    val username: String,
+    val firebaseToken: String?
 )
 
 @Serializable
 data class LoginRequest(
     val password: String,
     val username: String,
-    val firebaseToken: String? = null
+    val firebaseToken: String?
 )
 
 // Response models

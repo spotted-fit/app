@@ -15,8 +15,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mmk.kmpnotifier.notification.NotifierManager
 import fit.spotted.app.api.ApiProvider
-import fit.spotted.app.notifications.BumpNotifierListener
 import kotlinx.coroutines.launch
 
 /**
@@ -108,8 +108,7 @@ class LoginScreen(
                         isLoading = true
                         coroutineScope.launch {
                             try {
-                                val bumpNotifierListener = BumpNotifierListener()
-                                val firebaseToken = bumpNotifierListener.getStoredToken()
+                                val firebaseToken = NotifierManager.getPushNotifier().getToken()
                                 val response = apiClient.login(password, username, firebaseToken)
                                 if (response.result == "ok") {
                                     onLogin()
@@ -132,7 +131,8 @@ class LoginScreen(
                         isLoading = true
                         coroutineScope.launch {
                             try {
-                                val response = apiClient.register(email, password, username)
+                                val firebaseToken = NotifierManager.getPushNotifier().getToken()
+                                val response = apiClient.register(email, password, username, firebaseToken)
                                 if (response.result == "ok") {
                                     onLogin()
                                 } else {

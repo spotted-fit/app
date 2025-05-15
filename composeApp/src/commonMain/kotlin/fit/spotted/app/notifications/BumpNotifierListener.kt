@@ -19,16 +19,6 @@ class BumpNotifierListener : NotifierManager.Listener {
         settings.putString(TOKEN_KEY, token)
     }
 
-    fun getStoredToken(): String? {
-        return if (settings.hasKey(TOKEN_KEY)) settings.getString(TOKEN_KEY, "") else null
-    }
-
-    fun deleteStoredToken() {
-        if (settings.hasKey(TOKEN_KEY)) {
-            settings.remove(TOKEN_KEY)
-        }
-    }
-
     companion object {
         private const val TOKEN_KEY = "fcm_token"
     }

@@ -39,7 +39,6 @@ fun MainNavigation() {
                     isLoggedIn = false
                     apiClient.logOut()
                     NotifierManager.getPushNotifier().deleteMyToken()
-                    notifierListener.deleteStoredToken()
                 }
             }
         )

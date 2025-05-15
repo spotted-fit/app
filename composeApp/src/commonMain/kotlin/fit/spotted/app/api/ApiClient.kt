@@ -19,8 +19,8 @@ import kotlinx.serialization.json.Json
  */
 interface ApiClient {
     // Authentication
-    suspend fun register(email: String, password: String, username: String): AuthResponse
-    suspend fun login(password: String, username: String, firebaseToken: String? = null): AuthResponse
+    suspend fun register(email: String, password: String, username: String, firebaseToken: String?): AuthResponse
+    suspend fun login(password: String, username: String, firebaseToken: String?): AuthResponse
     fun isLoggedIn(): Boolean
     fun logOut()
 
@@ -112,9 +112,9 @@ internal class ApiClientImpl : ApiClient {
      * Registers a new user with the provided credentials.
      * Sets the auth token if registration is successful.
      */
-    override suspend fun register(email: String, password: String, username: String): AuthResponse {
+    override suspend fun register(email: String, password: String, username: String, firebaseToken: String?): AuthResponse {
         val response = client.post("$baseUrl/register") {
-            setBody(RegisterRequest(email, password, username))
+            setBody(RegisterRequest(email, password, username, firebaseToken))
             addAuth()
         }
         val authResponse = response.body<AuthResponse>()
