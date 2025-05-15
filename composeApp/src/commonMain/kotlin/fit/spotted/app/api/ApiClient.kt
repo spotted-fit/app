@@ -57,6 +57,18 @@ interface ApiClient {
     suspend fun pokeUser(toUsername: String): OkResponse
 
     suspend fun getFeed(): Feed
+    
+    // Challenges
+    suspend fun getChallenges(): ChallengesList
+    suspend fun getChallenge(id: Int): ChallengeResponse
+    suspend fun createChallenge(request: CreateChallengeRequest): ChallengeResponse
+    suspend fun getChallengeInvites(): ChallengeInvitesList
+    suspend fun respondToChallengeInvite(challengeId: Int, accepted: Boolean): OkResponse
+    suspend fun leaveChallenge(challengeId: Int): OkResponse
+    
+    // Achievements
+    suspend fun getAchievements(): AchievementsList
+    suspend fun getAchievement(id: Int): Achievement
 }
 
 /**
@@ -352,6 +364,104 @@ internal class ApiClientImpl : ApiClient {
     override suspend fun pokeUser(toUsername: String): OkResponse {
         return client.post("$baseUrl/friends/poke") {
             setBody(PokeRequest(toUsername))
+            addAuth()
+        }.body()
+    }
+
+    // Challenges API
+    
+    /**
+     * Gets all challenges for the current user.
+     *
+     * @return List of challenges
+     */
+    override suspend fun getChallenges(): ChallengesList {
+        return client.get("$baseUrl/challenges") {
+            addAuth()
+        }.body()
+    }
+    
+    /**
+     * Gets a challenge by its ID.
+     *
+     * @param id The ID of the challenge to retrieve
+     * @return The challenge details
+     */
+    override suspend fun getChallenge(id: Int): ChallengeResponse {
+        return client.get("$baseUrl/challenges/$id") {
+            addAuth()
+        }.body()
+    }
+    
+    /**
+     * Creates a new challenge.
+     *
+     * @param request The challenge creation request
+     * @return The created challenge
+     */
+    override suspend fun createChallenge(request: CreateChallengeRequest): ChallengeResponse {
+        return client.post("$baseUrl/challenges") {
+            setBody(request)
+            addAuth()
+        }.body()
+    }
+    
+    /**
+     * Gets all challenge invites for the current user.
+     *
+     * @return List of challenge invites
+     */
+    override suspend fun getChallengeInvites(): ChallengeInvitesList {
+        return client.get("$baseUrl/challenges/invites") {
+            addAuth()
+        }.body()
+    }
+    
+    /**
+     * Responds to a challenge invite.
+     *
+     * @param challengeId The ID of the challenge
+     * @param accepted Whether the invite was accepted
+     * @return OkResponse if successful
+     */
+    override suspend fun respondToChallengeInvite(challengeId: Int, accepted: Boolean): OkResponse {
+        return client.post("$baseUrl/challenges/invites/respond") {
+            setBody(ChallengeInviteResponse(challengeId, accepted))
+            addAuth()
+        }.body()
+    }
+    
+    /**
+     * Leaves a challenge.
+     *
+     * @param challengeId The ID of the challenge to leave
+     * @return OkResponse if successful
+     */
+    override suspend fun leaveChallenge(challengeId: Int): OkResponse {
+        return client.delete("$baseUrl/challenges/$challengeId/leave") {
+            addAuth()
+        }.body()
+    }
+    
+    /**
+     * Gets all achievements for the current user.
+     *
+     * @return List of achievements
+     */
+    override suspend fun getAchievements(): AchievementsList {
+        return client.get("$baseUrl/achievements") {
+            addAuth()
+        }.body()
+    }
+    
+    /**
+     * Gets an achievement by its ID.
+     *
+     * @param id The ID of the achievement to retrieve
+     * @return The achievement details
+     */
+    override suspend fun getAchievement(id: Int): Achievement {
+        return client.get("$baseUrl/achievements/$id") {
             addAuth()
         }.body()
     }

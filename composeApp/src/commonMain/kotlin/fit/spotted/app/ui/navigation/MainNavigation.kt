@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -71,8 +72,15 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
 
     var currentFriendProfile by remember { mutableStateOf<String?>(null) }
     var showingFriendProfile by remember { mutableStateOf(false) }
+    
+    // Challenge screen state
+    var showingChallengeDetails by remember { mutableStateOf(false) }
+    var currentChallengeId by remember { mutableStateOf<Int?>(null) }
+    var showingChallengeInvites by remember { mutableStateOf(false) }
+    var showingCreateChallenge by remember { mutableStateOf(false) }
+    var showingAchievements by remember { mutableStateOf(false) }
 
-    val pagerState = rememberPagerState(initialPage = 0, pageCount = { 4 })
+    val pagerState = rememberPagerState(initialPage = 0, pageCount = { 5 }) // Updated to 5 tabs
 
     fun handleTabChange(newTab: Int) {
         if (currentTab == 1 && newTab != 1 && hasTakenPicture) {
@@ -83,6 +91,13 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
             if (newTab != 2) {
                 showingFriendProfile = false
                 currentFriendProfile = null
+            }
+            if (newTab != 4) { // Reset challenge screens if not on challenges tab
+                showingChallengeDetails = false
+                currentChallengeId = null
+                showingChallengeInvites = false
+                showingCreateChallenge = false
+                showingAchievements = false
             }
         }
     }
@@ -95,6 +110,48 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
             handleTabChange(2) // Navigate to the friends tab
         }
     }
+    
+    // Challenge navigation functions
+    fun navigateToChallengeDetails(challengeId: Int) {
+        currentChallengeId = challengeId
+        showingChallengeDetails = true
+        showingChallengeInvites = false
+        showingCreateChallenge = false
+        showingAchievements = false
+        handleTabChange(4) // Navigate to challenges tab
+    }
+    
+    fun navigateToChallengeInvites() {
+        showingChallengeInvites = true
+        showingChallengeDetails = false
+        showingCreateChallenge = false
+        showingAchievements = false
+        handleTabChange(4) // Navigate to challenges tab
+    }
+    
+    fun navigateToCreateChallenge() {
+        showingCreateChallenge = true
+        showingChallengeInvites = false
+        showingChallengeDetails = false
+        showingAchievements = false
+        handleTabChange(4) // Navigate to challenges tab
+    }
+    
+    fun navigateToAchievements() {
+        showingAchievements = true
+        showingChallengeInvites = false
+        showingChallengeDetails = false
+        showingCreateChallenge = false
+        handleTabChange(4) // Navigate to challenges tab
+    }
+    
+    fun navigateToChallengesList() {
+        showingChallengeDetails = false
+        currentChallengeId = null
+        showingChallengeInvites = false
+        showingCreateChallenge = false
+        showingAchievements = false
+    }
 
     LaunchedEffect(currentTab) {
         pagerState.scrollToPage(currentTab)
@@ -105,6 +162,7 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
             handleTabChange(pagerState.currentPage)
         }
     }
+    
     if (showConfirmationDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmationDialog = false },
@@ -204,6 +262,23 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                     selectedContentColor = MaterialTheme.colors.onSurface,
                     unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
                 )
+                
+                // Challenges tab
+                BottomNavigationItem(
+                    selected = currentTab == 4,
+                    onClick = {
+                        handleTabChange(4)
+                    },
+                    icon = {
+                        Icon(
+                            Icons.Default.Star,
+                            contentDescription = "Challenges",
+                            modifier = Modifier.size(26.dp)
+                        )
+                    },
+                    selectedContentColor = MaterialTheme.colors.onSurface,
+                    unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                )
             }
         },
         topBar = {
@@ -282,6 +357,55 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                 }
 
                 3 -> ProfileScreen().Content()
+                
+                4 -> {
+                    // Challenges tab with nested navigation
+                    when {
+                        showingChallengeDetails && currentChallengeId != null -> {
+                            val detailsScreen = ChallengeDetailsScreen(currentChallengeId!!)
+                            detailsScreen.onNavigateBack = { navigateToChallengesList() }
+                            detailsScreen.onNavigateToUserProfile = { username ->
+                                navigateToFriendProfile(username, true)
+                            }
+                            detailsScreen.Content()
+                        }
+                        showingChallengeInvites -> {
+                            val invitesScreen = ChallengeInvitesScreen()
+                            invitesScreen.onNavigateBack = { navigateToChallengesList() }
+                            invitesScreen.onNavigateToChallengeDetails = { challengeId ->
+                                navigateToChallengeDetails(challengeId)
+                            }
+                            invitesScreen.Content()
+                        }
+                        showingCreateChallenge -> {
+                            val createScreen = CreateChallengeScreen()
+                            createScreen.onNavigateBack = { navigateToChallengesList() }
+                            createScreen.onChallengeCreated = { challengeId ->
+                                navigateToChallengeDetails(challengeId)
+                            }
+                            createScreen.Content()
+                        }
+                        showingAchievements -> {
+                            val achievementsScreen = AchievementsScreen()
+                            achievementsScreen.onNavigateBack = { navigateToChallengesList() }
+                            achievementsScreen.onNavigateToChallenge = { challengeId ->
+                                navigateToChallengeDetails(challengeId)
+                            }
+                            achievementsScreen.Content()
+                        }
+                        else -> {
+                            val challengesScreen = ChallengesScreen()
+                            challengesScreen.onNavigateToCreateChallenge = { navigateToCreateChallenge() }
+                            challengesScreen.onNavigateToChallengeInvites = { navigateToChallengeInvites() }
+                            challengesScreen.onNavigateToChallengeDetails = { challengeId ->
+                                navigateToChallengeDetails(challengeId)
+                            }
+                            challengesScreen.onNavigateToAchievements = { navigateToAchievements() }
+                            challengesScreen.Content()
+                        }
+                    }
+                }
+                
                 else -> FeedScreen().Content()
             }
         }

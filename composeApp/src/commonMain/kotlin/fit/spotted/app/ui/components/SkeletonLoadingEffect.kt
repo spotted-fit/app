@@ -59,6 +59,18 @@ fun ShimmerBrush(showShimmer: Boolean = true, targetValue: Float = 1000f): Brush
 }
 
 /**
+ * A basic skeleton loading effect for UI elements.
+ */
+@Composable
+fun SkeletonLoadingEffect(modifier: Modifier = Modifier) {
+    val shimmerBrush = ShimmerBrush()
+    Box(
+        modifier = modifier
+            .background(shimmerBrush)
+    )
+}
+
+/**
  * A skeleton loading effect for the profile screen.
  */
 @Composable
