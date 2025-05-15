@@ -42,6 +42,7 @@ fun PostUserInfo(
     activityType: ActivityType,
     adaptiveSizes: AdaptiveSizes,
     windowSizeClass: WindowSizeClass,
+    workoutDuration: String,
     state: PostDetailState? = null,
     onActivityTypeClick: (() -> Unit)? = null,
     onProfileClick: (() -> Unit)? = null
@@ -119,6 +120,21 @@ fun PostUserInfo(
                             fontSize = adaptiveSizes.captionTextSize,
                             color = Color.White.copy(alpha = 0.8f)
                         )
+                        
+                        // Timer display
+                        Spacer(modifier = Modifier.width(adaptiveSpacing.medium))
+                        Box(
+                            modifier = Modifier
+                                .background(Color.White.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "⏱️ $workoutDuration",
+                                fontSize = adaptiveSizes.captionTextSize,
+                                color = Color.White,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             }

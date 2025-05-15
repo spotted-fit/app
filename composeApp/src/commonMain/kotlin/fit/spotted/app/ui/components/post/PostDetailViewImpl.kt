@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import fit.spotted.app.api.ApiClient
 import fit.spotted.app.api.models.CommentData
 import fit.spotted.app.emoji.ActivityType
-import fit.spotted.app.ui.camera.TimerDisplay
 import fit.spotted.app.ui.components.post.components.*
 import fit.spotted.app.ui.components.post.state.PostDetailState
 import fit.spotted.app.ui.components.post.util.rememberAdaptiveSizes
@@ -102,14 +101,6 @@ internal fun PostDetailViewImpl(
             )
         }
 
-        TimerDisplay(
-            timerText = workoutDuration,
-            showPostAnimation = false,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .offset(y = -adaptiveSpacing.huge * 2)
-        )
-
         if (!isFromCamera) {
             Column(
                 modifier = Modifier
@@ -153,6 +144,7 @@ internal fun PostDetailViewImpl(
                 activityType = activityType,
                 adaptiveSizes = adaptiveSizes,
                 windowSizeClass = windowSize.widthSizeClass,
+                workoutDuration = workoutDuration,
                 state = state,
                 onActivityTypeClick = onActivityTypeClick,
                 onProfileClick = onProfileClick
