@@ -24,6 +24,7 @@ import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.api.models.Challenge
 import fit.spotted.app.api.models.ChallengeParticipant
 import fit.spotted.app.ui.components.SkeletonLoadingEffect
+import fit.spotted.app.ui.theme.LocalAdaptiveSpacing
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -103,6 +104,7 @@ class ChallengeDetailsScreen(private val challengeId: Int) {
                         }
                     },
                     backgroundColor = MaterialTheme.colors.surface,
+                    modifier = Modifier.padding(top = LocalAdaptiveSpacing.current.statusBarPadding),
                     actions = {
                         TextButton(
                             onClick = { showLeaveDialog = true },

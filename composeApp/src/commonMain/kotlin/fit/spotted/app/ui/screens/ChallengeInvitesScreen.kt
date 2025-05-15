@@ -22,6 +22,7 @@ import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.api.models.ChallengeInvite
 import fit.spotted.app.ui.components.PullToRefreshLayout
 import fit.spotted.app.ui.components.SkeletonLoadingEffect
+import fit.spotted.app.ui.theme.LocalAdaptiveSpacing
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -100,7 +101,8 @@ class ChallengeInvitesScreen {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                         }
                     },
-                    backgroundColor = MaterialTheme.colors.surface
+                    backgroundColor = MaterialTheme.colors.surface,
+                    modifier = Modifier.padding(top = LocalAdaptiveSpacing.current.statusBarPadding)
                 )
             }
         ) { paddingValues ->
