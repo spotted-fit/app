@@ -242,19 +242,31 @@ class CreateChallengeScreen {
                                     style = MaterialTheme.typography.caption
                                 )
                                 
-                                OutlinedTextField(
-                                    value = formatDate(startDate),
-                                    onValueChange = { /* Read only */ },
+                                Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { showStartDatePicker = true },
-                                    trailingIcon = {
-                                        IconButton(onClick = { showStartDatePicker = true }) {
-                                            Icon(Icons.Default.DateRange, contentDescription = "Select Date")
-                                        }
-                                    },
-                                    readOnly = true
-                                )
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .clickable { showStartDatePicker = true }
+                                ) {
+                                    OutlinedTextField(
+                                        value = formatDate(startDate),
+                                        onValueChange = { /* Read only */ },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        trailingIcon = {
+                                            Icon(
+                                                Icons.Default.DateRange, 
+                                                contentDescription = "Select Date"
+                                            )
+                                        },
+                                        readOnly = true,
+                                        enabled = false, // Disable to prevent focus but keep the style
+                                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                                            disabledTextColor = LocalContentColor.current,
+                                            disabledBorderColor = MaterialTheme.colors.onSurface.copy(alpha = 0.23f),
+                                            disabledLabelColor = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                                        )
+                                    )
+                                }
                             }
                             
                             Spacer(modifier = Modifier.width(16.dp))
@@ -268,19 +280,31 @@ class CreateChallengeScreen {
                                     style = MaterialTheme.typography.caption
                                 )
                                 
-                                OutlinedTextField(
-                                    value = formatDate(endDate),
-                                    onValueChange = { /* Read only */ },
+                                Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { showEndDatePicker = true },
-                                    trailingIcon = {
-                                        IconButton(onClick = { showEndDatePicker = true }) {
-                                            Icon(Icons.Default.DateRange, contentDescription = "Select Date")
-                                        }
-                                    },
-                                    readOnly = true
-                                )
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .clickable { showEndDatePicker = true }
+                                ) {
+                                    OutlinedTextField(
+                                        value = formatDate(endDate),
+                                        onValueChange = { /* Read only */ },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        trailingIcon = {
+                                            Icon(
+                                                Icons.Default.DateRange, 
+                                                contentDescription = "Select Date"
+                                            )
+                                        },
+                                        readOnly = true,
+                                        enabled = false, // Disable to prevent focus but keep the style
+                                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                                            disabledTextColor = LocalContentColor.current,
+                                            disabledBorderColor = MaterialTheme.colors.onSurface.copy(alpha = 0.23f),
+                                            disabledLabelColor = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                                        )
+                                    )
+                                }
                             }
                         }
                         

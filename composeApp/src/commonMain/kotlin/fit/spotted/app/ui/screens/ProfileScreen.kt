@@ -705,46 +705,50 @@ open class ProfileScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Profile avatar with improved visuals
-                Box(
-                    modifier = Modifier
-                        .size(avatarSize)
-                        .shadow(4.dp, CircleShape)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colors.surface)
-                        // Add semantic description for accessibility
-                        .semantics {
-                            contentDescription = "Profile picture for ${profile.username}"
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (profile.avatar != null) {
-                        SubcomposeAsyncImage(
-                            model = profile.avatar,
-                            contentDescription = "Profile Avatar",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                            loading = {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(30.dp),
-                                    strokeWidth = 2.dp
-                                )
+                ProfileAvatarWrapper {
+                    Box(
+                        modifier = Modifier
+                            .size(avatarSize)
+                            .shadow(4.dp, CircleShape)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colors.surface)
+                            // Add semantic description for accessibility
+                            .semantics {
+                                contentDescription = "Profile picture for ${profile.username}"
                             },
-                            error = {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = "Profile Avatar",
-                                    modifier = Modifier.size(45.dp),
-                                    tint = MaterialTheme.colors.primary
-                                )
-                            }
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Profile Avatar",
-                            modifier = Modifier.size(45.dp),
-                            tint = MaterialTheme.colors.primary
-                        )
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (profile.avatar != null) {
+                            SubcomposeAsyncImage(
+                                model = profile.avatar,
+                                contentDescription = "Profile Avatar",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize(),
+                                loading = {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(30.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                },
+                                error = {
+                                    // Beautiful friendly emoji instead of icon
+                                    Text(
+                                        text = "😊",
+                                        fontSize = 36.sp,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                        modifier = Modifier.fillMaxSize().padding(8.dp)
+                                    )
+                                }
+                            )
+                        } else {
+                            // Beautiful friendly emoji instead of icon
+                            Text(
+                                text = "😊",
+                                fontSize = 36.sp,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                modifier = Modifier.fillMaxSize().padding(8.dp)
+                            )
+                        }
                     }
                 }
 
@@ -754,16 +758,18 @@ open class ProfileScreen(
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(
-                        text = profile.username,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = when (windowSize.widthSizeClass) {
-                            WindowSizeClass.COMPACT -> 22.sp
-                            WindowSizeClass.MEDIUM -> 24.sp
-                            WindowSizeClass.EXPANDED -> 26.sp
-                        },
-                        color = MaterialTheme.colors.onBackground
-                    )
+                    ProfileUsernameWrapper {
+                        Text(
+                            text = profile.username,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = when (windowSize.widthSizeClass) {
+                                WindowSizeClass.COMPACT -> 22.sp
+                                WindowSizeClass.MEDIUM -> 24.sp
+                                WindowSizeClass.EXPANDED -> 26.sp
+                            },
+                            color = MaterialTheme.colors.onBackground
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(adaptiveSpacing.small))
 
@@ -1046,5 +1052,23 @@ open class ProfileScreen(
         } else {
             "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
         }
+    }
+
+    /**
+     * Allows subclasses to customize the avatar behavior.
+     * Default implementation just displays the content without modification.
+     */
+    @Composable
+    protected open fun ProfileAvatarWrapper(content: @Composable () -> Unit) {
+        content()
+    }
+
+    /**
+     * Allows subclasses to customize the username behavior.
+     * Default implementation just displays the content without modification.
+     */
+    @Composable
+    protected open fun ProfileUsernameWrapper(content: @Composable () -> Unit) {
+        content()
     }
 }
