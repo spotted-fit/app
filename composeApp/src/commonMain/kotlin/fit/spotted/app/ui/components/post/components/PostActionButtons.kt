@@ -75,7 +75,7 @@ fun PostActionButtons(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(adaptiveSpacing.medium)
     ) {
-        // Before/After toggle
+        // Before/After toggle button
         if (showBeforeAfterToggle) {
             Box(
                 modifier = Modifier
@@ -87,10 +87,10 @@ fun PostActionButtons(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = if (state.showAfterImage) "B" else "A",
+                    text = "FLIP",
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
-                    fontSize = adaptiveSizes.titleTextSize
+                    fontSize = 10.sp
                 )
             }
         }

@@ -3,6 +3,8 @@ package fit.spotted.app.ui.components.post.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -30,12 +32,14 @@ fun CommentsOverlay(
             .background(Color.Black.copy(alpha = 0.9f))
             .padding(24.dp)
     ) {
-        Column {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
             // Header with title
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 24.dp),
+                    .padding(bottom = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -64,14 +68,40 @@ fun CommentsOverlay(
                 }
             }
             
-            // Comments list
-            comments.forEach { comment ->
-                CommentItem(comment = comment)
+            // Scrollable comments list using LazyColumn
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                if (comments.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No comments yet",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 16.sp
+                        )
+                    }
+                } else {
+                    LazyColumn {
+                        items(comments) { comment ->
+                            CommentItem(comment = comment)
+                            Divider(
+                                color = Color.White.copy(alpha = 0.1f),
+                                thickness = 0.5.dp,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+                    }
+                }
             }
             
             // Add comment input field
             if (onAddComment != null) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 CommentInput(onAddComment = onAddComment)
             }
         }
@@ -86,7 +116,7 @@ private fun CommentItem(comment: CommentData) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp)
+            .padding(vertical = 8.dp)
     ) {
         // User avatar
         Box(
