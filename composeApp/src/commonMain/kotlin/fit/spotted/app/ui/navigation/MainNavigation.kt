@@ -83,16 +83,16 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { 5 }) // Updated to 5 tabs
 
     fun handleTabChange(newTab: Int) {
-        if (currentTab == 1 && newTab != 1 && hasTakenPicture) {
+        if (currentTab == 2 && newTab != 2 && hasTakenPicture) {
             showConfirmationDialog = true
             targetTab = newTab
         } else {
             currentTab = newTab
-            if (newTab != 2) {
+            if (newTab != 1) {
                 showingFriendProfile = false
                 currentFriendProfile = null
             }
-            if (newTab != 4) { // Reset challenge screens if not on challenges tab
+            if (newTab != 3) {
                 showingChallengeDetails = false
                 currentChallengeId = null
                 showingChallengeInvites = false
@@ -107,7 +107,7 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
         currentFriendProfile = username
         showingFriendProfile = true
         if (navigateToFriendsTab) {
-            handleTabChange(2) // Navigate to the friends tab
+            handleTabChange(1)
         }
     }
     
@@ -118,7 +118,7 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
         showingChallengeInvites = false
         showingCreateChallenge = false
         showingAchievements = false
-        handleTabChange(4) // Navigate to challenges tab
+        handleTabChange(3)
     }
     
     fun navigateToChallengeInvites() {
@@ -126,7 +126,7 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
         showingChallengeDetails = false
         showingCreateChallenge = false
         showingAchievements = false
-        handleTabChange(4) // Navigate to challenges tab
+        handleTabChange(3)
     }
     
     fun navigateToCreateChallenge() {
@@ -134,7 +134,7 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
         showingChallengeInvites = false
         showingChallengeDetails = false
         showingAchievements = false
-        handleTabChange(4) // Navigate to challenges tab
+        handleTabChange(3)
     }
     
     fun navigateToAchievements() {
@@ -142,7 +142,7 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
         showingChallengeInvites = false
         showingChallengeDetails = false
         showingCreateChallenge = false
-        handleTabChange(4) // Navigate to challenges tab
+        handleTabChange(3)
     }
     
     fun navigateToChallengesList() {
@@ -212,28 +212,11 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                     unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
                 )
 
-                // Activity/Camera tab
+                // Friends tab
                 BottomNavigationItem(
                     selected = currentTab == 1,
                     onClick = {
                         handleTabChange(1)
-                    },
-                    icon = {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = "Activity",
-                            modifier = Modifier.size(26.dp)
-                        )
-                    },
-                    selectedContentColor = MaterialTheme.colors.onSurface,
-                    unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
-                )
-
-                // Friends tab
-                BottomNavigationItem(
-                    selected = currentTab == 2,
-                    onClick = {
-                        handleTabChange(2)
                     },
                     icon = {
                         Icon(
@@ -246,28 +229,28 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                     unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
                 )
 
-                // Profile tab
+                // Activity/Camera tab
                 BottomNavigationItem(
-                    selected = currentTab == 3,
+                    selected = currentTab == 2,
                     onClick = {
-                        handleTabChange(3)
+                        handleTabChange(2)
                     },
                     icon = {
                         Icon(
-                            Icons.Default.AccountCircle,
-                            contentDescription = "Profile",
+                            Icons.Default.Add,
+                            contentDescription = "Activity",
                             modifier = Modifier.size(26.dp)
                         )
                     },
                     selectedContentColor = MaterialTheme.colors.onSurface,
                     unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
                 )
-                
+
                 // Challenges tab
                 BottomNavigationItem(
-                    selected = currentTab == 4,
+                    selected = currentTab == 3,
                     onClick = {
-                        handleTabChange(4)
+                        handleTabChange(3)
                     },
                     icon = {
                         Icon(
@@ -279,10 +262,27 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                     selectedContentColor = MaterialTheme.colors.onSurface,
                     unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
                 )
+                
+                // Profile tab
+                BottomNavigationItem(
+                    selected = currentTab == 4,
+                    onClick = {
+                        handleTabChange(4)
+                    },
+                    icon = {
+                        Icon(
+                            Icons.Default.AccountCircle,
+                            contentDescription = "Profile",
+                            modifier = Modifier.size(26.dp)
+                        )
+                    },
+                    selectedContentColor = MaterialTheme.colors.onSurface,
+                    unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                )
             }
         },
         topBar = {
-            if (currentTab == 3) {
+            if (currentTab == 4) {
                 TopAppBar(
                     modifier = Modifier
                         .padding(WindowInsets.statusBars.asPaddingValues()),
@@ -314,7 +314,7 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
         HorizontalPager(
             state = pagerState,
             // Disable user scrolling only when on camera tab after taking a picture
-            userScrollEnabled = !(currentTab == 1 && hasTakenPicture),
+            userScrollEnabled = !(currentTab == 2 && hasTakenPicture),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
@@ -328,14 +328,7 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                     }
                     feedScreen.Content()
                 }
-                1 -> CameraScreen(
-                    isVisible = currentTab == 1,
-                    onAfterWorkoutModeChanged = { isAfterWorkoutMode ->
-                        hasTakenPicture = isAfterWorkoutMode
-                    }
-                ).Content()
-
-                2 -> {
+                1 -> {
                     if (showingFriendProfile && currentFriendProfile != null) {
                         // Show friend profile if a friend is selected
                         FriendProfileScreen(
@@ -355,10 +348,13 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                         friendsScreen.Content()
                     }
                 }
-
-                3 -> ProfileScreen().Content()
-                
-                4 -> {
+                2 -> CameraScreen(
+                    isVisible = currentTab == 2,
+                    onAfterWorkoutModeChanged = { isAfterWorkoutMode ->
+                        hasTakenPicture = isAfterWorkoutMode
+                    }
+                ).Content()
+                3 -> {
                     // Challenges tab with nested navigation
                     when {
                         showingChallengeDetails && currentChallengeId != null -> {
@@ -405,6 +401,7 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                         }
                     }
                 }
+                4 -> ProfileScreen().Content()
                 
                 else -> FeedScreen().Content()
             }
