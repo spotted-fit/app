@@ -11,8 +11,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
-import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.dialogs.init
 import com.mmk.kmpnotifier.notification.NotifierManager
 import com.mmk.kmpnotifier.notification.configuration.NotificationPlatformConfiguration
 
@@ -23,8 +21,6 @@ class MainActivity : ComponentActivity() {
     private val requiredPermissions = arrayOf(
         android.Manifest.permission.CAMERA,
         android.Manifest.permission.POST_NOTIFICATIONS,
-        android.Manifest.permission.READ_EXTERNAL_STORAGE,
-        android.Manifest.permission.READ_MEDIA_IMAGES, // For Android 13+ (API level 33+)
     )
 
     // Permission launcher
@@ -49,9 +45,6 @@ class MainActivity : ComponentActivity() {
         if (!permissionsGranted) {
             requestPermissions()
         }
-
-        // Initialize FileKit
-        FileKit.init(this)
 
         setContent {
             App()

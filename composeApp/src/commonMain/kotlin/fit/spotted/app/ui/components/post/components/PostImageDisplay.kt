@@ -37,7 +37,6 @@ fun PostImageDisplay(
     beforeContent: @Composable () -> Unit,
     afterContent: @Composable () -> Unit,
     adaptiveSizes: AdaptiveSizes,
-    windowSizeClass: WindowSizeClass
 ) {
     val adaptiveSpacing = LocalAdaptiveSpacing.current
     val isReducedMotion = LocalReducedMotion.current

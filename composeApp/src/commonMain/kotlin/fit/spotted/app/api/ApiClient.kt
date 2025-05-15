@@ -43,7 +43,6 @@ interface ApiClient {
     // Profile
     suspend fun getUserProfile(username: String): Profile
     suspend fun getMe(): GetMeResponse
-    suspend fun updateProfileAvatar(imageData: ByteArray): UpdateAvatarResponse
 
     // Search
     suspend fun searchUsers(query: String): UserSearchResults
@@ -357,30 +356,5 @@ internal class ApiClientImpl : ApiClient {
             setBody(PokeRequest(toUsername, title, body))
             addAuth()
         }.body()
-    }
-
-    /**
-     * Updates the profile avatar for the current user.
-     *
-     * @param imageData The avatar image as a byte array
-     * @return Updated user profile information with the new avatar URL
-     */
-    override suspend fun updateProfileAvatar(imageData: ByteArray): UpdateAvatarResponse {
-        val response = client.submitFormWithBinaryData(
-            url = "$baseUrl/profile/avatar",
-            formData = formData {
-                append("avatar", imageData, Headers.build {
-                    append(HttpHeaders.ContentDisposition, "form-data; name=avatar; filename=avatar.jpg")
-                    append(HttpHeaders.ContentType, "image/jpeg")
-                })
-            }
-        ) {
-            method = HttpMethod.Post
-            accept(ContentType.Application.Json)
-            authToken?.let {
-                header(HttpHeaders.Authorization, "Bearer $it")
-            }
-        }
-        return response.body()
     }
 }

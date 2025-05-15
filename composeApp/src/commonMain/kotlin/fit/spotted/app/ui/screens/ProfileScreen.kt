@@ -46,13 +46,11 @@ import fit.spotted.app.api.models.PostDetailedData
 import fit.spotted.app.api.models.ProfilePost
 import fit.spotted.app.api.models.ProfileResponse
 import fit.spotted.app.emoji.ActivityType
-import fit.spotted.app.ui.components.ProfilePictureManager
+import fit.spotted.app.ui.components.post.PostDetailView
 import fit.spotted.app.ui.components.ProfileSkeletonLoading
 import fit.spotted.app.ui.components.PullToRefreshLayout
-import fit.spotted.app.ui.components.post.PostDetailView
 import fit.spotted.app.ui.theme.*
 import fit.spotted.app.utils.DateTimeUtils
-import fit.spotted.app.utils.UserPreferences
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -140,19 +138,6 @@ open class ProfileScreen(
                     if (response.result == "ok" && response.response != null) {
                         profileData = response.response
                         isLoading = false
-                        
-                        // If this is the current user's profile, check for persisted avatar URL
-                        if (username == null) {
-                            val userPreferences = UserPreferences.getInstance()
-                            val savedAvatarUrl = userPreferences.getAvatarUrl()
-                            
-                            // If there's a saved URL and it differs from the profile, update profile data
-                            if (savedAvatarUrl != null && savedAvatarUrl != response.response.avatar) {
-                                profileData = profileData?.copy(
-                                    avatar = savedAvatarUrl
-                                )
-                            }
-                        }
                     } else {
                         errorMessage = response.message ?: "Failed to load profile"
                         isLoading = false
@@ -683,10 +668,6 @@ open class ProfileScreen(
 
         val isSystemDark = isSystemInDarkTheme()
         val haptic = LocalHapticFeedback.current
-        
-        // The current avatar URL for the user's profile - already includes
-        // the persisted URL if available (through our earlier profileData update)
-        var currentAvatarUrl by remember { mutableStateOf(profile.avatar) }
 
         // Add extra padding at the top if this is a friend's profile (not the current user's profile)
         // For larger screens, reduce top padding for better space utilization
@@ -697,16 +678,6 @@ open class ProfileScreen(
                 WindowSizeClass.EXPANDED -> adaptiveSpacing.friendProfileTopPadding * 0.6f
             }
         } else adaptiveSpacing.medium
-
-        // Get UserPreferences instance
-        val userPreferences = remember { UserPreferences.getInstance() }
-        
-        // Save avatar URL when it changes
-        LaunchedEffect(currentAvatarUrl) {
-            currentAvatarUrl?.let { url ->
-                userPreferences.saveAvatarUrl(url)
-            }
-        }
 
         Column(
             modifier = Modifier
@@ -734,60 +705,46 @@ open class ProfileScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Profile avatar with improved visuals
-                if (username == null) {
-                    // Show profile picture manager for user's own profile
-                    ProfilePictureManager(
-                        currentAvatarUrl = currentAvatarUrl,
-                        onAvatarUpdated = { newAvatarUrl ->
-                            currentAvatarUrl = newAvatarUrl
-                            // Save the new avatar URL to persistent storage
-                            userPreferences.saveAvatarUrl(newAvatarUrl)
+                Box(
+                    modifier = Modifier
+                        .size(avatarSize)
+                        .shadow(4.dp, CircleShape)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colors.surface)
+                        // Add semantic description for accessibility
+                        .semantics {
+                            contentDescription = "Profile picture for ${profile.username}"
                         },
-                        modifier = Modifier.size(avatarSize)
-                    )
-                } else {
-                    // Regular avatar display for other users' profiles
-                    Box(
-                        modifier = Modifier
-                            .size(avatarSize)
-                            .shadow(4.dp, CircleShape)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colors.surface)
-                            // Add semantic description for accessibility
-                            .semantics {
-                                contentDescription = "Profile picture for ${profile.username}"
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (profile.avatar != null) {
+                        SubcomposeAsyncImage(
+                            model = profile.avatar,
+                            contentDescription = "Profile Avatar",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                            loading = {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(30.dp),
+                                    strokeWidth = 2.dp
+                                )
                             },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (profile.avatar != null) {
-                            SubcomposeAsyncImage(
-                                model = profile.avatar,
-                                contentDescription = "Profile Avatar",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize(),
-                                loading = {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(30.dp),
-                                        strokeWidth = 2.dp
-                                    )
-                                },
-                                error = {
-                                    Icon(
-                                        imageVector = Icons.Default.Person,
-                                        contentDescription = "Profile Avatar",
-                                        modifier = Modifier.size(45.dp),
-                                        tint = MaterialTheme.colors.primary
-                                    )
-                                }
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Profile Avatar",
-                                modifier = Modifier.size(45.dp),
-                                tint = MaterialTheme.colors.primary
-                            )
-                        }
+                            error = {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Profile Avatar",
+                                    modifier = Modifier.size(45.dp),
+                                    tint = MaterialTheme.colors.primary
+                                )
+                            }
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Profile Avatar",
+                            modifier = Modifier.size(45.dp),
+                            tint = MaterialTheme.colors.primary
+                        )
                     }
                 }
 
