@@ -54,6 +54,7 @@ import fit.spotted.app.utils.DateTimeUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import org.kodein.emoji.compose.WithPlatformEmoji
 
 /**
  * Screen that displays a user's profile, including their avatar, stats, and posts.
@@ -732,12 +733,15 @@ open class ProfileScreen(
                                 },
                                 error = {
                                     // Beautiful friendly emoji instead of icon
-                                    Text(
-                                        text = "😊",
-                                        fontSize = 36.sp,
-                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                        modifier = Modifier.fillMaxSize().padding(8.dp)
-                                    )
+                                    WithPlatformEmoji(text = "😊") { text, inlineContent ->
+                                        Text(
+                                            text = text,
+                                            inlineContent = inlineContent,
+                                            fontSize = 36.sp,
+                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                            modifier = Modifier.fillMaxSize().padding(8.dp)
+                                        )
+                                    }
                                 }
                             )
                         } else {
