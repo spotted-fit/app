@@ -35,7 +35,8 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun MainNavigation() {
-    var isLoggedIn by remember { mutableStateOf(false) }
+    // Use a neverEqualPolicy to force recomposition when this value changes
+    var isLoggedIn by remember { mutableStateOf(false, policy = neverEqualPolicy()) }
     var isInitializing by remember { mutableStateOf(true) }
     val notifierListener = remember { BumpNotifierListener() }
     val apiClient = ApiProvider.getApiClient()
@@ -45,6 +46,9 @@ fun MainNavigation() {
     // State to track if user was logged out due to auth error
     var showAuthErrorMessage by remember { mutableStateOf(false) }
     
+    // Key that forces recomposition when auth status changes
+    var authKey by remember { mutableStateOf(0) }
+    
     // Function to handle logout (used by both explicit logout and auth errors)
     fun performLogout() {
         coroutineScope.launch {
@@ -53,6 +57,8 @@ fun MainNavigation() {
                 apiClient.logOut()
                 NotifierManager.getPushNotifier().deleteMyToken()
                 isLoggedIn = false
+                // Increment the key to force recomposition
+                authKey++
             }
         }
     }
@@ -122,49 +128,54 @@ fun MainNavigation() {
         }
     }
 
-    Scaffold(
-        scaffoldState = scaffoldState,
-        snackbarHost = {
-            SnackbarHost(it) { data ->
-                Snackbar(
-                    modifier = Modifier.padding(16.dp),
-                    backgroundColor = Color.Red.copy(alpha = 0.8f),
-                    contentColor = Color.White,
-                    snackbarData = data
-                )
-            }
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // Show loading indicator during initial auth check
-            if (isInitializing) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
+    // Use authKey to force recomposition when auth state changes
+    key(authKey) {
+        Scaffold(
+            scaffoldState = scaffoldState,
+            snackbarHost = {
+                SnackbarHost(it) { data ->
+                    Snackbar(
+                        modifier = Modifier.padding(16.dp),
+                        backgroundColor = Color.Red.copy(alpha = 0.8f),
+                        contentColor = Color.White,
+                        snackbarData = data
+                    )
                 }
             }
-            // Only show content after initialization is complete
-            else if (isLoggedIn) {
-                MainScreenWithBottomNav(
-                    onLogout = {
-                        performLogout() // Use the shared logout function
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                // Show loading indicator during initial auth check
+                if (isInitializing) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
                     }
-                )
-            } else {
-                LoginScreen(
-                    onLogin = {
-                        coroutineScope.launch {
-                            NotifierManager.getPushNotifier().getToken()
-                            isLoggedIn = true
+                }
+                // Only show content after initialization is complete
+                else if (isLoggedIn) {
+                    MainScreenWithBottomNav(
+                        onLogout = {
+                            performLogout() // Use the shared logout function
                         }
-                    }
-                ).Content()
+                    )
+                } else {
+                    LoginScreen(
+                        onLogin = {
+                            coroutineScope.launch {
+                                NotifierManager.getPushNotifier().getToken()
+                                isLoggedIn = true
+                                // Also increment authKey on login
+                                authKey++
+                            }
+                        }
+                    ).Content()
+                }
             }
         }
     }

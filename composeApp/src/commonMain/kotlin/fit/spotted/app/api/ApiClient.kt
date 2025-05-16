@@ -106,6 +106,17 @@ internal class ApiClientImpl : ApiClient {
         onAuthError = callback
     }
     
+    // Helper method to handle auth errors consistently
+    private fun handle401Error() {
+        // Always clear the token first
+        logOut()
+        
+        // Then call the callback on the main thread
+        CoroutineScope(Dispatchers.Main).launch {
+            onAuthError?.invoke()
+        }
+    }
+    
     /**
      * Validates the current auth token by making a lightweight API call.
      * Returns true if the token is valid, false otherwise.
@@ -118,10 +129,20 @@ internal class ApiClientImpl : ApiClient {
             val response = client.get("$baseUrl/me") {
                 addAuth()
             }
+            
+            // Check status manually to catch 401s that might not throw exceptions
+            if (response.status.value == 401) {
+                handle401Error()
+                return false
+            }
+            
             // If we get here, the token is valid (no 401 was thrown)
             response.status.isSuccess()
         } catch (e: Exception) {
-            // If we get a 401, the token validation handler will already clear the token
+            // Check if it's a 401 error
+            if (e is ClientRequestException && e.response.status.value == 401) {
+                handle401Error()
+            }
             // For any exception, consider the token invalid
             false
         }
@@ -158,17 +179,19 @@ internal class ApiClientImpl : ApiClient {
                 
                 // Check if it's a 401 Unauthorized error
                 if (clientException.response.status.value == 401) {
-                    // Clear the token
-                    logOut()
-                    
-                    // Execute callback on UI thread to ensure immediate UI updates
-                    CoroutineScope(Dispatchers.Main).launch {
-                        onAuthError?.invoke()
-                    }
+                    handle401Error()
                 }
                 
                 // Let the exception propagate so it can be handled by the calling code
                 throw exception
+            }
+            
+            // Also check responses directly to catch 401s that might not throw exceptions
+            validateResponse { response ->
+                if (response.status.value == 401) {
+                    handle401Error()
+                    throw ClientRequestException(response, "HTTP 401: Unauthorized")
+                }
             }
         }
         
