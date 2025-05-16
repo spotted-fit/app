@@ -106,17 +106,6 @@ internal class ApiClientImpl : ApiClient {
         onAuthError = callback
     }
     
-    // Helper function to execute auth error callback on UI thread
-    private fun executeAuthErrorCallback() {
-        // Clear token first
-        logOut()
-        
-        // Then execute callback on Main thread to ensure UI updates immediately
-        CoroutineScope(Dispatchers.Main).launch {
-            onAuthError?.invoke()
-        }
-    }
-    
     /**
      * Validates the current auth token by making a lightweight API call.
      * Returns true if the token is valid, false otherwise.
@@ -169,20 +158,17 @@ internal class ApiClientImpl : ApiClient {
                 
                 // Check if it's a 401 Unauthorized error
                 if (clientException.response.status.value == 401) {
-                    // Execute callback on UI thread for immediate UI updates
-                    executeAuthErrorCallback()
+                    // Clear the token
+                    logOut()
+                    
+                    // Execute callback on UI thread to ensure immediate UI updates
+                    CoroutineScope(Dispatchers.Main).launch {
+                        onAuthError?.invoke()
+                    }
                 }
                 
                 // Let the exception propagate so it can be handled by the calling code
                 throw exception
-            }
-            
-            // Add a response validator to catch 401 responses that may not throw exceptions
-            validateResponse { response ->
-                if (response.status.value == 401) {
-                    executeAuthErrorCallback()
-                    throw ClientRequestException(response, "HTTP 401: Unauthorized")
-                }
             }
         }
         
