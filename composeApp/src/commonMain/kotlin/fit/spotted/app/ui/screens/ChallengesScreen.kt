@@ -60,9 +60,9 @@ class ChallengesScreen {
                 
                 errorMessage = null
             } catch (e: Exception) {
-                errorMessage = when {
-                    e.message?.contains("401") == true -> "Session expired. Please log in again."
-                    else -> e.message ?: "Failed to load challenges"
+                // Skip auth errors as they're handled at app level
+                if (e.message?.contains("401") != true) {
+                    errorMessage = e.message ?: "Failed to load challenges"
                 }
             } finally {
                 isLoading = false
@@ -81,9 +81,9 @@ class ChallengesScreen {
                     val invitesResponse = apiClient.getChallengeInvites()
                     hasInvites = invitesResponse.invites.isNotEmpty()
                 } catch (e: Exception) {
-                    errorMessage = when {
-                        e.message?.contains("401") == true -> "Session expired. Please log in again."
-                        else -> e.message ?: "Failed to load challenges"
+                    // Skip auth errors as they're handled at app level
+                    if (e.message?.contains("401") != true) {
+                        errorMessage = e.message ?: "Failed to load challenges"
                     }
                 } finally {
                     refreshing = false
@@ -102,7 +102,7 @@ class ChallengesScreen {
             return
         }
         
-        // Show error state if there's an error message
+        // Show error state if there's an error message (for non-auth errors)
         errorMessage?.let {
             Box(
                 modifier = Modifier.fillMaxSize(),

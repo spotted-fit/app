@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainNavigation() {
     var isLoggedIn by remember { mutableStateOf(false) }
+    var isInitializing by remember { mutableStateOf(true) } // Add loading state for initial auth check
     val notifierListener = remember { BumpNotifierListener() }
     val apiClient = ApiProvider.getApiClient()
     val coroutineScope = rememberCoroutineScope()
@@ -42,9 +43,6 @@ fun MainNavigation() {
     LaunchedEffect(Unit) {
         NotifierManager.addListener(notifierListener)
         
-        // Initialize the auth token state
-        isLoggedIn = apiClient.isLoggedIn()
-        
         // Register callback for auth errors (like 401)
         apiClient.setAuthErrorCallback {
             // This will be called on the background thread, so we need to switch to the main thread
@@ -55,6 +53,17 @@ fun MainNavigation() {
                 showAuthErrorMessage = true
             }
         }
+        
+        // Validate token on startup instead of just checking if it exists
+        isLoggedIn = if (apiClient.isLoggedIn()) {
+            // If token exists, validate it
+            apiClient.validateToken()
+        } else {
+            false
+        }
+        
+        // Initialization complete
+        isInitializing = false
     }
     
     // Show error message if needed
@@ -86,7 +95,17 @@ fun MainNavigation() {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            if (isLoggedIn) {
+            // Show loading indicator during initial auth check
+            if (isInitializing) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            // Only show content after initialization is complete
+            else if (isLoggedIn) {
                 MainScreenWithBottomNav(
                     onLogout = {
                         coroutineScope.launch {

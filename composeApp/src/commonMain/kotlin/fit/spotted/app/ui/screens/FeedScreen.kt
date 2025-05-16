@@ -57,9 +57,9 @@ class FeedScreen : Screen {
                         errorMessage = request.message ?: "Failed to load feed"
                     }
                 } catch (e: Exception) {
-                    errorMessage = when {
-                        e.message?.contains("401") == true -> "Session expired. Please log in again."
-                        else -> e.message ?: "An error occurred"
+                    // Skip showing auth errors as they're handled at the app level
+                    if (e.message?.contains("401") != true) {
+                        errorMessage = e.message ?: "An error occurred"
                     }
                 } finally {
                     isLoading = false
@@ -83,7 +83,7 @@ class FeedScreen : Screen {
             return
         }
 
-        // Show error with retry button
+        // Show error with retry button for non-auth errors
         errorMessage?.let {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -166,14 +166,10 @@ class FeedScreen : Screen {
                                     }
                                 }
                             } catch (e: Exception) {
-                                // Handle specific errors
-                                when {
-                                    e.message?.contains("401") == true -> {
-                                        // Auth error is already handled globally
-                                    }
-                                    else -> {
-                                        // Could show a toast or some other UI feedback here
-                                    }
+                                // Auth errors are already handled globally - ignore them here
+                                // Only handle non-auth errors if needed
+                                if (e.message?.contains("401") != true) {
+                                    // Could show a toast or some other UI feedback for non-auth errors
                                 }
                             }
                         }
@@ -192,14 +188,10 @@ class FeedScreen : Screen {
                                     }
                                 }
                             } catch (e: Exception) {
-                                // Handle specific errors
-                                when {
-                                    e.message?.contains("401") == true -> {
-                                        // Auth error is already handled globally
-                                    }
-                                    else -> {
-                                        // Could show a toast or some other UI feedback here
-                                    }
+                                // Auth errors are already handled globally - ignore them here
+                                // Only handle non-auth errors if needed
+                                if (e.message?.contains("401") != true) {
+                                    // Could show a toast or some other UI feedback for non-auth errors
                                 }
                             }
                         }

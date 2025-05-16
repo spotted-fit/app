@@ -26,6 +26,9 @@ interface ApiClient {
     
     // Auth error handling
     fun setAuthErrorCallback(callback: () -> Unit)
+    
+    // Token validation
+    suspend fun validateToken(): Boolean
 
     // Posts
     suspend fun createPost(
@@ -97,6 +100,27 @@ internal class ApiClientImpl : ApiClient {
     
     override fun setAuthErrorCallback(callback: () -> Unit) {
         onAuthError = callback
+    }
+    
+    /**
+     * Validates the current auth token by making a lightweight API call.
+     * Returns true if the token is valid, false otherwise.
+     */
+    override suspend fun validateToken(): Boolean {
+        if (!isLoggedIn()) return false
+        
+        return try {
+            // Use the "me" endpoint which should be lightweight and available in most APIs
+            val response = client.get("$baseUrl/me") {
+                addAuth()
+            }
+            // If we get here, the token is valid (no 401 was thrown)
+            response.status.isSuccess()
+        } catch (e: Exception) {
+            // If we get a 401, the token validation handler will already clear the token
+            // For any exception, consider the token invalid
+            false
+        }
     }
 
     /**
