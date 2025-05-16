@@ -7,6 +7,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fit.spotted.app.api.models.CommentData
+import org.kodein.emoji.compose.WithPlatformEmoji
 
 /**
  * Component that displays the comments overlay.
@@ -185,24 +189,23 @@ private fun CommentInput(onAddComment: (String) -> Unit) {
         Spacer(modifier = Modifier.width(8.dp))
         
         // Submit button
-        Box(
+        IconButton(
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colors.primary)
-                .clickable {
-                    if (commentText.isNotBlank()) {
-                        onAddComment(commentText)
-                        commentText = ""
-                    }
-                },
-            contentAlignment = Alignment.Center
+                .background(MaterialTheme.colors.primary),
+            onClick = {
+                if (commentText.isNotBlank()) {
+                    onAddComment(commentText)
+                    commentText = ""
+                }
+            }
         ) {
-            Text(
-                text = "→",
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
+            Icon(
+                imageVector = Icons.AutoMirrored.Default.Send,
+                contentDescription = "Send",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
             )
         }
     }

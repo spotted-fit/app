@@ -28,6 +28,7 @@ import fit.spotted.app.ui.theme.LocalAdaptiveSpacing
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import org.kodein.emoji.compose.WithPlatformEmoji
 import kotlin.time.Duration.Companion.days
 
 class ChallengesScreen {
@@ -123,7 +124,13 @@ class ChallengesScreen {
                     onClick = { onNavigateToAchievements() },
                     backgroundColor = MaterialTheme.colors.primary
                 ) {
-                    Text("🏆", fontSize = 20.sp)
+                    WithPlatformEmoji(text = "🏆") { text, inlineContent ->
+                        Text(
+                            text=text,
+                            inlineContent = inlineContent,
+                            fontSize = 20.sp
+                        )
+                    }
                 }
             }
         ) { paddingValues ->

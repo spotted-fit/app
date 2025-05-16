@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.kodein.emoji.compose.WithPlatformEmoji
 
 class AchievementsScreen {
     var onNavigateBack: () -> Unit = {}
@@ -196,10 +197,13 @@ class AchievementsScreen {
                         contentAlignment = Alignment.Center
                     ) {
                         // Here we're just showing a medal emoji, but you could load an image from iconUrl
-                        Text(
-                            text = "🏆",
-                            fontSize = 36.sp
-                        )
+                        WithPlatformEmoji(text = "🏆") { text, inlineContent ->
+                            Text(
+                                text = text,
+                                inlineContent = inlineContent,
+                                fontSize = 36.sp
+                            )
+                        }
                     }
                     
                     Spacer(modifier = Modifier.height(16.dp))
