@@ -23,6 +23,9 @@ interface ApiClient {
     suspend fun login(password: String, username: String, firebaseToken: String?): AuthResponse
     fun isLoggedIn(): Boolean
     fun logOut()
+    
+    // Auth error handling
+    fun setAuthErrorCallback(callback: () -> Unit)
 
     // Posts
     suspend fun createPost(
@@ -88,6 +91,13 @@ internal class ApiClientImpl : ApiClient {
     private val settings = Settings()
     override fun isLoggedIn() = "authToken" in settings
     override fun logOut() = settings.remove("authToken")
+    
+    // Auth error callback
+    private var onAuthError: (() -> Unit)? = null
+    
+    override fun setAuthErrorCallback(callback: () -> Unit) {
+        onAuthError = callback
+    }
 
     /**
      * Adds authorization header to the request if an auth token is available.
@@ -112,6 +122,24 @@ internal class ApiClientImpl : ApiClient {
             logger = Logger.DEFAULT
             level = LogLevel.ALL
         }
+        
+        // Handle HTTP errors globally
+        install(HttpCallValidator) {
+            handleResponseExceptionWithRequest { exception, _ ->
+                val clientException = exception as? ClientRequestException ?: return@handleResponseExceptionWithRequest
+                
+                // Check if it's a 401 Unauthorized error
+                if (clientException.response.status.value == 401) {
+                    // Clear the token and trigger the auth error callback
+                    logOut()
+                    onAuthError?.invoke()
+                }
+                
+                // Let the exception propagate so it can be handled by the calling code
+                throw exception
+            }
+        }
+        
         defaultRequest {
             contentType(ContentType.Application.Json)
             authToken?.let {

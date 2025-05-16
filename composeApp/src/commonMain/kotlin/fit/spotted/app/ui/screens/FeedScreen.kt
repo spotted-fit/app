@@ -2,10 +2,14 @@ package fit.spotted.app.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -13,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.api.models.PostDetailedData
@@ -33,25 +38,39 @@ class FeedScreen : Screen {
     @Composable
     override fun Content() {
         var isLoading by remember { mutableStateOf(true) }
+        var refreshing by remember { mutableStateOf(false) }
         var errorMessage by remember { mutableStateOf<String?>(null) }
         val apiClient by remember { mutableStateOf(ApiProvider.getApiClient()) }
         var posts by remember { mutableStateOf(emptyList<PostDetailedData>()) }
 
         val coroutineScope = rememberCoroutineScope()
 
-        LaunchedEffect(Unit) {
+        // Function to load feed data
+        fun loadFeed() {
             coroutineScope.launch {
                 try {
                     val request = apiClient.getFeed()
                     if (request.result == "ok" && request.response != null) {
                         posts = request.response
+                        errorMessage = null
+                    } else {
+                        errorMessage = request.message ?: "Failed to load feed"
                     }
-                    isLoading = false
                 } catch (e: Exception) {
-                    errorMessage = e.message ?: "An error occurred"
+                    errorMessage = when {
+                        e.message?.contains("401") == true -> "Session expired. Please log in again."
+                        else -> e.message ?: "An error occurred"
+                    }
+                } finally {
                     isLoading = false
+                    refreshing = false
                 }
             }
+        }
+
+        // Initial load
+        LaunchedEffect(Unit) {
+            loadFeed()
         }
 
         if (isLoading) {
@@ -64,16 +83,30 @@ class FeedScreen : Screen {
             return
         }
 
+        // Show error with retry button
         errorMessage?.let {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = it,
-                    color = MaterialTheme.colors.error,
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(16.dp)
-                )
+                ) {
+                    Text(
+                        text = it,
+                        color = Color.Red,
+                        style = MaterialTheme.typography.body1,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = { 
+                        isLoading = true
+                        loadFeed() 
+                    }) {
+                        Text("Try Again")
+                    }
+                }
             }
             return
         }
@@ -132,8 +165,16 @@ class FeedScreen : Screen {
                                         }
                                     }
                                 }
-                            } catch (_: Exception) {
-                                // Handle error
+                            } catch (e: Exception) {
+                                // Handle specific errors
+                                when {
+                                    e.message?.contains("401") == true -> {
+                                        // Auth error is already handled globally
+                                    }
+                                    else -> {
+                                        // Could show a toast or some other UI feedback here
+                                    }
+                                }
                             }
                         }
                     },
@@ -150,8 +191,16 @@ class FeedScreen : Screen {
                                         if (it.id == postId) updatedPost.response else it
                                     }
                                 }
-                            } catch (_: Exception) {
-                                // Handle error
+                            } catch (e: Exception) {
+                                // Handle specific errors
+                                when {
+                                    e.message?.contains("401") == true -> {
+                                        // Auth error is already handled globally
+                                    }
+                                    else -> {
+                                        // Could show a toast or some other UI feedback here
+                                    }
+                                }
                             }
                         }
                     },

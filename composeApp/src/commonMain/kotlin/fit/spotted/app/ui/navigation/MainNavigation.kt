@@ -18,7 +18,9 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.mmk.kmpnotifier.notification.NotifierManager
 import fit.spotted.app.api.ApiProvider
@@ -32,31 +34,78 @@ fun MainNavigation() {
     val notifierListener = remember { BumpNotifierListener() }
     val apiClient = ApiProvider.getApiClient()
     val coroutineScope = rememberCoroutineScope()
+    val scaffoldState = rememberScaffoldState()
+    
+    // State to track if user was logged out due to auth error
+    var showAuthErrorMessage by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         NotifierManager.addListener(notifierListener)
+        
+        // Initialize the auth token state
+        isLoggedIn = apiClient.isLoggedIn()
+        
+        // Register callback for auth errors (like 401)
+        apiClient.setAuthErrorCallback {
+            // This will be called on the background thread, so we need to switch to the main thread
+            coroutineScope.launch {
+                // Log out the user and reset the UI state
+                isLoggedIn = false
+                NotifierManager.getPushNotifier().deleteMyToken()
+                showAuthErrorMessage = true
+            }
+        }
+    }
+    
+    // Show error message if needed
+    LaunchedEffect(showAuthErrorMessage) {
+        if (showAuthErrorMessage) {
+            scaffoldState.snackbarHostState.showSnackbar(
+                message = "Your session has expired. Please log in again.",
+                duration = SnackbarDuration.Short
+            )
+            showAuthErrorMessage = false
+        }
     }
 
-    if (isLoggedIn) {
-        MainScreenWithBottomNav(
-            onLogout = {
-                coroutineScope.launch {
-                    isLoggedIn = false
-                    apiClient.logOut()
-                    NotifierManager.getPushNotifier().deleteMyToken()
-                }
+    Scaffold(
+        scaffoldState = scaffoldState,
+        snackbarHost = {
+            SnackbarHost(it) { data ->
+                Snackbar(
+                    modifier = Modifier.padding(16.dp),
+                    backgroundColor = Color.Red.copy(alpha = 0.8f),
+                    contentColor = Color.White,
+                    snackbarData = data
+                )
             }
-        )
-    } else {
-        Box(modifier = Modifier.fillMaxSize()) {
-            LoginScreen(
-                onLogin = {
-                    coroutineScope.launch {
-                        NotifierManager.getPushNotifier().getToken()
-                        isLoggedIn = true
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            if (isLoggedIn) {
+                MainScreenWithBottomNav(
+                    onLogout = {
+                        coroutineScope.launch {
+                            isLoggedIn = false
+                            apiClient.logOut()
+                            NotifierManager.getPushNotifier().deleteMyToken()
+                        }
                     }
-                }
-            ).Content()
+                )
+            } else {
+                LoginScreen(
+                    onLogin = {
+                        coroutineScope.launch {
+                            NotifierManager.getPushNotifier().getToken()
+                            isLoggedIn = true
+                        }
+                    }
+                ).Content()
+            }
         }
     }
 }
