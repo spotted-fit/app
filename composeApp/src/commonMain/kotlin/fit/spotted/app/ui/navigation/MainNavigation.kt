@@ -18,45 +18,165 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.mmk.kmpnotifier.notification.NotifierManager
 import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.notifications.BumpNotifierListener
 import fit.spotted.app.ui.screens.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun MainNavigation() {
-    var isLoggedIn by remember { mutableStateOf(false) }
+    // Use a neverEqualPolicy to force recomposition when this value changes
+    var isLoggedIn by remember { mutableStateOf(false, policy = neverEqualPolicy()) }
+    var isInitializing by remember { mutableStateOf(true) }
     val notifierListener = remember { BumpNotifierListener() }
     val apiClient = ApiProvider.getApiClient()
     val coroutineScope = rememberCoroutineScope()
+    val scaffoldState = rememberScaffoldState()
+    
+    // State to track if user was logged out due to auth error
+    var showAuthErrorMessage by remember { mutableStateOf(false) }
+    
+    // Key that forces recomposition when auth status changes
+    var authKey by remember { mutableStateOf(0) }
+    
+    // Function to handle logout (used by both explicit logout and auth errors)
+    fun performLogout() {
+        coroutineScope.launch {
+            // Run on Main dispatcher to ensure immediate UI updates
+            withContext(Dispatchers.Main) {
+                apiClient.logOut()
+                NotifierManager.getPushNotifier().deleteMyToken()
+                isLoggedIn = false
+                // Increment the key to force recomposition
+                authKey++
+            }
+        }
+    }
+    
+    // Function to validate the token
+    fun validateToken() {
+        coroutineScope.launch {
+            // Only validate if currently logged in
+            if (isLoggedIn) {
+                val isValid = apiClient.validateToken()
+                if (!isValid) {
+                    // If token is invalid, log out
+                    performLogout()
+                    showAuthErrorMessage = true
+                }
+            }
+        }
+    }
+
+    // Observe lifecycle to validate token when app comes to foreground
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                // App came to foreground, validate token
+                validateToken()
+            }
+        }
+        
+        lifecycleOwner.lifecycle.addObserver(observer)
+        
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     LaunchedEffect(Unit) {
         NotifierManager.addListener(notifierListener)
+        
+        // Register callback for auth errors (like 401)
+        apiClient.setAuthErrorCallback {
+            // This callback runs on the Main dispatcher from ApiClient
+            performLogout()
+            showAuthErrorMessage = true
+        }
+        
+        // Validate token on startup instead of just checking if it exists
+        isLoggedIn = if (apiClient.isLoggedIn()) {
+            // If token exists, validate it
+            apiClient.validateToken()
+        } else {
+            false
+        }
+        
+        // Initialization complete
+        isInitializing = false
+    }
+    
+    // Show error message if needed
+    LaunchedEffect(showAuthErrorMessage) {
+        if (showAuthErrorMessage) {
+            scaffoldState.snackbarHostState.showSnackbar(
+                message = "Your session has expired. Please log in again.",
+                duration = SnackbarDuration.Short
+            )
+            showAuthErrorMessage = false
+        }
     }
 
-    if (isLoggedIn) {
-        MainScreenWithBottomNav(
-            onLogout = {
-                coroutineScope.launch {
-                    isLoggedIn = false
-                    apiClient.logOut()
-                    NotifierManager.getPushNotifier().deleteMyToken()
+    // Use authKey to force recomposition when auth state changes
+    key(authKey) {
+        Scaffold(
+            scaffoldState = scaffoldState,
+            snackbarHost = {
+                SnackbarHost(it) { data ->
+                    Snackbar(
+                        modifier = Modifier.padding(16.dp),
+                        backgroundColor = Color.Red.copy(alpha = 0.8f),
+                        contentColor = Color.White,
+                        snackbarData = data
+                    )
                 }
             }
-        )
-    } else {
-        Box(modifier = Modifier.fillMaxSize()) {
-            LoginScreen(
-                onLogin = {
-                    coroutineScope.launch {
-                        NotifierManager.getPushNotifier().getToken()
-                        isLoggedIn = true
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                // Show loading indicator during initial auth check
+                if (isInitializing) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
                     }
                 }
-            ).Content()
+                // Only show content after initialization is complete
+                else if (isLoggedIn) {
+                    MainScreenWithBottomNav(
+                        onLogout = {
+                            performLogout() // Use the shared logout function
+                        }
+                    )
+                } else {
+                    LoginScreen(
+                        onLogin = {
+                            coroutineScope.launch {
+                                NotifierManager.getPushNotifier().getToken()
+                                isLoggedIn = true
+                                // Also increment authKey on login
+                                authKey++
+                            }
+                        }
+                    ).Content()
+                }
+            }
         }
     }
 }

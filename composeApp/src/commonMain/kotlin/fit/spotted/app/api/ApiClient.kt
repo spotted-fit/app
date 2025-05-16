@@ -10,8 +10,12 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
 /**
@@ -23,6 +27,12 @@ interface ApiClient {
     suspend fun login(password: String, username: String, firebaseToken: String?): AuthResponse
     fun isLoggedIn(): Boolean
     fun logOut()
+    
+    // Auth error handling
+    fun setAuthErrorCallback(callback: () -> Unit)
+    
+    // Token validation
+    suspend fun validateToken(): Boolean
 
     // Posts
     suspend fun createPost(
@@ -88,6 +98,55 @@ internal class ApiClientImpl : ApiClient {
     private val settings = Settings()
     override fun isLoggedIn() = "authToken" in settings
     override fun logOut() = settings.remove("authToken")
+    
+    // Auth error callback
+    private var onAuthError: (() -> Unit)? = null
+    
+    override fun setAuthErrorCallback(callback: () -> Unit) {
+        onAuthError = callback
+    }
+    
+    // Helper method to handle auth errors consistently
+    private fun handle401Error() {
+        // Always clear the token first
+        logOut()
+        
+        // Then call the callback on the main thread
+        CoroutineScope(Dispatchers.Main).launch {
+            onAuthError?.invoke()
+        }
+    }
+    
+    /**
+     * Validates the current auth token by making a lightweight API call.
+     * Returns true if the token is valid, false otherwise.
+     */
+    override suspend fun validateToken(): Boolean {
+        if (!isLoggedIn()) return false
+        
+        return try {
+            // Use the "me" endpoint which should be lightweight and available in most APIs
+            val response = client.get("$baseUrl/me") {
+                addAuth()
+            }
+            
+            // Check status manually to catch 401s that might not throw exceptions
+            if (response.status.value == 401) {
+                handle401Error()
+                return false
+            }
+            
+            // If we get here, the token is valid (no 401 was thrown)
+            response.status.isSuccess()
+        } catch (e: Exception) {
+            // Check if it's a 401 error
+            if (e is ClientRequestException && e.response.status.value == 401) {
+                handle401Error()
+            }
+            // For any exception, consider the token invalid
+            false
+        }
+    }
 
     /**
      * Adds authorization header to the request if an auth token is available.
@@ -112,6 +171,30 @@ internal class ApiClientImpl : ApiClient {
             logger = Logger.DEFAULT
             level = LogLevel.ALL
         }
+        
+        // Handle HTTP errors globally
+        install(HttpCallValidator) {
+            handleResponseExceptionWithRequest { exception, _ ->
+                val clientException = exception as? ClientRequestException ?: return@handleResponseExceptionWithRequest
+                
+                // Check if it's a 401 Unauthorized error
+                if (clientException.response.status.value == 401) {
+                    handle401Error()
+                }
+                
+                // Let the exception propagate so it can be handled by the calling code
+                throw exception
+            }
+            
+            // Also check responses directly to catch 401s that might not throw exceptions
+            validateResponse { response ->
+                if (response.status.value == 401) {
+                    handle401Error()
+                    throw ClientRequestException(response, "HTTP 401: Unauthorized")
+                }
+            }
+        }
+        
         defaultRequest {
             contentType(ContentType.Application.Json)
             authToken?.let {

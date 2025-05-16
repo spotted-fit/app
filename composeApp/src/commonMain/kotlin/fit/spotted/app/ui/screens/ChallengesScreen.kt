@@ -47,15 +47,23 @@ class ChallengesScreen {
         var isLoading by remember { mutableStateOf(true) }
         var hasInvites by remember { mutableStateOf(false) }
         var refreshing by remember { mutableStateOf(false) }
+        var errorMessage by remember { mutableStateOf<String?>(null) }
         
         // Get challenges on first load
         LaunchedEffect(Unit) {
             try {
-                challenges = apiClient.getChallenges().challenges
-                val invites = apiClient.getChallengeInvites().invites
-                hasInvites = invites.isNotEmpty()
+                val challengesResponse = apiClient.getChallenges()
+                challenges = challengesResponse.challenges
+                
+                val invitesResponse = apiClient.getChallengeInvites()
+                hasInvites = invitesResponse.invites.isNotEmpty()
+                
+                errorMessage = null
             } catch (e: Exception) {
-                // Handle error
+                // Skip auth errors as they're handled at app level
+                if (e.message?.contains("401") != true) {
+                    errorMessage = e.message ?: "Failed to load challenges"
+                }
             } finally {
                 isLoading = false
             }
@@ -65,17 +73,62 @@ class ChallengesScreen {
         fun refreshChallenges() {
             coroutineScope.launch {
                 refreshing = true
+                errorMessage = null
                 try {
-                    challenges = apiClient.getChallenges().challenges
-                    val invites = apiClient.getChallengeInvites().invites
-                    hasInvites = invites.isNotEmpty()
+                    val challengesResponse = apiClient.getChallenges()
+                    challenges = challengesResponse.challenges
+                    
+                    val invitesResponse = apiClient.getChallengeInvites()
+                    hasInvites = invitesResponse.invites.isNotEmpty()
                 } catch (e: Exception) {
-                    // Handle error
+                    // Skip auth errors as they're handled at app level
+                    if (e.message?.contains("401") != true) {
+                        errorMessage = e.message ?: "Failed to load challenges"
+                    }
                 } finally {
                     refreshing = false
                 }
             }
         }
+        
+        // Show loading state
+        if (isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+            return
+        }
+        
+        // Show error state if there's an error message (for non-auth errors)
+        errorMessage?.let {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = it,
+                        color = Color.Red,
+                        style = MaterialTheme.typography.body1,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = { refreshChallenges() }) {
+                        Text("Try Again")
+                    }
+                }
+            }
+            return
+        }
+
+        // Continue with the rest of the UI...
         
         Scaffold(
             topBar = {
@@ -141,17 +194,13 @@ class ChallengesScreen {
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                if (isLoading) {
-                    LoadingSkeleton()
+                if (challenges.isNullOrEmpty()) {
+                    EmptyChallengeList(onNavigateToCreateChallenge)
                 } else {
-                    if (challenges.isNullOrEmpty()) {
-                        EmptyChallengeList(onNavigateToCreateChallenge)
-                    } else {
-                        ChallengeList(
-                            challenges = challenges!!,
-                            onChallengeClick = { challenge -> onNavigateToChallengeDetails(challenge.id) }
-                        )
-                    }
+                    ChallengeList(
+                        challenges = challenges!!,
+                        onChallengeClick = { challenge -> onNavigateToChallengeDetails(challenge.id) }
+                    )
                 }
             }
         }
