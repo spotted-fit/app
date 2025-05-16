@@ -21,7 +21,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.mmk.kmpnotifier.notification.NotifierManager
 import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.notifications.BumpNotifierListener
@@ -39,6 +42,47 @@ fun MainNavigation() {
     
     // State to track if user was logged out due to auth error
     var showAuthErrorMessage by remember { mutableStateOf(false) }
+    
+    // Function to handle logout (used by both explicit logout and auth errors)
+    fun performLogout() {
+        coroutineScope.launch {
+            isLoggedIn = false
+            apiClient.logOut()
+            NotifierManager.getPushNotifier().deleteMyToken()
+        }
+    }
+    
+    // Function to validate the token
+    fun validateToken() {
+        coroutineScope.launch {
+            // Only validate if currently logged in
+            if (isLoggedIn) {
+                val isValid = apiClient.validateToken()
+                if (!isValid) {
+                    // If token is invalid, log out
+                    performLogout()
+                    showAuthErrorMessage = true
+                }
+            }
+        }
+    }
+
+    // Observe lifecycle to validate token when app comes to foreground
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                // App came to foreground, validate token
+                validateToken()
+            }
+        }
+        
+        lifecycleOwner.lifecycle.addObserver(observer)
+        
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     LaunchedEffect(Unit) {
         NotifierManager.addListener(notifierListener)
@@ -47,9 +91,9 @@ fun MainNavigation() {
         apiClient.setAuthErrorCallback {
             // This will be called on the background thread, so we need to switch to the main thread
             coroutineScope.launch {
-                // Log out the user and reset the UI state
-                isLoggedIn = false
-                NotifierManager.getPushNotifier().deleteMyToken()
+                // Use the same logout logic as the logout button
+                performLogout()
+                // Show error message
                 showAuthErrorMessage = true
             }
         }
@@ -108,11 +152,7 @@ fun MainNavigation() {
             else if (isLoggedIn) {
                 MainScreenWithBottomNav(
                     onLogout = {
-                        coroutineScope.launch {
-                            isLoggedIn = false
-                            apiClient.logOut()
-                            NotifierManager.getPushNotifier().deleteMyToken()
-                        }
+                        performLogout() // Use the shared logout function
                     }
                 )
             } else {
