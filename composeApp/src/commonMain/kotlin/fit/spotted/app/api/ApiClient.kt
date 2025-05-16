@@ -10,8 +10,12 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
 /**
@@ -102,6 +106,17 @@ internal class ApiClientImpl : ApiClient {
         onAuthError = callback
     }
     
+    // Helper function to execute auth error callback on UI thread
+    private fun executeAuthErrorCallback() {
+        // Clear token first
+        logOut()
+        
+        // Then execute callback on Main thread to ensure UI updates immediately
+        CoroutineScope(Dispatchers.Main).launch {
+            onAuthError?.invoke()
+        }
+    }
+    
     /**
      * Validates the current auth token by making a lightweight API call.
      * Returns true if the token is valid, false otherwise.
@@ -154,13 +169,20 @@ internal class ApiClientImpl : ApiClient {
                 
                 // Check if it's a 401 Unauthorized error
                 if (clientException.response.status.value == 401) {
-                    // Clear the token and trigger the auth error callback
-                    logOut()
-                    onAuthError?.invoke()
+                    // Execute callback on UI thread for immediate UI updates
+                    executeAuthErrorCallback()
                 }
                 
                 // Let the exception propagate so it can be handled by the calling code
                 throw exception
+            }
+            
+            // Add a response validator to catch 401 responses that may not throw exceptions
+            validateResponse { response ->
+                if (response.status.value == 401) {
+                    executeAuthErrorCallback()
+                    throw ClientRequestException(response, "HTTP 401: Unauthorized")
+                }
             }
         }
         

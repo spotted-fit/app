@@ -29,12 +29,15 @@ import com.mmk.kmpnotifier.notification.NotifierManager
 import fit.spotted.app.api.ApiProvider
 import fit.spotted.app.notifications.BumpNotifierListener
 import fit.spotted.app.ui.screens.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun MainNavigation() {
-    var isLoggedIn by remember { mutableStateOf(false) }
-    var isInitializing by remember { mutableStateOf(true) } // Add loading state for initial auth check
+    // Use mutableStateOf with structuralEquals to ensure recomposition
+    var isLoggedIn by remember { mutableStateOf(false, policy = neverEqualPolicy()) }
+    var isInitializing by remember { mutableStateOf(true) }
     val notifierListener = remember { BumpNotifierListener() }
     val apiClient = ApiProvider.getApiClient()
     val coroutineScope = rememberCoroutineScope()
@@ -43,12 +46,21 @@ fun MainNavigation() {
     // State to track if user was logged out due to auth error
     var showAuthErrorMessage by remember { mutableStateOf(false) }
     
+    // Key to force recomposition of the entire tree when auth changes
+    var authKey by remember { mutableStateOf(0) }
+    
     // Function to handle logout (used by both explicit logout and auth errors)
     fun performLogout() {
         coroutineScope.launch {
-            isLoggedIn = false
-            apiClient.logOut()
-            NotifierManager.getPushNotifier().deleteMyToken()
+            // Run on Main dispatcher to ensure immediate UI updates
+            withContext(Dispatchers.Main) {
+                apiClient.logOut()
+                NotifierManager.getPushNotifier().deleteMyToken()
+                // Set isLoggedIn to false to trigger UI update
+                isLoggedIn = false
+                // Increment key to force recomposition of the UI
+                authKey++
+            }
         }
     }
     
@@ -89,13 +101,9 @@ fun MainNavigation() {
         
         // Register callback for auth errors (like 401)
         apiClient.setAuthErrorCallback {
-            // This will be called on the background thread, so we need to switch to the main thread
-            coroutineScope.launch {
-                // Use the same logout logic as the logout button
-                performLogout()
-                // Show error message
-                showAuthErrorMessage = true
-            }
+            // This callback should now run on the Main dispatcher from ApiClient
+            performLogout()
+            showAuthErrorMessage = true
         }
         
         // Validate token on startup instead of just checking if it exists
@@ -121,49 +129,54 @@ fun MainNavigation() {
         }
     }
 
-    Scaffold(
-        scaffoldState = scaffoldState,
-        snackbarHost = {
-            SnackbarHost(it) { data ->
-                Snackbar(
-                    modifier = Modifier.padding(16.dp),
-                    backgroundColor = Color.Red.copy(alpha = 0.8f),
-                    contentColor = Color.White,
-                    snackbarData = data
-                )
-            }
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // Show loading indicator during initial auth check
-            if (isInitializing) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
+    // Use the authKey to force recomposition when auth state changes
+    key(authKey) {
+        Scaffold(
+            scaffoldState = scaffoldState,
+            snackbarHost = {
+                SnackbarHost(it) { data ->
+                    Snackbar(
+                        modifier = Modifier.padding(16.dp),
+                        backgroundColor = Color.Red.copy(alpha = 0.8f),
+                        contentColor = Color.White,
+                        snackbarData = data
+                    )
                 }
             }
-            // Only show content after initialization is complete
-            else if (isLoggedIn) {
-                MainScreenWithBottomNav(
-                    onLogout = {
-                        performLogout() // Use the shared logout function
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                // Show loading indicator during initial auth check
+                if (isInitializing) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
                     }
-                )
-            } else {
-                LoginScreen(
-                    onLogin = {
-                        coroutineScope.launch {
-                            NotifierManager.getPushNotifier().getToken()
-                            isLoggedIn = true
+                }
+                // Only show content after initialization is complete
+                else if (isLoggedIn) {
+                    MainScreenWithBottomNav(
+                        onLogout = {
+                            performLogout() // Use the shared logout function
                         }
-                    }
-                ).Content()
+                    )
+                } else {
+                    LoginScreen(
+                        onLogin = {
+                            coroutineScope.launch {
+                                NotifierManager.getPushNotifier().getToken()
+                                isLoggedIn = true
+                                // Increment key to force recomposition
+                                authKey++
+                            }
+                        }
+                    ).Content()
+                }
             }
         }
     }
