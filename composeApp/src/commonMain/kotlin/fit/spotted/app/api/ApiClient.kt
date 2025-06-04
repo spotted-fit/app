@@ -3,6 +3,7 @@ package fit.spotted.app.api
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.contains
 import fit.spotted.app.api.models.*
+import fit.spotted.app.api.ApiCache
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -270,6 +271,7 @@ internal class ApiClientImpl : ApiClient {
                 header(HttpHeaders.Authorization, "Bearer $it")
             }
         }
+        ApiCache.clear()
         return response.body()
     }
 
@@ -280,9 +282,14 @@ internal class ApiClientImpl : ApiClient {
      * @return The post details
      */
     override suspend fun getPost(id: Int): GetPostResponse {
-        return client.get("$baseUrl/posts/$id") {
+        ApiCache.getPost(id)?.let { cached ->
+            return ApiResponse(result = "ok", response = cached)
+        }
+        val response = client.get("$baseUrl/posts/$id") {
             addAuth()
-        }.body()
+        }.body<GetPostResponse>()
+        response.response?.let { ApiCache.savePost(it) }
+        return response
     }
 
     /**
@@ -292,9 +299,11 @@ internal class ApiClientImpl : ApiClient {
      * @return OkResponse if successful
      */
     override suspend fun likePost(id: Int): OkResponse {
-        return client.post("$baseUrl/posts/$id/like") {
+        val result = client.post("$baseUrl/posts/$id/like") {
             addAuth()
-        }.body()
+        }.body<OkResponse>()
+        ApiCache.removePost(id)
+        return result
     }
 
     /**
@@ -304,9 +313,11 @@ internal class ApiClientImpl : ApiClient {
      * @return OkResponse if successful
      */
     override suspend fun unlikePost(id: Int): OkResponse {
-        return client.delete("$baseUrl/posts/$id/like") {
+        val result = client.delete("$baseUrl/posts/$id/like") {
             addAuth()
-        }.body()
+        }.body<OkResponse>()
+        ApiCache.removePost(id)
+        return result
     }
 
     /**
@@ -316,9 +327,11 @@ internal class ApiClientImpl : ApiClient {
      * @return OkResponse if successful
      */
     override suspend fun deletePost(id: Int): OkResponse {
-        return client.delete("$baseUrl/posts/$id") {
+        val result = client.delete("$baseUrl/posts/$id") {
             addAuth()
-        }.body()
+        }.body<OkResponse>()
+        ApiCache.removePost(id)
+        return result
     }
 
     /**
@@ -329,10 +342,12 @@ internal class ApiClientImpl : ApiClient {
      * @return OkResponse if successful
      */
     override suspend fun addComment(postId: Int, text: String): OkResponse {
-        return client.post("$baseUrl/posts/$postId/comment") {
+        val result = client.post("$baseUrl/posts/$postId/comment") {
             setBody(CommentRequest(text))
             addAuth()
-        }.body()
+        }.body<OkResponse>()
+        ApiCache.removePost(postId)
+        return result
     }
 
     /**
@@ -433,9 +448,14 @@ internal class ApiClientImpl : ApiClient {
     }
 
     override suspend fun getFeed(): Feed {
-        return client.get("$baseUrl/feed") {
+        ApiCache.getFeed()?.let { cached ->
+            return ApiResponse(result = "ok", response = cached)
+        }
+        val response = client.get("$baseUrl/feed") {
             addAuth()
-        }.body()
+        }.body<Feed>()
+        response.response?.let { ApiCache.saveFeed(it) }
+        return response
     }
 
     /**
