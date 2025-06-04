@@ -11,11 +11,11 @@ import androidx.compose.material.lightColors
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 
-// Light theme colors - Modern black and white with transparency
+// Light theme colors with a vibrant accent
 private val LightColorPalette = lightColors(
-    primary = Color.Black,
-    primaryVariant = Color.Black.copy(alpha = 0.8f),
-    secondary = Color.White,
+    primary = Color(0xFF6200EE),
+    primaryVariant = Color(0xFF3700B3),
+    secondary = Color(0xFF03DAC5),
     background = Color.White,
     surface = Color.White,
     onPrimary = Color.White,
@@ -24,14 +24,14 @@ private val LightColorPalette = lightColors(
     onSurface = Color.Black
 )
 
-// Dark theme colors - Modern black and white with transparency
+// Dark theme colors with the same accent
 private val DarkColorPalette = darkColors(
-    primary = Color.Black,
-    primaryVariant = Color.Black.copy(alpha = 0.7f),
-    secondary = Color.White,
+    primary = Color(0xFFBB86FC),
+    primaryVariant = Color(0xFF3700B3),
+    secondary = Color(0xFF03DAC5),
     background = Color.Black,
     surface = Color(0xFF121212),
-    onPrimary = Color.White,
+    onPrimary = Color.Black,
     onSecondary = Color.Black,
     onBackground = Color.White,
     onSurface = Color.White

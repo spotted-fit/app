@@ -311,9 +311,9 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
     Scaffold(
         bottomBar = {
             BottomNavigation(
-                backgroundColor = MaterialTheme.colors.surface.copy(alpha = 0.9f),
+                backgroundColor = MaterialTheme.colors.primary,
                 elevation = 0.dp,
-                contentColor = MaterialTheme.colors.onSurface
+                contentColor = MaterialTheme.colors.onPrimary
             ) {
                 // Feed tab
                 BottomNavigationItem(
@@ -328,8 +328,8 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                             modifier = Modifier.size(26.dp)
                         )
                     },
-                    selectedContentColor = MaterialTheme.colors.onSurface,
-                    unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                    selectedContentColor = MaterialTheme.colors.onPrimary,
+                    unselectedContentColor = MaterialTheme.colors.onPrimary.copy(alpha = 0.5f),
                 )
 
                 // Friends tab
@@ -345,8 +345,8 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                             modifier = Modifier.size(26.dp)
                         )
                     },
-                    selectedContentColor = MaterialTheme.colors.onSurface,
-                    unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                    selectedContentColor = MaterialTheme.colors.onPrimary,
+                    unselectedContentColor = MaterialTheme.colors.onPrimary.copy(alpha = 0.5f),
                 )
 
                 // Activity/Camera tab
@@ -362,8 +362,8 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                             modifier = Modifier.size(26.dp)
                         )
                     },
-                    selectedContentColor = MaterialTheme.colors.onSurface,
-                    unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                    selectedContentColor = MaterialTheme.colors.onPrimary,
+                    unselectedContentColor = MaterialTheme.colors.onPrimary.copy(alpha = 0.5f),
                 )
 
                 // Challenges tab
@@ -379,8 +379,8 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                             modifier = Modifier.size(26.dp)
                         )
                     },
-                    selectedContentColor = MaterialTheme.colors.onSurface,
-                    unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                    selectedContentColor = MaterialTheme.colors.onPrimary,
+                    unselectedContentColor = MaterialTheme.colors.onPrimary.copy(alpha = 0.5f),
                 )
                 
                 // Profile tab
@@ -396,8 +396,8 @@ fun MainScreenWithBottomNav(onLogout: () -> Unit) {
                             modifier = Modifier.size(26.dp)
                         )
                     },
-                    selectedContentColor = MaterialTheme.colors.onSurface,
-                    unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                    selectedContentColor = MaterialTheme.colors.onPrimary,
+                    unselectedContentColor = MaterialTheme.colors.onPrimary.copy(alpha = 0.5f),
                 )
             }
         },
