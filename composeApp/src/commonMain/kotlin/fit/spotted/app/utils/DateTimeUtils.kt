@@ -36,7 +36,10 @@ object DateTimeUtils {
             else -> {
                 // For older posts, show month and day
                 val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-                val month = localDateTime.month.name.take(3)
+                val month = localDateTime.month.name
+                    .lowercase()
+                    .replaceFirstChar { it.uppercase() }
+                    .take(3)
                 val day = localDateTime.dayOfMonth
                 "$month $day"
             }
